@@ -1,0 +1,14 @@
+
+# mac
+._*
+__MACOSX
+.DS_Store
+
+# win
+*~
+Thumbs.db
+desktop.ini
+
+# build artifacts
+bin/
+pkg/

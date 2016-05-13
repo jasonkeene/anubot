@@ -1,4 +1,4 @@
-package anubot_test
+package bot_test
 
 import (
 	"crypto/tls"
@@ -8,12 +8,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"anubot"
+	. "anubot"
 )
 
 var _ = Describe("Bot", func() {
 	var (
-		bot           *anubot.Bot
+		bot           *Bot
 		fakeIRCServer *fakeIRCServer
 	)
 
@@ -29,7 +29,7 @@ var _ = Describe("Bot", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// create the bot and server
-		bot = anubot.New("test_user", "test_password", "127.0.0.1", port)
+		bot = New("test_user", "test_password", "127.0.0.1", port)
 		fakeIRCServer = newFakeIRCServer(listener)
 		go func() {
 			defer GinkgoRecover()

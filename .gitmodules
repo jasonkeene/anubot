@@ -22,3 +22,15 @@
 [submodule "src/golang.org/x/net"]
 	path = src/golang.org/x/net
 	url = https://go.googlesource.com/net
+[submodule "src/github.com/apoydence/eachers"]
+	path = src/github.com/apoydence/eachers
+	url = https://github.com/apoydence/eachers
+[submodule "src/github.com/nelsam/hel"]
+	path = src/github.com/nelsam/hel
+	url = https://github.com/nelsam/hel
+[submodule "src/github.com/spf13/cobra"]
+	path = src/github.com/spf13/cobra
+	url = https://github.com/spf13/cobra
+[submodule "src/github.com/spf13/pflag"]
+	path = src/github.com/spf13/pflag
+	url = https://github.com/spf13/pflag

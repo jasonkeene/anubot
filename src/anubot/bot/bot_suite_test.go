@@ -1,11 +1,9 @@
-package anubot_test
+package bot_test
 
 import (
 	"crypto/tls"
 	"testing"
 
-	"github.com/fluffle/goirc/logging"
-	logginglib "github.com/fluffle/golog/logging"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -71,6 +69,11 @@ var (
 	clientTLSConfig *tls.Config
 )
 
+func TestBot(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Bot Suite")
+}
+
 var _ = BeforeSuite(func() {
 	var err error
 	cert, err = tls.X509KeyPair([]byte(tlsCrt), []byte(tlsKey))
@@ -81,13 +84,4 @@ var _ = BeforeSuite(func() {
 	clientTLSConfig = &tls.Config{
 		InsecureSkipVerify: true,
 	}
-
-	logger := logginglib.NewFromFlags()
-	logger.SetLogLevel(logginglib.LogDebug)
-	logging.SetLogger(logger)
 })
-
-func TestAnubot(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Anubot Suite")
-}

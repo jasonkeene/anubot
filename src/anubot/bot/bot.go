@@ -1,4 +1,4 @@
-package anubot
+package bot
 
 import (
 	"crypto/tls"

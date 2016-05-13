@@ -1,4 +1,4 @@
-package anubot_test
+package bot_test
 
 import (
 	"errors"
@@ -84,12 +84,9 @@ func (a *fakeIRCServer) Stop() {
 	close(a.stop)
 	err := a.listener.Close()
 	Expect(err).ToNot(HaveOccurred())
-	println("entering lock")
 	a.mu.Lock()
-	println("lock entered")
 	connections := a.connections
 	a.mu.Unlock()
-	println("exited lock")
 	for _, conn := range connections {
 		err = conn.Close()
 		Expect(err).ToNot(HaveOccurred())

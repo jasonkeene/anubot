@@ -1,4 +1,4 @@
-package anubot_test
+package bot_test
 
 import (
 	"strings"

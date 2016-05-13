@@ -12,3 +12,9 @@ desktop.ini
 # build artifacts
 bin/
 pkg/
+
+# vim
+*.swp
+
+# node packages
+node_modules

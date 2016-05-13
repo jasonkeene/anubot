@@ -1,0 +1,24 @@
+[submodule "src/github.com/davecgh/go-spew"]
+	path = src/github.com/davecgh/go-spew
+	url = https://github.com/davecgh/go-spew
+[submodule "src/github.com/fluffle/goirc"]
+	path = src/github.com/fluffle/goirc
+	url = https://github.com/fluffle/goirc
+[submodule "src/github.com/fluffle/golog"]
+	path = src/github.com/fluffle/golog
+	url = https://github.com/fluffle/golog
+[submodule "src/github.com/golang/mock"]
+	path = src/github.com/golang/mock
+	url = https://github.com/golang/mock
+[submodule "src/github.com/mattn/go-sqlite3"]
+	path = src/github.com/mattn/go-sqlite3
+	url = https://github.com/mattn/go-sqlite3
+[submodule "src/github.com/onsi/ginkgo"]
+	path = src/github.com/onsi/ginkgo
+	url = https://github.com/onsi/ginkgo
+[submodule "src/github.com/onsi/gomega"]
+	path = src/github.com/onsi/gomega
+	url = https://github.com/onsi/gomega
+[submodule "src/golang.org/x/net"]
+	path = src/golang.org/x/net
+	url = https://go.googlesource.com/net

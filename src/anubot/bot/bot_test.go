@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "anubot"
+	. "anubot/bot"
 )
 
 var _ = Describe("Bot", func() {

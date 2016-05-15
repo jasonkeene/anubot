@@ -9,10 +9,11 @@ __MACOSX
 Thumbs.db
 desktop.ini
 
-# build artifacts
+# go build artifacts
 bin/
 pkg/
 app/anubot-server
+*.coverprofile
 
 # vim
 *.swp

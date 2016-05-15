@@ -12,6 +12,7 @@ desktop.ini
 # build artifacts
 bin/
 pkg/
+app/anubot-server
 
 # vim
 *.swp

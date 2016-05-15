@@ -59,6 +59,18 @@ var _ = Describe("Store", func() {
 			Expect(username).To(Equal(expectedUser))
 			Expect(pass).To(Equal(expectedPass))
 		})
+
+		It("stores the primary channel", func() {
+			_, err := store.PrimaryChannel()
+			Expect(err).To(HaveOccurred())
+
+			err = store.SetPrimaryChannel("#foobar")
+			Expect(err).ToNot(HaveOccurred())
+
+			channel, err := store.PrimaryChannel()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(channel).To(Equal("#foobar"))
+		})
 	})
 })
 

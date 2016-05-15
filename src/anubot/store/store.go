@@ -67,6 +67,37 @@ func (s *Store) Close() error {
 
 // SetCredentials stores credentials
 func (s *Store) SetCredentials(user, pass string) error {
+	err := s.setValueForKey("username", user)
+	if err != nil {
+		return err
+	}
+	return s.setValueForKey("password", pass)
+}
+
+// Credentials retrieves credentials
+func (s *Store) Credentials() (string, string, error) {
+	user, err := s.valueFromKey("username")
+	if err != nil {
+		return "", "", err
+	}
+	pass, err := s.valueFromKey("password")
+	if err != nil {
+		return "", "", err
+	}
+	return user, pass, nil
+}
+
+// SetPrimaryChannel sets the primary channel
+func (s *Store) SetPrimaryChannel(channel string) error {
+	return s.setValueForKey("primary_channel", channel)
+}
+
+// PrimaryChannel retrieves the primary channel
+func (s *Store) PrimaryChannel() (string, error) {
+	return s.valueFromKey("primary_channel")
+}
+
+func (s *Store) setValueForKey(key, value string) error {
 	txn, err := s.querier.Begin()
 	if err != nil {
 		return err
@@ -76,34 +107,22 @@ func (s *Store) SetCredentials(user, pass string) error {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec("username", user)
+	_, err = stmt.Exec(key, value)
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec("password", pass)
-	if err != nil {
-		return err
-	}
-	err = txn.Commit()
-	return err
+	return txn.Commit()
 }
 
-// Credentials retrieves credentials
-func (s *Store) Credentials() (string, string, error) {
-	var user, pass string
+func (s *Store) valueFromKey(key string) (string, error) {
+	var value string
 	err := s.querier.
-		QueryRow("SELECT value FROM key_value WHERE key = 'username'").
-		Scan(&user)
+		QueryRow("SELECT value FROM key_value WHERE key = ?", key).
+		Scan(&value)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-	err = s.querier.
-		QueryRow("SELECT value FROM key_value WHERE key = 'password'").
-		Scan(&pass)
-	if err != nil {
-		return "", "", err
-	}
-	return user, pass, nil
+	return value, nil
 }
 
 // HomePath returns a path for a sqlite db in the current user's home directory

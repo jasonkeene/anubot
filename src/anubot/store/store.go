@@ -74,6 +74,17 @@ func (s *Store) SetCredentials(user, pass string) error {
 	return s.setValueForKey("password", pass)
 }
 
+// HasCredentials returns true if valid credentials are set
+func (s *Store) HasCredentials() bool {
+	user, pass, err := s.Credentials()
+	log.Println("user:", user)
+	if err != nil || user == "" || pass == "" {
+		log.Println("bad creds")
+		return false
+	}
+	return true
+}
+
 // Credentials retrieves credentials
 func (s *Store) Credentials() (string, string, error) {
 	user, err := s.valueFromKey("username")
@@ -102,7 +113,7 @@ func (s *Store) setValueForKey(key, value string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := txn.Prepare("INSERT INTO key_value (key, value) VALUES (?, ?)")
+	stmt, err := txn.Prepare("INSERT OR REPLACE INTO key_value (key, value) VALUES (?, ?)")
 	if err != nil {
 		return err
 	}

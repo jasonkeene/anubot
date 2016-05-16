@@ -60,6 +60,27 @@ var _ = Describe("Store", func() {
 			Expect(pass).To(Equal(expectedPass))
 		})
 
+		It("can tell if it has valid credentials or not", func() {
+			expectedUser, expectedPass := "test-user", "test-pass"
+
+			Expect(store.HasCredentials()).To(BeFalse())
+
+			err := store.SetCredentials(expectedUser, expectedPass)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(store.HasCredentials()).To(BeTrue())
+
+			err = store.SetCredentials("", expectedPass)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(store.HasCredentials()).To(BeFalse())
+
+			err = store.SetCredentials(expectedUser, "")
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(store.HasCredentials()).To(BeFalse())
+		})
+
 		It("stores the primary channel", func() {
 			_, err := store.PrimaryChannel()
 			Expect(err).To(HaveOccurred())

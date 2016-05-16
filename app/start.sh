@@ -7,7 +7,7 @@ build_server() {
         echo removing anubot-server
         rm anubot-server
     fi
-    go build -o anubot-server anubot/api
+    go build -o anubot-server anubot/cmd/api-server
 }
 
 main() {

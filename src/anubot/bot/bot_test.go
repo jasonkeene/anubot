@@ -14,6 +14,7 @@ import (
 var _ = Describe("Bot", func() {
 	var (
 		bot           *Bot
+		connConfig    *ConnConfig
 		fakeIRCServer *fakeIRCServer
 	)
 
@@ -29,7 +30,14 @@ var _ = Describe("Bot", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		// create the bot and server
-		bot = New("test_user", "test_password", "127.0.0.1", port)
+		bot = &Bot{}
+		connConfig = &ConnConfig{
+			BotUsername: "test_user",
+			BotPassword: "test_password",
+			Host:        "127.0.0.1",
+			Port:        port,
+			TLSConfig:   clientTLSConfig,
+		}
 		fakeIRCServer = newFakeIRCServer(listener)
 		go func() {
 			defer GinkgoRecover()
@@ -48,13 +56,13 @@ var _ = Describe("Bot", func() {
 		})
 
 		It("attempts to connect over TLS", func() {
-			err, _ := bot.Connect(clientTLSConfig)
+			err, _ := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
 			assertConnected(fakeIRCServer)
 		})
 
 		It("can disconnect", func() {
-			err, disconnected := bot.Connect(clientTLSConfig)
+			err, disconnected := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
 			assertConnected(fakeIRCServer)
 			bot.Disconnect()
@@ -67,7 +75,7 @@ var _ = Describe("Bot", func() {
 			BeforeEach(func() {
 				fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
 
-				err, _ := bot.Connect(clientTLSConfig)
+				err, _ := bot.Connect(connConfig)
 				Expect(err).ToNot(HaveOccurred())
 				assertConnected(fakeIRCServer)
 			})

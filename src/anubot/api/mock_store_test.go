@@ -6,36 +6,62 @@
 package api_test
 
 type mockStore struct {
-	HasCredentialsCalled chan bool
-	HasCredentialsOutput struct {
-		Has chan bool
-	}
 	SetCredentialsCalled chan bool
 	SetCredentialsInput  struct {
-		User, Pass chan string
+		Kind, User, Pass chan string
 	}
 	SetCredentialsOutput struct {
 		Err chan error
+	}
+	HasCredentialsCalled chan bool
+	HasCredentialsInput  struct {
+		Kind chan string
+	}
+	HasCredentialsOutput struct {
+		Has chan bool
+	}
+	CredentialsCalled chan bool
+	CredentialsInput  struct {
+		Kind chan string
+	}
+	CredentialsOutput struct {
+		User chan string
+		Pass chan string
+		Err  chan error
 	}
 }
 
 func newMockStore() *mockStore {
 	m := &mockStore{}
-	m.HasCredentialsCalled = make(chan bool, 100)
-	m.HasCredentialsOutput.Has = make(chan bool, 100)
 	m.SetCredentialsCalled = make(chan bool, 100)
+	m.SetCredentialsInput.Kind = make(chan string, 100)
 	m.SetCredentialsInput.User = make(chan string, 100)
 	m.SetCredentialsInput.Pass = make(chan string, 100)
 	m.SetCredentialsOutput.Err = make(chan error, 100)
+	m.HasCredentialsCalled = make(chan bool, 100)
+	m.HasCredentialsInput.Kind = make(chan string, 100)
+	m.HasCredentialsOutput.Has = make(chan bool, 100)
+	m.CredentialsCalled = make(chan bool, 100)
+	m.CredentialsInput.Kind = make(chan string, 100)
+	m.CredentialsOutput.User = make(chan string, 100)
+	m.CredentialsOutput.Pass = make(chan string, 100)
+	m.CredentialsOutput.Err = make(chan error, 100)
 	return m
 }
-func (m *mockStore) HasCredentials() (has bool) {
-	m.HasCredentialsCalled <- true
-	return <-m.HasCredentialsOutput.Has
-}
-func (m *mockStore) SetCredentials(user, pass string) (err error) {
+func (m *mockStore) SetCredentials(kind, user, pass string) (err error) {
 	m.SetCredentialsCalled <- true
+	m.SetCredentialsInput.Kind <- kind
 	m.SetCredentialsInput.User <- user
 	m.SetCredentialsInput.Pass <- pass
 	return <-m.SetCredentialsOutput.Err
+}
+func (m *mockStore) HasCredentials(kind string) (has bool) {
+	m.HasCredentialsCalled <- true
+	m.HasCredentialsInput.Kind <- kind
+	return <-m.HasCredentialsOutput.Has
+}
+func (m *mockStore) Credentials(kind string) (user string, pass string, err error) {
+	m.CredentialsCalled <- true
+	m.CredentialsInput.Kind <- kind
+	return <-m.CredentialsOutput.User, <-m.CredentialsOutput.Pass, <-m.CredentialsOutput.Err
 }

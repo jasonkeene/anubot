@@ -7,13 +7,15 @@ import (
 	"golang.org/x/net/websocket"
 
 	"anubot/api"
+	"anubot/bot"
 	"anubot/store"
 )
 
 func main() {
 	store := store.New(store.HomePath())
 	store.InitDDL()
-	api := api.New(store)
+	bot := &bot.Bot{}
+	api := api.New(store, bot)
 	handler := websocket.Handler(api.Serve)
 
 	http.Handle("/api", handler)

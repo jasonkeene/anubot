@@ -8,67 +8,64 @@ import (
 	"github.com/fluffle/goirc/client"
 )
 
+type ConnConfig struct {
+	UserUsername string
+	UserPassword string
+	BotUsername  string
+	BotPassword  string
+	Host         string
+	Port         int
+	TLSConfig    *tls.Config
+}
+
+// TODO: Implement userConn
 type Bot struct {
-	username string
-	password string
-
-	host string
-	port int
-
-	conn         *client.Conn
+	// userConn     *client.Conn
+	botConn      *client.Conn
 	connected    chan struct{}
 	disconnected chan struct{}
 }
 
-func New(username, password, host string, port int) *Bot {
-	return &Bot{
-		username: username,
-		password: password,
-		host:     host,
-		port:     port,
-	}
-}
-
-func (b *Bot) Connect(tlsConfig *tls.Config) (error, chan struct{}) {
-	cfg := client.NewConfig(b.username)
-	cfg.Me.Name = b.username
+func (b *Bot) Connect(c *ConnConfig) (error, chan struct{}) {
+	cfg := client.NewConfig(c.BotUsername)
+	cfg.Me.Name = c.BotUsername
 	cfg.Me.Ident = "anubot"
-	cfg.Pass = b.password
+	cfg.Pass = c.BotPassword
 	cfg.SSL = true
-	if tlsConfig == nil {
-		tlsConfig = &tls.Config{
-			ServerName: b.host,
+	if c.TLSConfig == nil {
+		c.TLSConfig = &tls.Config{
+			ServerName: c.Host,
 		}
 	}
-	cfg.SSLConfig = tlsConfig
-	cfg.Server = net.JoinHostPort(b.host, strconv.Itoa(b.port))
-	b.conn = client.Client(cfg)
+	cfg.SSLConfig = c.TLSConfig
+	cfg.Server = net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
+	b.botConn = client.Client(cfg)
 	b.connected = make(chan struct{})
 	b.disconnected = make(chan struct{})
 
 	b.registerConnectEventHandler()
 	b.registerDisconnectEventHandler()
 
-	return b.conn.Connect(), b.disconnected
+	return b.botConn.Connect(), b.disconnected
 }
 
 func (b *Bot) Disconnect() {
-	b.conn.Quit()
+	b.botConn.Quit()
 }
 
 func (b *Bot) Join(channel string) {
 	<-b.connected
-	b.conn.Join(channel)
+	b.botConn.Join(channel)
 }
 
 func (b *Bot) registerConnectEventHandler() {
-	b.conn.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
+	b.botConn.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
 		close(b.connected)
 	})
 }
 
 func (b *Bot) registerDisconnectEventHandler() {
-	b.conn.HandleFunc(client.DISCONNECTED, func(conn *client.Conn, line *client.Line) {
+	b.botConn.HandleFunc(client.DISCONNECTED, func(conn *client.Conn, line *client.Line) {
 		close(b.disconnected)
 	})
 }

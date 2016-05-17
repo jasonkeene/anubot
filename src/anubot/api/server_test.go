@@ -13,11 +13,13 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "anubot/api"
+	"anubot/bot"
 )
 
 var _ = Describe("APIServer", func() {
 	var (
 		mockStore *mockStore
+		mockBot   *mockBot
 		listener  net.Listener
 		api       *APIServer
 		server    *http.Server
@@ -26,13 +28,14 @@ var _ = Describe("APIServer", func() {
 
 	BeforeEach(func() {
 		mockStore = newMockStore()
+		mockBot = newMockBot()
 
 		// spin up server
 		var err error
 		listener, err = net.Listen("tcp", ":0")
 		Expect(err).ToNot(HaveOccurred())
 
-		api = New(mockStore)
+		api = New(mockStore, mockBot)
 		server = &http.Server{
 			Handler:        websocket.Handler(api.Serve),
 			ReadTimeout:    10 * time.Second,
@@ -87,10 +90,13 @@ var _ = Describe("APIServer", func() {
 		Consistently(receive).ShouldNot(Receive())
 	})
 
-	It("can set credentials", func() {
+	It("can manage credentials", func() {
 		// make sure credentails are not set
 		mockStore.HasCredentialsOutput.Has <- false
-		event := Event{Cmd: "has-credentials-set"}
+		event := Event{
+			Cmd:     "has-credentials-set",
+			Payload: "user",
+		}
 		websocket.JSON.Send(client, &event)
 		websocket.JSON.Receive(client, &event)
 		Expect(event.Cmd).To(Equal("has-credentials-set"))
@@ -103,23 +109,92 @@ var _ = Describe("APIServer", func() {
 		event = Event{
 			Cmd: "set-credentials",
 			Payload: map[string]string{
+				"kind":     "user",
 				"username": "test-username",
 				"password": "test-password",
 			},
 		}
 		websocket.JSON.Send(client, &event)
 		Eventually(mockStore.SetCredentialsInput).Should(BeCalled(
-			With("test-username", "test-password"),
+			With("user", "test-username", "test-password"),
 		))
 
 		// make sure they were set correctly
 		mockStore.HasCredentialsOutput.Has <- true
-		event = Event{Cmd: "has-credentials-set"}
+		event = Event{
+			Cmd:     "has-credentials-set",
+			Payload: "user",
+		}
 		websocket.JSON.Send(client, &event)
 		websocket.JSON.Receive(client, &event)
 		Expect(event.Cmd).To(Equal("has-credentials-set"))
 		payload = event.Payload.(bool)
 		Expect(payload).To(BeTrue())
 		Expect(mockStore.HasCredentialsCalled).To(Receive())
+	})
+
+	It("ignores credential kinds other than user and bot", func() {
+		// attempt to set credentials
+		event := Event{
+			Cmd: "set-credentials",
+			Payload: map[string]string{
+				"kind":     "bad-kind",
+				"username": "test-username",
+				"password": "test-password",
+			},
+		}
+		websocket.JSON.Send(client, &event)
+		Consistently(mockStore.SetCredentialsInput).ShouldNot(BeCalled())
+
+		// make sure has credentials doesn't call into the store either
+		event = Event{
+			Cmd:     "has-credentials-set",
+			Payload: "bad-kind",
+		}
+		websocket.JSON.Send(client, &event)
+		Consistently(mockStore.HasCredentialsInput).ShouldNot(BeCalled())
+		websocket.JSON.Receive(client, &event)
+		Expect(event.Cmd).To(Equal("has-credentials-set"))
+		payload := event.Payload.(bool)
+		Expect(payload).To(BeFalse())
+	})
+
+	It("can have the bot connect and disconnect", func() {
+		// connect
+		mockStore.CredentialsOutput.User <- "user-test-username"
+		mockStore.CredentialsOutput.Pass <- "user-test-password"
+		mockStore.CredentialsOutput.Err <- nil
+		mockStore.CredentialsOutput.User <- "bot-test-username"
+		mockStore.CredentialsOutput.Pass <- "bot-test-password"
+		mockStore.CredentialsOutput.Err <- nil
+
+		mockBot.ConnectOutput.Err <- nil
+		mockBot.ConnectOutput.Disconnected <- nil
+
+		event := Event{Cmd: "connect"}
+		websocket.JSON.Send(client, &event)
+		websocket.JSON.Receive(client, &event)
+		Expect(event.Cmd).To(Equal("connect"))
+		connected, ok := event.Payload.(bool)
+		Expect(ok).To(BeTrue())
+		Expect(connected).To(BeTrue())
+		Expect(mockStore.CredentialsInput).To(BeCalled(
+			With("user"),
+			With("bot"),
+		))
+
+		var connConfig *bot.ConnConfig
+		Eventually(mockBot.ConnectInput.ConnConfig).Should(Receive(&connConfig))
+		Expect(connConfig.UserUsername).To(Equal("user-test-username"))
+		Expect(connConfig.UserPassword).To(Equal("user-test-password"))
+		Expect(connConfig.BotUsername).To(Equal("bot-test-username"))
+		Expect(connConfig.BotPassword).To(Equal("bot-test-password"))
+		Expect(connConfig.Host).To(Equal("irc.chat.twitch.tv"))
+		Expect(connConfig.Port).To(Equal(443))
+
+		// disconnect
+		event = Event{Cmd: "disconnect"}
+		websocket.JSON.Send(client, &event)
+		Eventually(mockBot.DisconnectCalled).Should(Receive())
 	})
 })

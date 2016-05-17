@@ -2,10 +2,8 @@ package store_test
 
 import (
 	"errors"
-	"math/rand"
 	"os/user"
 	"path"
-	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -36,61 +34,6 @@ var _ = Describe("Store", func() {
 				mockQuerier.CloseOutput.Ret0 <- err
 				Expect(store.Close()).To(Equal(err))
 			})
-		})
-	})
-
-	Describe("New", func() {
-		BeforeEach(func() {
-			store = New(path.Join(tempDir, "test-"+strconv.Itoa(rand.Int())))
-			Expect(store.InitDDL()).To(Succeed())
-		})
-
-		It("stores credentials", func() {
-			expectedUser, expectedPass := "test-user", "test-pass"
-
-			_, _, err := store.Credentials()
-			Expect(err).To(HaveOccurred())
-
-			err = store.SetCredentials(expectedUser, expectedPass)
-			Expect(err).ToNot(HaveOccurred())
-
-			username, pass, err := store.Credentials()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(username).To(Equal(expectedUser))
-			Expect(pass).To(Equal(expectedPass))
-		})
-
-		It("can tell if it has valid credentials or not", func() {
-			expectedUser, expectedPass := "test-user", "test-pass"
-
-			Expect(store.HasCredentials()).To(BeFalse())
-
-			err := store.SetCredentials(expectedUser, expectedPass)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(store.HasCredentials()).To(BeTrue())
-
-			err = store.SetCredentials("", expectedPass)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(store.HasCredentials()).To(BeFalse())
-
-			err = store.SetCredentials(expectedUser, "")
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(store.HasCredentials()).To(BeFalse())
-		})
-
-		It("stores the primary channel", func() {
-			_, err := store.PrimaryChannel()
-			Expect(err).To(HaveOccurred())
-
-			err = store.SetPrimaryChannel("#foobar")
-			Expect(err).ToNot(HaveOccurred())
-
-			channel, err := store.PrimaryChannel()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(channel).To(Equal("#foobar"))
 		})
 	})
 })

@@ -10,9 +10,9 @@ Thumbs.db
 desktop.ini
 
 # go build artifacts
-bin/
-pkg/
-app/anubot-server
+/bin/
+/pkg/
+/app/anubot-server
 *.coverprofile
 
 # vim
@@ -20,3 +20,6 @@ app/anubot-server
 
 # node packages
 node_modules
+
+# app build artifacts
+/app/lib/

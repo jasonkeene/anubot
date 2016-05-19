@@ -1,5 +1,6 @@
 
-const websocket = require('websocket');
+const websocket = require('websocket'),
+      views = require('./lib/views/main.js');
 
 var client = new websocket.client();
 
@@ -32,3 +33,5 @@ client.on('connect', function(connection) {
 });
 
 client.connect('ws://localhost:12345/api', '', 'http://localhost:12345');
+
+views.render();

@@ -1,0 +1,23 @@
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    padding: 0;
+    margin: 0;
+}
+
+#app {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: radial-gradient(ellipse at center, rgba(26,26,30,1) 0%, rgba(53,54,62,1) 100%);
+    color: #F2F7DA;
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url(assets/type/open_sans.ttf) format('truetype');
+}

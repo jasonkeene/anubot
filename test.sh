@@ -1,3 +1,15 @@
 #!/bin/bash
-cd src/anubot
-ginkgo -r -race -randomizeAllSpecs
+
+set -ex
+
+pushd src/anubot
+    ginkgo unfocus
+    goimports -w .
+    ginkgo -r -race -randomizeAllSpecs
+popd
+
+pushd app
+    jasmine
+popd
+
+echo 'All Tests Passed!'

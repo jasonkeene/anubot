@@ -6,7 +6,7 @@ import (
 	"github.com/fluffle/goirc/logging"
 	logginglib "github.com/fluffle/golog/logging"
 
-	anubot "anubot/bot"
+	"anubot/bot"
 )
 
 const (
@@ -15,21 +15,21 @@ const (
 )
 
 func main() {
-	twitchUser := os.Getenv("TWITCH_USER")
-	twitchPass := os.Getenv("TWITCH_PASS")
-	twitchChannel := os.Getenv("TWITCH_CHANNEL")
 	initLogging()
-	bot := anubot.New(
-		twitchUser,
-		twitchPass,
-		twitchHost,
-		twitchPort,
-	)
-	err, disconnected := bot.Connect(nil)
+	connConfig := &bot.ConnConfig{
+		UserUsername: os.Getenv("TWITCH_USER_USER"),
+		UserPassword: os.Getenv("TWITCH_USER_PASS"),
+		BotUsername:  os.Getenv("TWITCH_BOT_USER"),
+		BotPassword:  os.Getenv("TWITCH_BOT_PASS"),
+		Host:         twitchHost,
+		Port:         twitchPort,
+	}
+	bot := &bot.Bot{}
+	err, disconnected := bot.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}
-	bot.Join(twitchChannel)
+	bot.Join("#" + connConfig.UserUsername)
 
 	<-disconnected
 }

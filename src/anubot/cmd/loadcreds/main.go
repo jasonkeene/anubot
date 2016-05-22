@@ -7,12 +7,13 @@ import (
 )
 
 func main() {
-	twitchUser := os.Getenv("TWITCH_USER")
-	twitchPass := os.Getenv("TWITCH_PASS")
-	twitchChannel := os.Getenv("TWITCH_CHANNEL")
+	botUser := os.Getenv("TWITCH_BOT_USER")
+	botPass := os.Getenv("TWITCH_BOT_PASS")
+	userUser := os.Getenv("TWITCH_USER_USER")
+	userPass := os.Getenv("TWITCH_USER_PASS")
 
 	s := store.New(store.HomePath())
 	s.InitDDL()
-	s.SetCredentials(twitchUser, twitchPass)
-	s.SetPrimaryChannel(twitchChannel)
+	s.SetCredentials("bot", botUser, botPass)
+	s.SetCredentials("user", userUser, userPass)
 }

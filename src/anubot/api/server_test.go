@@ -100,8 +100,11 @@ var _ = Describe("APIServer", func() {
 		websocket.JSON.Send(client, &event)
 		websocket.JSON.Receive(client, &event)
 		Expect(event.Cmd).To(Equal("has-credentials-set"))
-		payload := event.Payload.(bool)
-		Expect(payload).To(BeFalse())
+		payload := event.Payload.(map[string]interface{})
+		kind := payload["kind"].(string)
+		result := payload["result"].(bool)
+		Expect(kind).To(Equal("user"))
+		Expect(result).To(BeFalse())
 		Expect(mockStore.HasCredentialsCalled).To(Receive())
 
 		// set credentials
@@ -128,8 +131,11 @@ var _ = Describe("APIServer", func() {
 		websocket.JSON.Send(client, &event)
 		websocket.JSON.Receive(client, &event)
 		Expect(event.Cmd).To(Equal("has-credentials-set"))
-		payload = event.Payload.(bool)
-		Expect(payload).To(BeTrue())
+		payload = event.Payload.(map[string]interface{})
+		kind = payload["kind"].(string)
+		result = payload["result"].(bool)
+		Expect(kind).To(Equal("user"))
+		Expect(result).To(BeTrue())
 		Expect(mockStore.HasCredentialsCalled).To(Receive())
 	})
 
@@ -155,8 +161,11 @@ var _ = Describe("APIServer", func() {
 		Consistently(mockStore.HasCredentialsInput).ShouldNot(BeCalled())
 		websocket.JSON.Receive(client, &event)
 		Expect(event.Cmd).To(Equal("has-credentials-set"))
-		payload := event.Payload.(bool)
-		Expect(payload).To(BeFalse())
+		payload := event.Payload.(map[string]interface{})
+		kind := payload["kind"].(string)
+		result := payload["result"].(bool)
+		Expect(kind).To(Equal("bad-kind"))
+		Expect(result).To(BeFalse())
 	})
 
 	It("can have the bot connect and disconnect", func() {

@@ -25,12 +25,21 @@ func pingHandler(event Event, session *Session) {
 func hasCredentialsSetHandler(event Event, session *Session) {
 	var result bool
 	kind, ok := event.Payload.(string)
-	if ok && (kind == "user" || kind == "bot") {
+	if !ok {
+		return
+	}
+	if kind == "user" || kind == "bot" {
 		result = session.store.HasCredentials(kind)
 	}
 	websocket.JSON.Send(session.ws, &Event{
-		Cmd:     "has-credentials-set",
-		Payload: result,
+		Cmd: "has-credentials-set",
+		Payload: struct {
+			Kind   string `json:"kind"`
+			Result bool   `json:"result"`
+		}{
+			Kind:   kind,
+			Result: result,
+		},
 	})
 }
 

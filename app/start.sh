@@ -10,8 +10,8 @@ build_server() {
     go build -o anubot-server anubot/cmd/api-server
 }
 
-watch_app_views() {
-    babel --presets es2015,react --watch --out-dir lib/views src/views &
+watch_app_source() {
+    babel --presets es2015,react --watch --out-dir lib src &
     BABEL_PID=$!
     echo babel started as pid $BABEL_PID
 }
@@ -20,10 +20,6 @@ watch_app_styles() {
     node-sass --watch --output lib/styles src/styles &
     NODE_PID=$!
     echo node-stats started as pid $NODE_PID
-}
-
-build_app() {
-    cp src/app.js lib/app.js
 }
 
 kill_watchers() {
@@ -39,16 +35,12 @@ main() {
     build_server
     echo
 
-    echo -e "\033[1m\033[34mWatching Application Views\033[0m"
-    watch_app_views
+    echo -e "\033[1m\033[34mWatching Application Source\033[0m"
+    watch_app_source
     echo
 
     echo -e "\033[1m\033[34mWatching Application Styles\033[0m"
     watch_app_styles
-    echo
-
-    echo -e "\033[1m\033[34mBuilding Application\033[0m"
-    build_app
     echo
 
     echo -e "\033[1m\033[34mStarting Application\033[0m"

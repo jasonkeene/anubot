@@ -1,7 +1,7 @@
 'use strict';
 
-const electron = require('electron');
-const child_process = require('child_process')
+const electron = require('electron'),
+      child_process = require('child_process');
 
 var mainWindow = null; // keep main object from being GC'd
 

@@ -5,6 +5,12 @@ body {
     margin: 0;
 }
 
+body, div, span, p, li {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
 #app {
     position: absolute;
     width: 100%;
@@ -13,6 +19,23 @@ body {
     left: 0;
     background: radial-gradient(ellipse at center, rgba(26,26,30,1) 0%, rgba(53,54,62,1) 100%);
     color: #F2F7DA;
+}
+
+#menu {
+    width: 200px;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    background-color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tab {
+    margin-left: 220px;
 }
 
 @font-face {

@@ -1,6 +1,108 @@
 
 const React = require('react');
 
+const AuthOverlay = React.createClass({
+    // lifecycle
+    getInitialState: function () {
+        return {
+            // ui data
+            mode: "choice",
+
+            // auth data
+            initCredentialsCheck: 0,
+            userCredentialsSet: false,
+            botCredentialsSet: false,
+        };
+    },
+    componentWillMount: function () {
+        this.checkIfAuthenticated();
+    },
+
+    // network events
+    checkIfAuthenticated: function () {
+        this.props.listeners.add("has-credentials-set", this.handleHasCredentialsSetEvent);
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "has-credentials-set",
+            "payload": "user",
+        }));
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "has-credentials-set",
+            "payload": "bot",
+        }));
+    },
+    handleHasCredentialsSetEvent: function (payload) {
+        var setValues = {};
+        setValues[payload.kind + "CredentialsSet"] = payload.result;
+        setValues.initCredentialsCheck = this.state.initCredentialsCheck + 1;
+
+        if (setValues.initCredentialsCheck >= 2) {
+            // at this point we got two response events from the server
+            setValues.initCredentialsCheck = 0;
+            this.props.listeners.remove("has-credentials-set", this.handleHasCredentialsSetEvent);
+        }
+
+        // write state out
+        // TODO: react docs say this isn't guarenteed to happen syncronously
+        // so we can't rely on this.state values afterward
+        this.setState(setValues);
+
+        if (this.state.userCredentialsSet && this.state.botCredentialsSet) {
+            // tell the parent we are authenticated
+            this.props.parent.setState({authenticated: true});
+
+            // connect to the remote irc server
+            this.props.parent.connect();
+        }
+    },
+
+    // events from clildren
+    handleOptionClick: function (mode) {
+        this.setState({mode: mode});
+    },
+    handleAuth: function (credentials) {
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "set-credentials",
+            "payload": {
+                "kind": "bot",
+                "username": credentials.botUsername,
+                "password": credentials.botPassword,
+            },
+        }));
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "set-credentials",
+            "payload": {
+                "kind": "user",
+                "username": credentials.channelUsername,
+                "password": credentials.channelPassword,
+            },
+        }));
+        this.checkIfAuthenticated();
+    },
+
+    // rendering
+    render: function () {
+        switch (this.state.mode) {
+        case "choice":
+            return this.renderChoice();
+        case "auto":
+            return this.renderAuto();
+        case "manual":
+            return <ManualMode parent={this} />;
+        }
+    },
+    renderChoice: function () {
+        return <div id="auth-overlay">
+            <ul>
+                <AuthOption parent={this} value="auto" text="Login via Twitch" />
+                <AuthOption parent={this} value="manual" text="Manually Enter Oauth Tokens" />
+            </ul>
+        </div>;
+    },
+    renderAuto: function () {
+        return <div id="auth-overlay"> Auto </div>;
+    },
+});
+
 const AuthOption = React.createClass({
     handleClick: function () {
         this.props.parent.handleOptionClick(this.props.value);
@@ -88,42 +190,5 @@ const ManualMode = React.createClass({
         );
     }
 })
-
-const AuthOverlay = React.createClass({
-    getInitialState: function () {
-        return {
-            mode: "choice",
-        };
-    },
-
-    handleOptionClick: function (mode) {
-        this.setState({mode: mode});
-    },
-    handleAuth: function (credentials) {
-        this.props.parent.handleAuth(credentials);
-    },
-
-    renderChoice: function () {
-        return <div id="auth-overlay">
-            <ul>
-                <AuthOption parent={this} value="auto" text="Login via Twitch" />
-                <AuthOption parent={this} value="manual" text="Manually Enter Oauth Tokens" />
-            </ul>
-        </div>;
-    },
-    renderAuto: function () {
-        return <div id="auth-overlay"> Auto </div>;
-    },
-    render: function () {
-        switch (this.state.mode) {
-        case "choice":
-            return this.renderChoice();
-        case "auto":
-            return this.renderAuto();
-        case "manual":
-            return <ManualMode parent={this} />;
-        }
-    },
-});
 
 module.exports = AuthOverlay;

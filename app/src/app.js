@@ -4,15 +4,11 @@ const websocket = require('websocket'),
       unpack = require('./lib/unpack.js'),
       views = require('./lib/views/main.js');
 
-// TODO: need to consider mutation of this by other connects
-var conn;
-
-const client = new websocket.client(),
-      listeners = new Listeners();
+const client = new websocket.client();
 
 client.on('connect', function(connection) {
-    conn = connection;
-    views.render();
+    const listeners = new Listeners();
+    views.render(connection, listeners);
     console.log('WebSocket Client Connected');
 
     connection.on('message', function(message) {

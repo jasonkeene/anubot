@@ -63,6 +63,11 @@ func (b *Bot) Join(channel string) {
 	b.botConn.Join(channel)
 }
 
+// Send sents a raw message to the IRC server.
+func (b *Bot) Send(message string) {
+	b.botConn.Raw(message)
+}
+
 func (b *Bot) registerConnectEventHandler() {
 	b.botConn.HandleFunc(client.CONNECTED, func(conn *client.Conn, line *client.Line) {
 		close(b.connected)

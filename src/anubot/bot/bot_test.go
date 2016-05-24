@@ -94,9 +94,29 @@ var _ = Describe("Bot", func() {
 
 				bot.Join("#test_chan1")
 				bot.Join("#test_chan2")
+				// TODO: this eventually takes a while to respond
 				Eventually(fakeIRCServer.Received, 3).Should(EqualLines(
 					"JOIN #test_chan1",
 					"JOIN #test_chan2",
+				))
+			})
+		})
+	})
+
+	Describe("Send", func() {
+		Context("with a connected bot", func() {
+			BeforeEach(func() {
+				fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
+
+				_, err := bot.Connect(connConfig)
+				Expect(err).ToNot(HaveOccurred())
+				assertConnected(fakeIRCServer)
+			})
+
+			It("sends messages to the server", func() {
+				bot.Send("test-message")
+				Eventually(fakeIRCServer.Received, 3).Should(EqualLines(
+					"test-message",
 				))
 			})
 		})

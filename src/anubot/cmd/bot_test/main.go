@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"os"
 
 	"github.com/fluffle/goirc/logging"
@@ -25,13 +26,18 @@ func main() {
 		Port:         twitchPort,
 	}
 	bot := &bot.Bot{}
-	disconnected, err := bot.Connect(connConfig)
+	_, err := bot.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}
 	bot.Join("#" + connConfig.UserUsername)
 
-	<-disconnected
+	// read from stdin and send to irc server
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		text, _ := reader.ReadString('\n')
+		bot.Send(text)
+	}
 }
 
 func initLogging() {

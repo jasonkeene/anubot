@@ -25,7 +25,7 @@ func main() {
 		Port:         twitchPort,
 	}
 	bot := &bot.Bot{}
-	err, disconnected := bot.Connect(connConfig)
+	disconnected, err := bot.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}

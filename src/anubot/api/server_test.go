@@ -177,8 +177,8 @@ var _ = Describe("APIServer", func() {
 		mockStore.CredentialsOutput.Pass <- "bot-test-password"
 		mockStore.CredentialsOutput.Err <- nil
 
-		mockBot.ConnectOutput.Err <- nil
 		mockBot.ConnectOutput.Disconnected <- nil
+		mockBot.ConnectOutput.Err <- nil
 
 		event := Event{Cmd: "connect"}
 		websocket.JSON.Send(client, &event)

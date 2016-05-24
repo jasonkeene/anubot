@@ -21,7 +21,7 @@ type Store interface {
 
 // Bot is the object reposible for talking to IRC.
 type Bot interface {
-	Connect(connConfig *bot.ConnConfig) (err error, disconnected chan struct{})
+	Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error)
 	Disconnect()
 }
 

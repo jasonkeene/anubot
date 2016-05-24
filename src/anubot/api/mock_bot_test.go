@@ -13,8 +13,8 @@ type mockBot struct {
 		ConnConfig chan *bot.ConnConfig
 	}
 	ConnectOutput struct {
-		Err          chan error
 		Disconnected chan chan struct{}
+		Err          chan error
 	}
 	DisconnectCalled chan bool
 }
@@ -23,15 +23,15 @@ func newMockBot() *mockBot {
 	m := &mockBot{}
 	m.ConnectCalled = make(chan bool, 100)
 	m.ConnectInput.ConnConfig = make(chan *bot.ConnConfig, 100)
-	m.ConnectOutput.Err = make(chan error, 100)
 	m.ConnectOutput.Disconnected = make(chan chan struct{}, 100)
+	m.ConnectOutput.Err = make(chan error, 100)
 	m.DisconnectCalled = make(chan bool, 100)
 	return m
 }
-func (m *mockBot) Connect(connConfig *bot.ConnConfig) (err error, disconnected chan struct{}) {
+func (m *mockBot) Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error) {
 	m.ConnectCalled <- true
 	m.ConnectInput.ConnConfig <- connConfig
-	return <-m.ConnectOutput.Err, <-m.ConnectOutput.Disconnected
+	return <-m.ConnectOutput.Disconnected, <-m.ConnectOutput.Err
 }
 func (m *mockBot) Disconnect() {
 	m.DisconnectCalled <- true

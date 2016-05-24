@@ -28,7 +28,7 @@ type Bot struct {
 }
 
 // Connect establishes a connection to the IRC server.
-func (b *Bot) Connect(c *ConnConfig) (error, chan struct{}) {
+func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	// TODO: Is this idempotent?
 	cfg := client.NewConfig(c.BotUsername)
 	cfg.Me.Name = c.BotUsername
@@ -49,7 +49,7 @@ func (b *Bot) Connect(c *ConnConfig) (error, chan struct{}) {
 	b.registerConnectEventHandler()
 	b.registerDisconnectEventHandler()
 
-	return b.botConn.Connect(), b.disconnected
+	return b.disconnected, b.botConn.Connect()
 }
 
 // Disconnect tears down the connection to the IRC server.

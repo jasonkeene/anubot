@@ -56,13 +56,13 @@ var _ = Describe("Bot", func() {
 		})
 
 		It("attempts to connect over TLS", func() {
-			err, _ := bot.Connect(connConfig)
+			_, err := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
 			assertConnected(fakeIRCServer)
 		})
 
 		It("can disconnect", func() {
-			err, disconnected := bot.Connect(connConfig)
+			disconnected, err := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
 			assertConnected(fakeIRCServer)
 			bot.Disconnect()
@@ -75,7 +75,7 @@ var _ = Describe("Bot", func() {
 			BeforeEach(func() {
 				fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
 
-				err, _ := bot.Connect(connConfig)
+				_, err := bot.Connect(connConfig)
 				Expect(err).ToNot(HaveOccurred())
 				assertConnected(fakeIRCServer)
 			})

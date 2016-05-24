@@ -18,15 +18,18 @@ type ConnConfig struct {
 	TLSConfig    *tls.Config
 }
 
-// TODO: Implement userConn
+// Bot communicates with the IRC server and has pointers to features.
 type Bot struct {
+	// TODO: Implement userConn (this might not be needed)
 	// userConn     *client.Conn
 	botConn      *client.Conn
 	connected    chan struct{}
 	disconnected chan struct{}
 }
 
+// Connect establishes a connection to the IRC server.
 func (b *Bot) Connect(c *ConnConfig) (error, chan struct{}) {
+	// TODO: Is this idempotent?
 	cfg := client.NewConfig(c.BotUsername)
 	cfg.Me.Name = c.BotUsername
 	cfg.Me.Ident = "anubot"
@@ -49,10 +52,12 @@ func (b *Bot) Connect(c *ConnConfig) (error, chan struct{}) {
 	return b.botConn.Connect(), b.disconnected
 }
 
+// Disconnect tears down the connection to the IRC server.
 func (b *Bot) Disconnect() {
 	b.botConn.Quit()
 }
 
+// Join joins an IRC channel.
 func (b *Bot) Join(channel string) {
 	<-b.connected
 	b.botConn.Join(channel)

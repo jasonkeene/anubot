@@ -88,12 +88,12 @@ func connectHandler(event Event, session *Session) {
 		return
 	}
 	connConfig := &bot.ConnConfig{
-		UserUsername: userUser,
-		UserPassword: userPass,
-		BotUsername:  botUser,
-		BotPassword:  botPass,
-		Host:         twitchHost,
-		Port:         twitchPort,
+		StreamerUsername: userUser,
+		StreamerPassword: userPass,
+		BotUsername:      botUser,
+		BotPassword:      botPass,
+		Host:             twitchHost,
+		Port:             twitchPort,
 	}
 	// TODO: handle error from connect as a false payload
 	session.bot.Connect(connConfig)

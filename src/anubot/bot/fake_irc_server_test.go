@@ -12,9 +12,10 @@ import (
 type fakeIRCServer struct {
 	listener    net.Listener
 	connections []net.Conn
-	received    []byte
-	sent        []byte
-	responses   [][]byte
+
+	received  map[net.Conn][]byte
+	sent      map[net.Conn][]byte
+	responses map[int][][]byte
 
 	stop    chan struct{}
 	stopped chan struct{}
@@ -26,6 +27,10 @@ func newFakeIRCServer(listener net.Listener) *fakeIRCServer {
 	return &fakeIRCServer{
 		listener: listener,
 
+		received:  make(map[net.Conn][]byte),
+		sent:      make(map[net.Conn][]byte),
+		responses: make(map[int][][]byte),
+
 		stop:    make(chan struct{}),
 		stopped: make(chan struct{}),
 	}
@@ -34,72 +39,112 @@ func newFakeIRCServer(listener net.Listener) *fakeIRCServer {
 func (a *fakeIRCServer) Start() {
 	defer close(a.stopped)
 	for {
+		// check for stop signal
 		select {
 		case <-a.stop:
 			return
 		default:
 		}
+
+		// block and accept a connection
 		conn, _ := a.listener.Accept()
+
+		// check for stop signal again since we've been blocked
 		select {
 		case <-a.stop:
 			return
 		default:
 		}
+
+		// track connection
 		a.mu.Lock()
 		a.connections = append(a.connections, conn)
 		a.connWg.Add(1)
 		a.mu.Unlock()
+
+		// spin off a goroutine to handle the connection
 		go a.handleConn(conn)
 	}
 }
 
 func (a *fakeIRCServer) handleConn(conn net.Conn) {
-	defer a.connWg.Done()
+	defer func() {
+		conn.Close()
+		a.removeConnection(conn)
+		a.connWg.Done()
+	}()
+	a.mu.Lock()
+	connIndex, err := a.findConnectionIndex(conn)
+	a.mu.Unlock()
+	Expect(err).ToNot(HaveOccurred())
 	for {
+		// check for stop signal
 		select {
 		case <-a.stop:
 			return
 		default:
 		}
+
+		// create a buffer
 		data := make([]byte, 256)
+		// block and read into buffer
+		// TODO: check err?
 		i, _ := conn.Read(data)
+
+		// check for stop signal again since we've been blocked
+		select {
+		case <-a.stop:
+			return
+		default:
+		}
+
+		// write data into received
 		a.mu.Lock()
-		a.received = append(a.received, data[:i]...)
+		a.received[conn] = append(a.received[conn], data[:i]...)
+
+		// tear down connection if we got a quit command
 		if strings.HasPrefix(string(data[:i]), "QUIT") {
-			conn.Close()
-			a.removeConnection(conn)
 			a.mu.Unlock()
 			return
 		}
-		if len(a.responses) > 0 {
-			data, a.responses = a.responses[0], a.responses[1:]
+
+		// send response
+		if len(a.responses[connIndex]) > 0 {
+			data, a.responses[connIndex] = a.responses[connIndex][0], a.responses[connIndex][1:]
 			conn.Write(data)
-			a.sent = append(a.sent, data...)
+			a.sent[conn] = append(a.sent[conn], data...)
 		}
 		a.mu.Unlock()
 	}
 }
 
 func (a *fakeIRCServer) Stop() {
+	// signal for listeners and connections to stop
 	close(a.stop)
-	err := a.listener.Close()
-	Expect(err).ToNot(HaveOccurred())
+
+	// close listener
+	Expect(a.listener.Close()).To(Succeed())
+
+	// close all connections
 	a.mu.Lock()
 	connections := a.connections
 	a.mu.Unlock()
 	for _, conn := range connections {
-		err = conn.Close()
-		Expect(err).ToNot(HaveOccurred())
+		Expect(conn.Close()).To(Succeed())
 	}
+
+	// wait for listener to stop
 	<-a.stopped
+
+	// wait for connections to stop
 	a.connWg.Wait()
 }
 
-func (a *fakeIRCServer) Respond(data ...string) {
+func (a *fakeIRCServer) Respond(connIndex int, data ...string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	message := []byte(strings.Join(data, "\r\n") + "\r\n")
-	a.responses = append(a.responses, message)
+	a.responses[connIndex] = append(a.responses[connIndex], message)
 }
 
 func (a *fakeIRCServer) Connections() []net.Conn {
@@ -108,38 +153,40 @@ func (a *fakeIRCServer) Connections() []net.Conn {
 	return a.connections
 }
 
-func (a *fakeIRCServer) Received() []byte {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.received
+func (a *fakeIRCServer) Received(connIndex int) func() []byte {
+	return func() []byte {
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		return a.received[a.connections[connIndex]]
+	}
 }
 
-func (a *fakeIRCServer) Sent() []byte {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.sent
+func (a *fakeIRCServer) Sent(connIndex int) func() []byte {
+	return func() []byte {
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		return a.sent[a.connections[connIndex]]
+	}
 }
 
 func (a *fakeIRCServer) Clear() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	a.received = nil
-	a.sent = nil
+	a.received = make(map[net.Conn][]byte)
+	a.sent = make(map[net.Conn][]byte)
+	a.responses = make(map[int][][]byte)
 }
 
 func (a *fakeIRCServer) removeConnection(conn net.Conn) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	i, err := a.findConnectionIndex(conn)
-	if err == nil {
-		a.connections = append(a.connections[:i], a.connections[i+1:]...)
-	}
+	Expect(err).ToNot(HaveOccurred())
+	a.connections = append(a.connections[:i], a.connections[i+1:]...)
 }
 
 func (a *fakeIRCServer) findConnectionIndex(conn net.Conn) (int, error) {
-	var (
-		i int
-		c net.Conn
-	)
-	for i, c = range a.connections {
+	for i, c := range a.connections {
 		if c == conn {
 			return i, nil
 		}

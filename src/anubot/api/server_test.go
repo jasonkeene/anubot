@@ -194,8 +194,8 @@ var _ = Describe("APIServer", func() {
 
 		var connConfig *bot.ConnConfig
 		Eventually(mockBot.ConnectInput.ConnConfig).Should(Receive(&connConfig))
-		Expect(connConfig.UserUsername).To(Equal("user-test-username"))
-		Expect(connConfig.UserPassword).To(Equal("user-test-password"))
+		Expect(connConfig.StreamerUsername).To(Equal("user-test-username"))
+		Expect(connConfig.StreamerPassword).To(Equal("user-test-password"))
 		Expect(connConfig.BotUsername).To(Equal("bot-test-username"))
 		Expect(connConfig.BotPassword).To(Equal("bot-test-password"))
 		Expect(connConfig.Host).To(Equal("irc.chat.twitch.tv"))

@@ -23,6 +23,13 @@ var _ = Describe("Bot", func() {
 		listener, err := tls.Listen("tcp", ":0", serverTLSConfig)
 		Expect(err).ToNot(HaveOccurred())
 
+		// start up fake IRC server
+		fakeIRCServer = newFakeIRCServer(listener)
+		go func() {
+			defer GinkgoRecover()
+			fakeIRCServer.Start()
+		}()
+
 		// figure out the port that was assigned
 		_, sport, err := net.SplitHostPort(listener.Addr().String())
 		Expect(err).ToNot(HaveOccurred())
@@ -32,17 +39,14 @@ var _ = Describe("Bot", func() {
 		// create the bot and server
 		bot = &Bot{}
 		connConfig = &ConnConfig{
-			BotUsername: "test_user",
-			BotPassword: "test_password",
-			Host:        "127.0.0.1",
-			Port:        port,
-			TLSConfig:   clientTLSConfig,
+			StreamerUsername: "test-streamer-user",
+			StreamerPassword: "test-streamer-password",
+			BotUsername:      "test-bot-user",
+			BotPassword:      "test-bot-password",
+			Host:             "127.0.0.1",
+			Port:             port,
+			TLSConfig:        clientTLSConfig,
 		}
-		fakeIRCServer = newFakeIRCServer(listener)
-		go func() {
-			defer GinkgoRecover()
-			fakeIRCServer.Start()
-		}()
 	})
 
 	AfterEach(func() {
@@ -52,85 +56,86 @@ var _ = Describe("Bot", func() {
 
 	Describe("Connect/Disconnect", func() {
 		BeforeEach(func() {
-			fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
+			fakeIRCServer.Respond(0, ":127.0.0.1 001 test-streamer-user :GLHF!")
+			fakeIRCServer.Respond(1, ":127.0.0.1 001 test-bot-user :GLHF!")
 		})
 
 		It("attempts to connect over TLS", func() {
 			_, err := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
-			assertConnected(fakeIRCServer)
+			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
+			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
+			fakeIRCServer.Clear()
 		})
 
 		It("can disconnect", func() {
 			disconnected, err := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
-			assertConnected(fakeIRCServer)
+			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
+			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
 			bot.Disconnect()
 			Eventually(disconnected).Should(BeClosed())
 		})
 	})
 
-	Describe("Join", func() {
-		Context("with a connected bot", func() {
-			BeforeEach(func() {
-				fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
+	Context("with a connected bot", func() {
+		BeforeEach(func() {
+			fakeIRCServer.Respond(0, ":127.0.0.1 001 test-streamer-user :GLHF!")
+			fakeIRCServer.Respond(1, ":127.0.0.1 001 test-bot-user :GLHF!")
 
-				_, err := bot.Connect(connConfig)
-				Expect(err).ToNot(HaveOccurred())
-				assertConnected(fakeIRCServer)
-			})
+			_, err := bot.Connect(connConfig)
+			Expect(err).ToNot(HaveOccurred())
+			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
+			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
+			fakeIRCServer.Clear()
+		})
 
-			It("can join multiple channels", func() {
-				fakeIRCServer.Respond(
-					":test_user!test_user@test_user.127.0.0.1 JOIN #test_chan1",
-					":test_user.127.0.0.1 353 test_user = #test_chan1 :test_user",
-					":test_user.127.0.0.1 366 test_user #test_chan1 :End of /NAMES list",
+		Describe("Join", func() {
+			It("can join a channel", func() {
+				fakeIRCServer.Respond(0,
+					":test-streamer-user!test-streamer-user@test-streamer-user.127.0.0.1 JOIN #test_chan",
+					":test-streamer-user.127.0.0.1 353 test-streamer-user = #test_chan :test-streamer-user",
+					":test-streamer-user.127.0.0.1 366 test-streamer-user #test_chan :End of /NAMES list",
 				)
-				fakeIRCServer.Respond(
-					":test_user!test_user@test_user.127.0.0.1 JOIN #test_chan2",
-					":test_user.127.0.0.1 353 test_user = #test_chan2 :test_user",
-					":test_user.127.0.0.1 366 test_user #test_chan2 :End of /NAMES list",
+				fakeIRCServer.Respond(1,
+					":test-bot-user!test-bot-user@test-bot-user.127.0.0.1 JOIN #test_chan",
+					":test-bot-user.127.0.0.1 353 test-bot-user = #test_chan :test-bot-user",
+					":test-bot-user.127.0.0.1 366 test-bot-user #test_chan :End of /NAMES list",
 				)
 
-				bot.Join("#test_chan1")
-				bot.Join("#test_chan2")
+				bot.Join("#test_chan")
 				// TODO: this eventually takes a while to respond
-				Eventually(fakeIRCServer.Received, 3).Should(EqualLines(
-					"JOIN #test_chan1",
-					"JOIN #test_chan2",
+				Eventually(fakeIRCServer.Received(0), 3).Should(EqualLines(
+					"JOIN #test_chan",
+				))
+				Eventually(fakeIRCServer.Received(1), 3).Should(EqualLines(
+					"JOIN #test_chan",
 				))
 			})
 		})
-	})
 
-	Describe("Send", func() {
-		Context("with a connected bot", func() {
-			BeforeEach(func() {
-				fakeIRCServer.Respond(":127.0.0.1 001 test_user :GLHF!")
-
-				_, err := bot.Connect(connConfig)
-				Expect(err).ToNot(HaveOccurred())
-				assertConnected(fakeIRCServer)
-			})
-
+		Describe("Send", func() {
 			It("sends messages to the server", func() {
-				bot.Send("test-message")
-				Eventually(fakeIRCServer.Received, 3).Should(EqualLines(
-					"test-message",
+				bot.Send("streamer", "test-streamer-message")
+				Eventually(fakeIRCServer.Received(0), 3).Should(EqualLines(
+					"test-streamer-message",
+				))
+				bot.Send("bot", "test-bot-message")
+				Eventually(fakeIRCServer.Received(1), 3).Should(EqualLines(
+					"test-bot-message",
 				))
 			})
 		})
 	})
 })
 
-func assertConnected(fakeIRCServer *fakeIRCServer) {
-	Eventually(fakeIRCServer.Received).Should(EqualLines(
-		"PASS test_password",
-		"NICK test_user",
-		"USER anubot 12 * :test_user",
+func assertConnected(connIndex int, username, password string, fakeIRCServer *fakeIRCServer) {
+	Eventually(fakeIRCServer.Received(connIndex)).Should(EqualLines(
+		"PASS "+password,
+		"NICK "+username,
+		"USER anubot 12 * :"+username,
 	))
-	Eventually(fakeIRCServer.Sent).Should(EqualLines(
-		":127.0.0.1 001 test_user :GLHF!",
+	Eventually(fakeIRCServer.Sent(connIndex)).Should(EqualLines(
+		":127.0.0.1 001 " + username + " :GLHF!",
 	))
-	fakeIRCServer.Clear()
 }

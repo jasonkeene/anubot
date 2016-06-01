@@ -122,7 +122,14 @@ func (b *Bot) part(channel string) {
 	b.botConn.Part(b.channel)
 }
 
-// Send sents a raw message to the specified IRC connection.
+// Channel returns the currently active channel.
+func (b *Bot) Channel() string {
+	b.channelMu.Lock()
+	defer b.channelMu.Unlock()
+	return b.channel
+}
+
+// Send sends a raw message to the specified IRC connection.
 func (b *Bot) Send(user, message string) {
 	switch user {
 	case "streamer":
@@ -134,7 +141,7 @@ func (b *Bot) Send(user, message string) {
 	}
 }
 
-// Send sents a chat message to the specified IRC connection.
+// Privmsg sends a chat message to the specified IRC connection.
 func (b *Bot) Privmsg(user, target, message string) {
 	switch user {
 	case "streamer":

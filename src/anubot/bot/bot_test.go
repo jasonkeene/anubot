@@ -71,6 +71,7 @@ var _ = Describe("Bot", func() {
 
 		It("joins the streamer's channel on connect", func() {
 			_, err := bot.Connect(connConfig)
+			Expect(bot.Channel()).To(Equal("#test-streamer-user"))
 			Expect(err).ToNot(HaveOccurred())
 
 			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
@@ -109,6 +110,7 @@ var _ = Describe("Bot", func() {
 		Describe("Join", func() {
 			It("can join a different channel", func() {
 				bot.Join("#test_chan")
+				Expect(bot.Channel()).To(Equal("#test_chan"))
 
 				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
 					"JOIN #test_chan",
@@ -129,6 +131,7 @@ var _ = Describe("Bot", func() {
 				))
 
 				bot.Join("#test_chan2")
+				Expect(bot.Channel()).To(Equal("#test_chan2"))
 
 				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
 					"PART #test_chan",

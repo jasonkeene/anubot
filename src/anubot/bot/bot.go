@@ -122,13 +122,25 @@ func (b *Bot) part(channel string) {
 	b.botConn.Part(b.channel)
 }
 
-// Send sents a raw message to the IRC server.
+// Send sents a raw message to the specified IRC connection.
 func (b *Bot) Send(user, message string) {
 	switch user {
 	case "streamer":
 		b.streamerConn.Raw(message)
 	case "bot":
 		b.botConn.Raw(message)
+	default:
+		log.Panicf("Bad user provided for sending message")
+	}
+}
+
+// Send sents a chat message to the specified IRC connection.
+func (b *Bot) Privmsg(user, target, message string) {
+	switch user {
+	case "streamer":
+		b.streamerConn.Privmsg(target, message)
+	case "bot":
+		b.botConn.Privmsg(target, message)
 	default:
 		log.Panicf("Bad user provided for sending message")
 	}

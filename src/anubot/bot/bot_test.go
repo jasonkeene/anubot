@@ -140,14 +140,27 @@ var _ = Describe("Bot", func() {
 		})
 
 		Describe("Send", func() {
-			It("sends messages to the server", func() {
+			It("sends raw messages to the specified connection", func() {
 				bot.Send("streamer", "test-streamer-message")
-				Eventually(fakeIRCServer.Received(0), 3).Should(ContainLines(
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
 					"test-streamer-message",
 				))
 				bot.Send("bot", "test-bot-message")
-				Eventually(fakeIRCServer.Received(1), 3).Should(ContainLines(
+				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
 					"test-bot-message",
+				))
+			})
+		})
+
+		Describe("Privmsg", func() {
+			It("sends chat messages to the specified connection", func() {
+				bot.Privmsg("streamer", "#test-streamer-user", "test-streamer-message")
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+					"PRIVMSG #test-streamer-user :test-streamer-message",
+				))
+				bot.Privmsg("bot", "#test-streamer-user", "test-bot-message")
+				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
+					"PRIVMSG #test-streamer-user :test-bot-message",
 				))
 			})
 		})

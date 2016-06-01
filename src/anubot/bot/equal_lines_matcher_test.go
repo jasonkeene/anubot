@@ -7,13 +7,12 @@ import (
 	"github.com/onsi/gomega/types"
 )
 
-type equalLines struct {
+type equalLinesMatcher struct {
 	matchers.EqualMatcher
 }
 
 func EqualLines(lines ...string) types.GomegaMatcher {
-	expected := []byte(strings.Join(lines, "\r\n") + "\r\n")
-	matcher := &equalLines{}
-	matcher.Expected = expected
+	matcher := &equalLinesMatcher{}
+	matcher.Expected = []byte(strings.Join(lines, "\r\n") + "\r\n")
 	return matcher
 }

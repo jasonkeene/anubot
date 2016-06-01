@@ -3,6 +3,7 @@ package bot
 import (
 	"crypto/tls"
 	"errors"
+	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -105,7 +106,7 @@ func (b *Bot) Send(user, message string) {
 	case "bot":
 		b.botConn.Raw(message)
 	default:
-		panic("Bad user provided for sending message")
+		log.Panicf("Bad user provided for sending message")
 	}
 }
 

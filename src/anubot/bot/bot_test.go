@@ -46,6 +46,7 @@ var _ = Describe("Bot", func() {
 			Host:             "127.0.0.1",
 			Port:             port,
 			TLSConfig:        clientTLSConfig,
+			Flood:            true,
 		}
 	})
 
@@ -104,11 +105,11 @@ var _ = Describe("Bot", func() {
 				)
 
 				bot.Join("#test_chan")
-				// TODO: this eventually takes a while to respond
-				Eventually(fakeIRCServer.Received(0), 3).Should(EqualLines(
+
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
 					"JOIN #test_chan",
 				))
-				Eventually(fakeIRCServer.Received(1), 3).Should(EqualLines(
+				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
 					"JOIN #test_chan",
 				))
 			})
@@ -130,12 +131,12 @@ var _ = Describe("Bot", func() {
 })
 
 func assertConnected(connIndex int, username, password string, fakeIRCServer *fakeIRCServer) {
-	Eventually(fakeIRCServer.Received(connIndex)).Should(EqualLines(
+	Eventually(fakeIRCServer.Received(connIndex)).Should(ContainLines(
 		"PASS "+password,
 		"NICK "+username,
 		"USER anubot 12 * :"+username,
 	))
-	Eventually(fakeIRCServer.Sent(connIndex)).Should(EqualLines(
+	Eventually(fakeIRCServer.Sent(connIndex)).Should(ContainLines(
 		":127.0.0.1 001 " + username + " :GLHF!",
 	))
 }

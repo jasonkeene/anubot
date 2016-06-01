@@ -19,6 +19,7 @@ type ConnConfig struct {
 	Host             string
 	Port             int
 	TLSConfig        *tls.Config
+	Flood            bool
 }
 
 // Bot communicates with the IRC server and has pointers to features.
@@ -127,6 +128,7 @@ func connectUser(username, password string, c *ConnConfig) (*client.Conn, chan s
 	cfg.SSL = true
 	cfg.SSLConfig = c.TLSConfig
 	cfg.Server = net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
+	cfg.Flood = c.Flood
 	conn := client.Client(cfg)
 
 	// register dis/connect handlers

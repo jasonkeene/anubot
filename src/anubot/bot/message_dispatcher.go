@@ -1,13 +1,16 @@
 package bot
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 const minBufferSize = 20
 
 type Message struct {
 	Channel string
 	Body    string
-	// TODO: add timestamp
+	Time    time.Time
 }
 
 type MessageDispatcher struct {
@@ -24,6 +27,7 @@ func NewMessageDispatcher() *MessageDispatcher {
 }
 
 func (d *MessageDispatcher) Dispatch(msg Message) {
+	// TODO: deduplicate messages that have the same channel/body
 	d.storeMu.Lock()
 	defer d.storeMu.Unlock()
 

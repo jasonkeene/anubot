@@ -69,6 +69,21 @@ var _ = Describe("Bot", func() {
 			fakeIRCServer.Clear()
 		})
 
+		It("joins the streamer's channel on connect", func() {
+			_, err := bot.Connect(connConfig)
+			Expect(err).ToNot(HaveOccurred())
+
+			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
+			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
+
+			Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+				"JOIN #test-streamer-user",
+			))
+			Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
+				"JOIN #test-streamer-user",
+			))
+		})
+
 		It("can disconnect", func() {
 			disconnected, err := bot.Connect(connConfig)
 			Expect(err).ToNot(HaveOccurred())
@@ -92,18 +107,7 @@ var _ = Describe("Bot", func() {
 		})
 
 		Describe("Join", func() {
-			It("can join a channel", func() {
-				fakeIRCServer.Respond(0,
-					":test-streamer-user!test-streamer-user@test-streamer-user.127.0.0.1 JOIN #test_chan",
-					":test-streamer-user.127.0.0.1 353 test-streamer-user = #test_chan :test-streamer-user",
-					":test-streamer-user.127.0.0.1 366 test-streamer-user #test_chan :End of /NAMES list",
-				)
-				fakeIRCServer.Respond(1,
-					":test-bot-user!test-bot-user@test-bot-user.127.0.0.1 JOIN #test_chan",
-					":test-bot-user.127.0.0.1 353 test-bot-user = #test_chan :test-bot-user",
-					":test-bot-user.127.0.0.1 366 test-bot-user #test_chan :End of /NAMES list",
-				)
-
+			It("can join a different channel", func() {
 				bot.Join("#test_chan")
 
 				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
@@ -113,16 +117,36 @@ var _ = Describe("Bot", func() {
 					"JOIN #test_chan",
 				))
 			})
+
+			It("parts old channel when it joins a different channel", func() {
+				bot.Join("#test_chan")
+
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+					"PART #test-streamer-user",
+				))
+				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
+					"PART #test-streamer-user",
+				))
+
+				bot.Join("#test_chan2")
+
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+					"PART #test_chan",
+				))
+				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
+					"PART #test_chan",
+				))
+			})
 		})
 
 		Describe("Send", func() {
 			It("sends messages to the server", func() {
 				bot.Send("streamer", "test-streamer-message")
-				Eventually(fakeIRCServer.Received(0), 3).Should(EqualLines(
+				Eventually(fakeIRCServer.Received(0), 3).Should(ContainLines(
 					"test-streamer-message",
 				))
 				bot.Send("bot", "test-bot-message")
-				Eventually(fakeIRCServer.Received(1), 3).Should(EqualLines(
+				Eventually(fakeIRCServer.Received(1), 3).Should(ContainLines(
 					"test-bot-message",
 				))
 			})

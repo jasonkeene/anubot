@@ -28,9 +28,13 @@ type Bot struct {
 	connected    bool
 	streamerConn *client.Conn
 	botConn      *client.Conn
+
+	channelMu sync.Mutex
+	channel   string
 }
 
-// Connect establishes connections to the IRC server.
+// Connect establishes two connections to the Twitch IRC server, one as the
+// streamer and one as the bot. It then joins the streamer's channel.
 func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -72,6 +76,12 @@ func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 		}
 	}()
 
+	// join streamer's channel by default
+	b.channelMu.Lock()
+	b.channel = "#" + c.StreamerUsername
+	b.channelMu.Unlock()
+	b.join(b.channel)
+
 	return disconnected, nil
 }
 
@@ -93,10 +103,23 @@ func (b *Bot) Disconnect() {
 }
 
 // Join joins an IRC channel.
-// TODO: Implement parting logic
 func (b *Bot) Join(channel string) {
+	b.channelMu.Lock()
+	defer b.channelMu.Unlock()
+
+	b.join(channel)
+	b.part(channel)
+	b.channel = channel
+}
+
+func (b *Bot) join(channel string) {
 	b.streamerConn.Join(channel)
 	b.botConn.Join(channel)
+}
+
+func (b *Bot) part(channel string) {
+	b.streamerConn.Part(b.channel)
+	b.botConn.Part(b.channel)
 }
 
 // Send sents a raw message to the IRC server.

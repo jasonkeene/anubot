@@ -19,19 +19,18 @@ const (
 func main() {
 	initLogging()
 	connConfig := &bot.ConnConfig{
-		UserUsername: os.Getenv("TWITCH_USER_USER"),
-		UserPassword: os.Getenv("TWITCH_USER_PASS"),
-		BotUsername:  os.Getenv("TWITCH_BOT_USER"),
-		BotPassword:  os.Getenv("TWITCH_BOT_PASS"),
-		Host:         twitchHost,
-		Port:         twitchPort,
+		StreamerUsername: os.Getenv("TWITCH_USER_USER"),
+		StreamerPassword: os.Getenv("TWITCH_USER_PASS"),
+		BotUsername:      os.Getenv("TWITCH_BOT_USER"),
+		BotPassword:      os.Getenv("TWITCH_BOT_PASS"),
+		Host:             twitchHost,
+		Port:             twitchPort,
 	}
 	bot := &bot.Bot{}
 	disconnected, err := bot.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}
-	bot.Join("#" + connConfig.UserUsername)
 
 	// read from stdin and send to irc server
 	reader := bufio.NewReader(os.Stdin)
@@ -43,7 +42,7 @@ func main() {
 			}
 			text = strings.Trim(text, "\r\n")
 			if len(text) > 0 {
-				bot.Send(text)
+				bot.Send("bot", text)
 			}
 		}
 	}()

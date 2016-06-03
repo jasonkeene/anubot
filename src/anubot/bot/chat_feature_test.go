@@ -50,22 +50,89 @@ var _ = Describe("ChatFeature", func() {
 	})
 
 	Describe("ChatHandler", func() {
-		It("dispatches messages it got from the IRC server", func() {
-			now := time.Now()
-			chatFeature.ChatHandler(nil, &client.Line{
-				Time: now,
-				Args: []string{
-					"#test-chan",
-					"test-message",
-				},
-			})
-			Expect(mockDispatcher.DispatchInput).To(BeCalled(
-				With(Message{
-					Channel: "#test-chan",
-					Body:    "test-message",
-					Time:    now,
-				}),
-			))
+		var handler func(*client.Conn, *client.Line)
+
+		BeforeEach(func() {
+			mockFeatureWriter.ChannelOutput.Channel <- "test-user"
 		})
+
+		Context("streamer handler", func() {
+			BeforeEach(func() {
+				handler = chatFeature.ChatHandler("streamer")
+			})
+
+			It("dispatches private messages", func() {
+				now := time.Now()
+				handler(nil, &client.Line{
+					Time: now,
+					Args: []string{
+						"test-target",
+						"test-message",
+					},
+				})
+				Expect(mockDispatcher.DispatchInput).To(BeCalled(
+					With(Message{
+						Target: "test-target",
+						Body:   "test-message",
+						Time:   now,
+					}),
+				))
+			})
+
+			It("doesn't dispatch messages sent to the current channel", func() {
+				now := time.Now()
+				handler(nil, &client.Line{
+					Time: now,
+					Args: []string{
+						"test-user",
+						"test-message",
+					},
+				})
+				Expect(mockDispatcher.DispatchInput).ToNot(BeCalled())
+			})
+		})
+
+		Context("bot handler", func() {
+			BeforeEach(func() {
+				handler = chatFeature.ChatHandler("bot")
+			})
+
+			It("dispatches private messages", func() {
+				now := time.Now()
+				handler(nil, &client.Line{
+					Time: now,
+					Args: []string{
+						"test-target",
+						"test-message",
+					},
+				})
+				Expect(mockDispatcher.DispatchInput).To(BeCalled(
+					With(Message{
+						Target: "test-target",
+						Body:   "test-message",
+						Time:   now,
+					}),
+				))
+			})
+
+			It("dispatches messages sent to the current channel", func() {
+				now := time.Now()
+				handler(nil, &client.Line{
+					Time: now,
+					Args: []string{
+						"test-user",
+						"test-message",
+					},
+				})
+				Expect(mockDispatcher.DispatchInput).To(BeCalled(
+					With(Message{
+						Target: "test-user",
+						Body:   "test-message",
+						Time:   now,
+					}),
+				))
+			})
+		})
+
 	})
 })

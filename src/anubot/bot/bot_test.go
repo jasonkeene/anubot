@@ -4,7 +4,9 @@ import (
 	"crypto/tls"
 	"net"
 	"strconv"
+	"sync"
 
+	"github.com/fluffle/goirc/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -165,6 +167,41 @@ var _ = Describe("Bot", func() {
 				Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
 					"PRIVMSG #test-streamer-user :test-bot-message",
 				))
+			})
+		})
+
+		Describe("HandleFunc", func() {
+			var (
+				mu     sync.Mutex
+				called bool
+			)
+
+			It("can register functions to handle events for the streamer", func() {
+				fakeIRCServer.Respond(0, ":thebossreturns!thebossreturns@thebossreturns.tmi.twitch.tv PRIVMSG #postcrypt :hello world")
+				bot.HandleFunc("streamer", "PRIVMSG", func(*client.Conn, *client.Line) {
+					mu.Lock()
+					defer mu.Unlock()
+					called = true
+				})
+				Eventually(func() bool {
+					mu.Lock()
+					defer mu.Unlock()
+					return called
+				}).Should(BeTrue())
+			})
+
+			It("can register functions to handle events for the bot", func() {
+				fakeIRCServer.Respond(1, ":thebossreturns!thebossreturns@thebossreturns.tmi.twitch.tv PRIVMSG #postcrypt :hello world")
+				bot.HandleFunc("bot", "PRIVMSG", func(*client.Conn, *client.Line) {
+					mu.Lock()
+					defer mu.Unlock()
+					called = true
+				})
+				Eventually(func() bool {
+					mu.Lock()
+					defer mu.Unlock()
+					return called
+				}).Should(BeTrue())
 			})
 		})
 	})

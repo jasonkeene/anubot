@@ -153,6 +153,18 @@ func (b *Bot) Privmsg(user, target, message string) {
 	}
 }
 
+// HandleFunc registers functions to handle IRC commands for a specific user.
+func (b *Bot) HandleFunc(user, command string, handlefunc client.HandlerFunc) {
+	switch user {
+	case "streamer":
+		b.streamerConn.HandleFunc(command, handlefunc)
+	case "bot":
+		b.botConn.HandleFunc(command, handlefunc)
+	default:
+		log.Panicf("Bad user provided for registering handlefunc")
+	}
+}
+
 func initTLS(c *ConnConfig) {
 	if c.TLSConfig == nil {
 		c.TLSConfig = &tls.Config{

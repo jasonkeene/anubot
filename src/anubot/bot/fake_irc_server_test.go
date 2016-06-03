@@ -147,6 +147,18 @@ func (a *fakeIRCServer) Respond(connIndex int, data ...string) {
 	a.responses[connIndex] = append(a.responses[connIndex], message)
 }
 
+func (a *fakeIRCServer) TriggerResponse(connIndex int) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	data := make([]byte, 256)
+	conn := a.connections[connIndex]
+	if len(a.responses[connIndex]) > 0 {
+		data, a.responses[connIndex] = a.responses[connIndex][0], a.responses[connIndex][1:]
+		conn.Write(data)
+		a.sent[conn] = append(a.sent[conn], data...)
+	}
+}
+
 func (a *fakeIRCServer) Connections() []net.Conn {
 	a.mu.Lock()
 	defer a.mu.Unlock()

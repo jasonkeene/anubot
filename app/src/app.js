@@ -6,7 +6,11 @@ const websocket = require('websocket'),
 
 const client = new websocket.client();
 
+// save off connection for development/debugging
+var conn;
+
 client.on('connect', function(connection) {
+    conn = connection;
     const listeners = new Listeners();
     views.render(connection, listeners);
     console.log('WebSocket Client Connected');

@@ -23,6 +23,8 @@ type Store interface {
 type Bot interface {
 	Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error)
 	Disconnect()
+	Channel() string
+	InitChatFeature(dispatcher *bot.MessageDispatcher)
 }
 
 // Event is the structure sent over websocket connections by both ends.
@@ -33,22 +35,25 @@ type Event struct {
 
 // Session stores objects handlers need when responding to events.
 type Session struct {
-	ws    *websocket.Conn
-	store Store
-	bot   Bot
+	ws         *websocket.Conn
+	store      Store
+	bot        Bot
+	dispatcher *bot.MessageDispatcher
 }
 
 // APIServer responds to websocket events sent from the client.
 type APIServer struct {
-	store Store
-	bot   Bot
+	store      Store
+	bot        Bot
+	dispatcher *bot.MessageDispatcher
 }
 
 // New creates a new APIServer.
-func New(store Store, bot Bot) *APIServer {
+func New(store Store, bot Bot, dispatcher *bot.MessageDispatcher) *APIServer {
 	return &APIServer{
-		store: store,
-		bot:   bot,
+		store:      store,
+		bot:        bot,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -57,9 +62,10 @@ func (api *APIServer) Serve(ws *websocket.Conn) {
 	defer ws.Close()
 
 	session := &Session{
-		ws:    ws,
-		store: api.store,
-		bot:   api.bot,
+		ws:         ws,
+		store:      api.store,
+		bot:        api.bot,
+		dispatcher: api.dispatcher,
 	}
 
 	for {

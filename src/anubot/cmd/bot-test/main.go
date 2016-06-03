@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 
@@ -26,11 +27,20 @@ func main() {
 		Host:             twitchHost,
 		Port:             twitchPort,
 	}
-	bot := &bot.Bot{}
-	disconnected, err := bot.Connect(connConfig)
+
+	// create message dispatcher
+	dispatcher := bot.NewMessageDispatcher()
+	chanMessages := dispatcher.Messages("#" + connConfig.StreamerUsername)
+
+	// create and connect bot
+	b := &bot.Bot{}
+	disconnected, err := b.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}
+
+	// wire up features
+	b.InitChatFeature(dispatcher)
 
 	// read from stdin and send to irc server
 	reader := bufio.NewReader(os.Stdin)
@@ -42,8 +52,14 @@ func main() {
 			}
 			text = strings.Trim(text, "\r\n")
 			if len(text) > 0 {
-				bot.Send("bot", text)
+				b.Send("bot", text)
 			}
+		}
+	}()
+	go func() {
+		for {
+			msg := <-chanMessages
+			fmt.Println("got message:", msg.Body)
 		}
 	}()
 	<-disconnected

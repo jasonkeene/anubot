@@ -17,10 +17,13 @@ func main() {
 	store.InitDDL()
 
 	// Setup bot that communicates with the Twitch IRC server.
-	bot := &bot.Bot{}
+	b := &bot.Bot{}
+
+	// Create message dispatcher.
+	dispatcher := bot.NewMessageDispatcher()
 
 	// Setup websocket API server.
-	api := api.New(store, bot)
+	api := api.New(store, b, dispatcher)
 	http.Handle("/api", websocket.Handler(api.Serve))
 
 	// Bind websocket API.

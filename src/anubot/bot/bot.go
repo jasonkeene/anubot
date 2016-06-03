@@ -31,6 +31,9 @@ type Bot struct {
 
 	channelMu sync.Mutex
 	channel   string
+
+	// features
+	chatFeature *ChatFeature
 }
 
 // Connect establishes two connections to the Twitch IRC server, one as the
@@ -163,6 +166,24 @@ func (b *Bot) HandleFunc(user, command string, handlefunc client.HandlerFunc) {
 	default:
 		log.Panicf("Bad user provided for registering handlefunc")
 	}
+}
+
+// TODO: cover this in tests
+// InitChatFeature wires up the chat feature of the bot.
+func (b *Bot) InitChatFeature(dispatcher *MessageDispatcher) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.chatFeature = NewChatFeature(b, dispatcher)
+	b.chatFeature.Init()
+}
+
+// TODO: cover this in tests
+// ChatFeature returns the chat feature of the bot.
+func (b *Bot) ChatFeautre() *ChatFeature {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.chatFeature
 }
 
 func initTLS(c *ConnConfig) {

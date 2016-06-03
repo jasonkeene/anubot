@@ -16,8 +16,8 @@ var _ = Describe("MessageDispatcher", func() {
 	BeforeEach(func() {
 		dispatcher = NewMessageDispatcher()
 		testMsg = Message{
-			Channel: "#test-chan",
-			Body:    "hello world",
+			Target: "#test-chan",
+			Body:   "hello world",
 		}
 	})
 

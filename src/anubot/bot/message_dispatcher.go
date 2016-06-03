@@ -8,9 +8,9 @@ import (
 const minBufferSize = 20
 
 type Message struct {
-	Channel string
-	Body    string
-	Time    time.Time
+	Target string
+	Body   string
+	Time   time.Time
 }
 
 type MessageDispatcher struct {
@@ -31,8 +31,8 @@ func (d *MessageDispatcher) Dispatch(msg Message) {
 	d.storeMu.Lock()
 	defer d.storeMu.Unlock()
 
-	d.store[msg.Channel] = append(d.store[msg.Channel], msg)
-	for _, ch := range d.readers[msg.Channel] {
+	d.store[msg.Target] = append(d.store[msg.Target], msg)
+	for _, ch := range d.readers[msg.Target] {
 		ch <- msg
 	}
 }

@@ -9,6 +9,7 @@ const App = React.createClass({
         return {
             authenticated: false,
             tab: "chat",
+            messages: [],
         };
     },
 
@@ -25,11 +26,18 @@ const App = React.createClass({
             this.props.connection.sendUTF(JSON.stringify({
                 "cmd": "subscribe",
             }));
+            this.props.listeners.add("chat-message", this.handleChatMessage);
         }
+    },
+    handleChatMessage: function (payload) {
+        var messages = this.state.messages;
+        messages.push(payload);
+        this.setState({messages: messages});
+        console.log(this.state.messages);
     },
 
     renderTab: function () {
-        return <ChatTab />;
+        return <ChatTab messages={this.state.messages} />;
     },
     render: function () {
         if (!this.state.authenticated) {

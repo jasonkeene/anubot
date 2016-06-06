@@ -7,8 +7,15 @@ const ChatTab = React.createClass({
         };
     },
 
+    renderMessage: function (message) {
+        return <div>{message.Body}</div>;
+    },
     render: function () {
-        return <div className="tab">ChatTab</div>;
+        return (
+            <div className="tab">
+                {this.props.messages.map(this.renderMessage)}
+            </div>
+        );
     },
 });
 

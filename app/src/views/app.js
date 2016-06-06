@@ -14,9 +14,18 @@ const App = React.createClass({
 
     // network events
     connect: function () {
+        this.props.listeners.add("connect", this.handleConnect);
         this.props.connection.sendUTF(JSON.stringify({
             "cmd": "connect",
         }));
+    },
+    handleConnect: function (payload) {
+        this.props.listeners.remove("connect", this.handleConnect);
+        if (payload) {
+            this.props.connection.sendUTF(JSON.stringify({
+                "cmd": "subscribe",
+            }));
+        }
     },
 
     renderTab: function () {

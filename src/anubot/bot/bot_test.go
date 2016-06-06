@@ -204,6 +204,18 @@ var _ = Describe("Bot", func() {
 				}).Should(BeTrue())
 			})
 		})
+
+		Describe("InitChatFeature", func() {
+			It("creates a chat feature from a message dispatcher", func() {
+				bot.InitChatFeature(nil)
+				cf := bot.ChatFeature()
+				cf.Send("streamer", "test-cf-message")
+
+				Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+					"PRIVMSG #test-streamer-user :test-cf-message",
+				))
+			})
+		})
 	})
 })
 

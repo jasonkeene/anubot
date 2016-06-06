@@ -168,7 +168,6 @@ func (b *Bot) HandleFunc(user, command string, handlefunc client.HandlerFunc) {
 	}
 }
 
-// TODO: cover this in tests
 // InitChatFeature wires up the chat feature of the bot.
 func (b *Bot) InitChatFeature(dispatcher *MessageDispatcher) {
 	b.mu.Lock()
@@ -178,9 +177,8 @@ func (b *Bot) InitChatFeature(dispatcher *MessageDispatcher) {
 	b.chatFeature.Init()
 }
 
-// TODO: cover this in tests
 // ChatFeature returns the chat feature of the bot.
-func (b *Bot) ChatFeautre() *ChatFeature {
+func (b *Bot) ChatFeature() *ChatFeature {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.chatFeature

@@ -6,10 +6,12 @@ const Menu = React.createClass({
         return {
             items: [
                 ["Chat", "chat"],
-                ["Foo", "foo"],
-                ["Bar", "bar"],
-                ["Baz", "baz"],
-                ["Qux", "qux"],
+                ["Playlist", "playlist"],
+                ["Currency", "currency"],
+                ["Commands", "commands"],
+                ["Mini-games", "mini-games"],
+                ["Stats", "stats"],
+                ["Settings", "settings"],
             ],
         };
     },

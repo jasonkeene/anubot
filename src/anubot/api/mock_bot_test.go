@@ -17,6 +17,14 @@ type mockBot struct {
 		Err          chan error
 	}
 	DisconnectCalled chan bool
+	ChannelCalled    chan bool
+	ChannelOutput    struct {
+		Ret0 chan string
+	}
+	InitChatFeatureCalled chan bool
+	InitChatFeatureInput  struct {
+		Dispatcher chan *bot.MessageDispatcher
+	}
 }
 
 func newMockBot() *mockBot {
@@ -26,6 +34,10 @@ func newMockBot() *mockBot {
 	m.ConnectOutput.Disconnected = make(chan chan struct{}, 100)
 	m.ConnectOutput.Err = make(chan error, 100)
 	m.DisconnectCalled = make(chan bool, 100)
+	m.ChannelCalled = make(chan bool, 100)
+	m.ChannelOutput.Ret0 = make(chan string, 100)
+	m.InitChatFeatureCalled = make(chan bool, 100)
+	m.InitChatFeatureInput.Dispatcher = make(chan *bot.MessageDispatcher, 100)
 	return m
 }
 func (m *mockBot) Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error) {
@@ -35,4 +47,12 @@ func (m *mockBot) Connect(connConfig *bot.ConnConfig) (disconnected chan struct{
 }
 func (m *mockBot) Disconnect() {
 	m.DisconnectCalled <- true
+}
+func (m *mockBot) Channel() string {
+	m.ChannelCalled <- true
+	return <-m.ChannelOutput.Ret0
+}
+func (m *mockBot) InitChatFeature(dispatcher *bot.MessageDispatcher) {
+	m.InitChatFeatureCalled <- true
+	m.InitChatFeatureInput.Dispatcher <- dispatcher
 }

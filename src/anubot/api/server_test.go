@@ -35,7 +35,7 @@ var _ = Describe("APIServer", func() {
 		listener, err = net.Listen("tcp", ":0")
 		Expect(err).ToNot(HaveOccurred())
 
-		api = New(mockStore, mockBot)
+		api = New(mockStore, mockBot, nil)
 		server = &http.Server{
 			Handler:        websocket.Handler(api.Serve),
 			ReadTimeout:    10 * time.Second,

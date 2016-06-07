@@ -8,7 +8,7 @@ const ChatTab = React.createClass({
     },
 
     renderMessage: function (message) {
-        return <div>{message.Body}</div>;
+        return <div>{message.body}</div>;
     },
     render: function () {
         return (

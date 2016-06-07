@@ -8,9 +8,9 @@ import (
 const minBufferSize = 20
 
 type Message struct {
-	Target string
-	Body   string
-	Time   time.Time
+	Target string    `json:"target"`
+	Body   string    `json:"body"`
+	Time   time.Time `json:"time"`
 }
 
 type MessageDispatcher struct {

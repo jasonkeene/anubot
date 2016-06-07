@@ -26,11 +26,16 @@ func (cf *ChatFeature) Send(user, message string) {
 func (cf *ChatFeature) ChatHandler(user string) func(*client.Conn, *client.Line) {
 	return func(conn *client.Conn, line *client.Line) {
 		target := line.Args[0]
+
+		// don't accept messages sent to the streamer conn for the current
+		// channel
 		if target == cf.writer.Channel() && user == "streamer" {
 			return
 		}
+
 		// TODO: Args might not always exist
 		cf.dispatcher.Dispatch(Message{
+			Nick:   line.Nick,
 			Target: target,
 			Body:   line.Args[1],
 			Time:   line.Time,

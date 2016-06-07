@@ -8,6 +8,7 @@ import (
 const minBufferSize = 20
 
 type Message struct {
+	Nick   string    `json:"nick"`
 	Target string    `json:"target"`
 	Body   string    `json:"body"`
 	Time   time.Time `json:"time"`

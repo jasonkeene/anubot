@@ -27,7 +27,6 @@ func NewMessageDispatcher() *MessageDispatcher {
 }
 
 func (d *MessageDispatcher) Dispatch(msg Message) {
-	// TODO: deduplicate messages that have the same channel/body
 	d.storeMu.Lock()
 	defer d.storeMu.Unlock()
 

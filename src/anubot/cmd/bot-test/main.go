@@ -28,19 +28,21 @@ func main() {
 		Port:             twitchPort,
 	}
 
-	// create message dispatcher
+	// setup bot that communicates with the twitch IRC server
+	b := &bot.Bot{}
+
+	// create message dispatcher and subscribe to channel
 	dispatcher := bot.NewMessageDispatcher()
 	chanMessages := dispatcher.Messages("#" + connConfig.StreamerUsername)
 
-	// create and connect bot
-	b := &bot.Bot{}
+	// wire up features
+	b.InitChatFeature(dispatcher)
+
+	// connect bot
 	disconnected, err := b.Connect(connConfig)
 	if err != nil {
 		panic(err)
 	}
-
-	// wire up features
-	b.InitChatFeature(dispatcher)
 
 	// read from stdin and send to irc server
 	reader := bufio.NewReader(os.Stdin)

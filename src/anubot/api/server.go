@@ -4,6 +4,7 @@ import (
 	"anubot/bot"
 	"io"
 	"log"
+	"sync"
 
 	"golang.org/x/net/websocket"
 )
@@ -39,6 +40,23 @@ type Session struct {
 	store      Store
 	bot        Bot
 	dispatcher *bot.MessageDispatcher
+
+	mu            sync.Mutex
+	subscriptions []chan bot.Message
+}
+
+// AddSubscription adds a subscription to the session.
+func (s *Session) AddSubscription(sub chan bot.Message) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.subscriptions = append(s.subscriptions, sub)
+}
+
+// Subscriptions gets the current subscriptions for the session.
+func (s *Session) Subscriptions() []chan bot.Message {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.subscriptions
 }
 
 // APIServer responds to websocket events sent from the client.
@@ -59,9 +77,20 @@ func New(store Store, bot Bot, dispatcher *bot.MessageDispatcher) *APIServer {
 
 // Serve reads off of a websocket connection and responds to events.
 func (api *APIServer) Serve(ws *websocket.Conn) {
-	defer ws.Close()
+	var session *Session
 
-	session := &Session{
+	defer func() {
+		// clean up session subscriptions
+		for _, sub := range session.Subscriptions() {
+			api.dispatcher.Remove(sub)
+		}
+		// disconnect from irc
+		api.bot.Disconnect()
+		// tear down the conn
+		ws.Close()
+	}()
+
+	session = &Session{
 		ws:         ws,
 		store:      api.store,
 		bot:        api.bot,

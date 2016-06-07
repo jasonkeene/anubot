@@ -50,6 +50,8 @@ var _ = Describe("Bot", func() {
 			TLSConfig:        clientTLSConfig,
 			Flood:            true,
 		}
+
+		bot.InitChatFeature(nil)
 	})
 
 	AfterEach(func() {

@@ -98,9 +98,6 @@ func connectHandler(event Event, session *Session) {
 	// TODO: handle error from connect as a false payload
 	session.bot.Connect(connConfig)
 
-	// wire up chat feature
-	session.bot.InitChatFeature(session.dispatcher)
-
 	websocket.JSON.Send(session.ws, &Event{
 		Cmd:     "connect",
 		Payload: true,
@@ -113,8 +110,8 @@ func disconnectHandler(event Event, session *Session) {
 
 func subscribeHandler(event Event, session *Session) {
 	messages := session.dispatcher.Messages(session.bot.Channel())
+	session.AddSubscription(messages)
 
-	// TODO: need to implement teardown of subscription goroutines
 	go func() {
 		for msg := range messages {
 			websocket.JSON.Send(session.ws, &Event{
@@ -126,7 +123,7 @@ func subscribeHandler(event Event, session *Session) {
 }
 
 func unsubscribeHandler(event Event, session *Session) {
-	// TODO: need to implement teardown of subscription goroutines
+	// TODO: need to implement
 }
 
 type HandlerFunc func(event Event, session *Session)

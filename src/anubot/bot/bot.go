@@ -85,6 +85,9 @@ func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	b.channelMu.Unlock()
 	b.join(b.channel)
 
+	// register handlers for features
+	b.chatFeature.Register()
+
 	return disconnected, nil
 }
 
@@ -172,9 +175,7 @@ func (b *Bot) HandleFunc(user, command string, handlefunc client.HandlerFunc) {
 func (b *Bot) InitChatFeature(dispatcher *MessageDispatcher) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-
 	b.chatFeature = NewChatFeature(b, dispatcher)
-	b.chatFeature.Init()
 }
 
 // ChatFeature returns the chat feature of the bot.

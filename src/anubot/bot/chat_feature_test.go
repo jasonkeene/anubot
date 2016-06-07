@@ -24,7 +24,7 @@ var _ = Describe("ChatFeature", func() {
 	})
 
 	It("can register it's handler func to listen to chat messages", func() {
-		chatFeature.Init()
+		chatFeature.Register()
 		Expect(mockFeatureWriter.HandleFuncInput.User).To(Receive(Equal("bot")))
 		Expect(mockFeatureWriter.HandleFuncInput.Command).To(Receive(Equal("PRIVMSG")))
 		Expect(mockFeatureWriter.HandleFuncInput.User).To(Receive(Equal("streamer")))

@@ -12,21 +12,24 @@ import (
 )
 
 func main() {
-	// Create and initialize database connection.
+	// create and initialize database connection
 	store := store.New(store.HomePath())
 	store.InitDDL()
 
-	// Setup bot that communicates with the Twitch IRC server.
+	// setup bot that communicates with the twitch IRC server
 	b := &bot.Bot{}
 
-	// Create message dispatcher.
+	// create message dispatcher
 	dispatcher := bot.NewMessageDispatcher()
 
-	// Setup websocket API server.
+	// wire up features
+	b.InitChatFeature(dispatcher)
+
+	// setup websocket API server
 	api := api.New(store, b, dispatcher)
 	http.Handle("/api", websocket.Handler(api.Serve))
 
-	// Bind websocket API.
+	// bind websocket API
 	fmt.Println("listening on port 12345")
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {

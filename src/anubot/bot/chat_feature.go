@@ -14,7 +14,7 @@ func NewChatFeature(writer FeatureWriter, dispatcher Dispatcher) *ChatFeature {
 	}
 }
 
-func (cf *ChatFeature) Init() {
+func (cf *ChatFeature) Register() {
 	cf.writer.HandleFunc("bot", "PRIVMSG", cf.ChatHandler("bot"))
 	cf.writer.HandleFunc("streamer", "PRIVMSG", cf.ChatHandler("streamer"))
 }

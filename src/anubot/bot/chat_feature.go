@@ -34,11 +34,13 @@ func (cf *ChatFeature) ChatHandler(user string) func(*client.Conn, *client.Line)
 		}
 
 		// TODO: Args might not always exist
-		cf.dispatcher.Dispatch(Message{
+		msg := Message{
 			Nick:   line.Nick,
 			Target: target,
 			Body:   line.Args[1],
 			Time:   line.Time,
-		})
+		}
+		WriteMessageID(&msg)
+		cf.dispatcher.Dispatch(msg)
 	}
 }

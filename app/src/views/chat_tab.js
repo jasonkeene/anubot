@@ -9,7 +9,7 @@ const ChatTab = React.createClass({
 
     renderMessage: function (message) {
         return (
-            <div>
+            <div key={message.id}>
                 {message.nick}:&nbsp;
                 {message.body}
             </div>

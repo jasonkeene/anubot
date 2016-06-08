@@ -30,6 +30,7 @@ const Menu = React.createClass({
             nodes.push(<MenuItem parent={this}
                                  text={this.state.items[i][0]}
                                  id={this.state.items[i][1]}
+                                 selected={this.props.selected == this.state.items[i][1]}
                                  key={i+"-"+this.state.items[i][1]} />);
         }
         return nodes;
@@ -47,7 +48,12 @@ const MenuItem = React.createClass({
     },
 
     render: function () {
-        return <li onClick={this.handleClick}>{this.props.text}</li>;
+        return (
+            <li onClick={this.handleClick}
+                className={this.props.selected ? "selected" : ""}>
+                {this.props.text}
+            </li>
+        );
     },
 });
 

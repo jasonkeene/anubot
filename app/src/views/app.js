@@ -56,8 +56,8 @@ const App = React.createClass({
             );
         }
         return (
-            <div>
-                <Menu parent={this} />
+            <div id="app">
+                <Menu parent={this} selected={this.state.tab} />
                 {this.renderTab()}
             </div>
         );

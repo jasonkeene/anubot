@@ -4,8 +4,10 @@ const React = require('react'),
       App = require('./app.js');
 
 function render(connection, listeners) {
-    ReactDOM.render(<App connection={connection} listeners={listeners} />,
-                    document.querySelector('#app'));
+    ReactDOM.render(
+        <App connection={connection} listeners={listeners} />,
+        document.querySelector('#react-anchor')
+    );
 }
 
 module.exports.render = render;

@@ -18,12 +18,19 @@
         }
     }
     .body {
+
         display: flex;
         flex-direction: column;
 
         .spacer {
             flex-grow: 1;
             flex-shrink: 2;
+        }
+        .message {
+            .nick {
+                font-weight: 900;
+                color: black;
+            }
         }
     }
     .footer {

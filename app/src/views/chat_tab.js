@@ -1,10 +1,42 @@
 
-const React = require('react');
+const React = require('react'),
+      ReactDOM = require('react-dom');
 
 const ChatTab = React.createClass({
     getInitialState: function () {
         return {
+            scroll: true,
         };
+    },
+    componentDidMount: function () {
+        var domNode = ReactDOM.findDOMNode(this).querySelector('.body');
+        this.domNode = domNode;
+        domNode.addEventListener('scroll', this.handleScroll);
+        this.scrollToBottom();
+    },
+    componentWillUnmount: function() {
+        this.domNode.removeEventListener('scroll', this.handleScroll);
+    },
+    componentDidUpdate: function () {
+        this.scrollToBottom();
+    },
+
+    scrollToBottom: function () {
+        if (this.state.scroll) {
+            this.domNode.scrollTop = this.domNode.scrollHeight;
+        }
+    },
+    scrollIsAtBottom: function () {
+        return this.domNode.scrollTop + this.domNode.clientHeight == this.domNode.scrollHeight;
+    },
+
+    // event handlers
+    handleScroll: function (event) {
+        if (this.scrollIsAtBottom()) {
+            this.setState({scroll: true});
+            return
+        }
+        this.setState({scroll: false});
     },
 
     renderMessage: function (message) {

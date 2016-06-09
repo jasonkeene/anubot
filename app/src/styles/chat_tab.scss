@@ -1,5 +1,9 @@
 
 #chat-tab {
+    * {
+        -webkit-user-select: text;
+    }
+
     .header {
         position: fixed;
         width: 100%;

@@ -33,7 +33,6 @@ const App = React.createClass({
         var messages = this.state.messages;
         messages.push(payload);
         this.setState({messages: messages});
-        console.log(this.state.messages);
     },
 
     renderTab: function () {

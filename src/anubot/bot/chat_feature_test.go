@@ -54,6 +54,8 @@ var _ = Describe("ChatFeature", func() {
 
 		BeforeEach(func() {
 			mockFeatureWriter.ChannelOutput.Channel <- "test-user"
+			mockFeatureWriter.StreamerUsernameOutput.Ret0 <- "test-user"
+			mockFeatureWriter.BotUsernameOutput.Ret0 <- "test-bot"
 		})
 
 		Context("streamer handler", func() {
@@ -70,12 +72,14 @@ var _ = Describe("ChatFeature", func() {
 						"test-message",
 					},
 				})
+				msg := Message{
+					Target: "test-target",
+					Body:   "test-message",
+					Time:   now,
+				}
+				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
-					With(Message{
-						Target: "test-target",
-						Body:   "test-message",
-						Time:   now,
-					}),
+					With(msg),
 				))
 			})
 
@@ -106,12 +110,14 @@ var _ = Describe("ChatFeature", func() {
 						"test-message",
 					},
 				})
+				msg := Message{
+					Target: "test-target",
+					Body:   "test-message",
+					Time:   now,
+				}
+				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
-					With(Message{
-						Target: "test-target",
-						Body:   "test-message",
-						Time:   now,
-					}),
+					With(msg),
 				))
 			})
 
@@ -124,12 +130,14 @@ var _ = Describe("ChatFeature", func() {
 						"test-message",
 					},
 				})
+				msg := Message{
+					Target: "test-user",
+					Body:   "test-message",
+					Time:   now,
+				}
+				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
-					With(Message{
-						Target: "test-user",
-						Body:   "test-message",
-						Time:   now,
-					}),
+					With(msg),
 				))
 			})
 		})

@@ -6,10 +6,22 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/fluffle/goirc/client"
 )
+
+var capString string
+
+func init() {
+	caps := []string{
+		"twitch.tv/tags",
+		"twitch.tv/commands",
+		"twitch.tv/membership",
+	}
+	capString = strings.Join(caps, " ")
+}
 
 type ConnConfig struct {
 	StreamerUsername string
@@ -97,10 +109,18 @@ func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	b.channelMu.Unlock()
 	b.join(b.channel)
 
+	// ask for capabilities
+	b.requestCapabilities()
+
 	// register handlers for features
 	b.chatFeature.Register()
 
 	return disconnected, nil
+}
+
+func (b *Bot) requestCapabilities() {
+	b.Send("streamer", "CAP REQ :"+capString)
+	b.Send("bot", "CAP REQ :"+capString)
 }
 
 // Disconnect tears down the connections to the IRC server and resets the state

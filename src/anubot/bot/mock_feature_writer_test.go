@@ -21,6 +21,14 @@ type mockFeatureWriter struct {
 	ChannelOutput struct {
 		Channel chan string
 	}
+	StreamerUsernameCalled chan bool
+	StreamerUsernameOutput struct {
+		Ret0 chan string
+	}
+	BotUsernameCalled chan bool
+	BotUsernameOutput struct {
+		Ret0 chan string
+	}
 }
 
 func newMockFeatureWriter() *mockFeatureWriter {
@@ -35,6 +43,10 @@ func newMockFeatureWriter() *mockFeatureWriter {
 	m.PrivmsgInput.Msg = make(chan string, 100)
 	m.ChannelCalled = make(chan bool, 100)
 	m.ChannelOutput.Channel = make(chan string, 100)
+	m.StreamerUsernameCalled = make(chan bool, 100)
+	m.StreamerUsernameOutput.Ret0 = make(chan string, 100)
+	m.BotUsernameCalled = make(chan bool, 100)
+	m.BotUsernameOutput.Ret0 = make(chan string, 100)
 	return m
 }
 func (m *mockFeatureWriter) HandleFunc(user, command string, handlefunc client.HandlerFunc) {
@@ -52,4 +64,12 @@ func (m *mockFeatureWriter) Privmsg(user, target, msg string) {
 func (m *mockFeatureWriter) Channel() (channel string) {
 	m.ChannelCalled <- true
 	return <-m.ChannelOutput.Channel
+}
+func (m *mockFeatureWriter) StreamerUsername() string {
+	m.StreamerUsernameCalled <- true
+	return <-m.StreamerUsernameOutput.Ret0
+}
+func (m *mockFeatureWriter) BotUsername() string {
+	m.BotUsernameCalled <- true
+	return <-m.BotUsernameOutput.Ret0
 }

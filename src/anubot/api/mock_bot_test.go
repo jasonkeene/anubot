@@ -25,6 +25,18 @@ type mockBot struct {
 	InitChatFeatureInput  struct {
 		Dispatcher chan *bot.MessageDispatcher
 	}
+	ChatFeatureCalled chan bool
+	ChatFeatureOutput struct {
+		Ret0 chan *bot.ChatFeature
+	}
+	StreamerUsernameCalled chan bool
+	StreamerUsernameOutput struct {
+		Ret0 chan string
+	}
+	BotUsernameCalled chan bool
+	BotUsernameOutput struct {
+		Ret0 chan string
+	}
 }
 
 func newMockBot() *mockBot {
@@ -38,6 +50,12 @@ func newMockBot() *mockBot {
 	m.ChannelOutput.Ret0 = make(chan string, 100)
 	m.InitChatFeatureCalled = make(chan bool, 100)
 	m.InitChatFeatureInput.Dispatcher = make(chan *bot.MessageDispatcher, 100)
+	m.ChatFeatureCalled = make(chan bool, 100)
+	m.ChatFeatureOutput.Ret0 = make(chan *bot.ChatFeature, 100)
+	m.StreamerUsernameCalled = make(chan bool, 100)
+	m.StreamerUsernameOutput.Ret0 = make(chan string, 100)
+	m.BotUsernameCalled = make(chan bool, 100)
+	m.BotUsernameOutput.Ret0 = make(chan string, 100)
 	return m
 }
 func (m *mockBot) Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error) {
@@ -55,4 +73,16 @@ func (m *mockBot) Channel() string {
 func (m *mockBot) InitChatFeature(dispatcher *bot.MessageDispatcher) {
 	m.InitChatFeatureCalled <- true
 	m.InitChatFeatureInput.Dispatcher <- dispatcher
+}
+func (m *mockBot) ChatFeature() *bot.ChatFeature {
+	m.ChatFeatureCalled <- true
+	return <-m.ChatFeatureOutput.Ret0
+}
+func (m *mockBot) StreamerUsername() string {
+	m.StreamerUsernameCalled <- true
+	return <-m.StreamerUsernameOutput.Ret0
+}
+func (m *mockBot) BotUsername() string {
+	m.BotUsernameCalled <- true
+	return <-m.BotUsernameOutput.Ret0
 }

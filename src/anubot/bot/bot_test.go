@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/fluffle/goirc/client"
@@ -71,6 +72,28 @@ var _ = Describe("Bot", func() {
 			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
 			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
 			fakeIRCServer.Clear()
+		})
+
+		It("asks for capabilities", func() {
+			caps := []string{
+				"twitch.tv/tags",
+				"twitch.tv/commands",
+				"twitch.tv/membership",
+			}
+			capString := strings.Join(caps, " ")
+
+			_, err := bot.Connect(connConfig)
+			Expect(err).ToNot(HaveOccurred())
+
+			assertConnected(0, "test-streamer-user", "test-streamer-password", fakeIRCServer)
+			assertConnected(1, "test-bot-user", "test-bot-password", fakeIRCServer)
+
+			Eventually(fakeIRCServer.Received(0)).Should(ContainLines(
+				"CAP REQ :" + capString,
+			))
+			Eventually(fakeIRCServer.Received(1)).Should(ContainLines(
+				"CAP REQ :" + capString,
+			))
 		})
 
 		It("joins the streamer's channel on connect", func() {

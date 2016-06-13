@@ -27,6 +27,13 @@
             flex-shrink: 2;
         }
         .message {
+            .badges {
+                img {
+                    margin: 0 2px;
+                    vertical-align: middle;
+                    -webkit-user-select: none;
+                }
+            }
             .nick {
                 font-weight: 900;
                 color: black;

@@ -50,9 +50,29 @@ const ChatTab = React.createClass({
         this.setState({scroll: false});
     },
 
+    renderBadges: function (message) {
+        var tags = message.tags;
+        if (tags === undefined) {
+            return;
+        }
+        var badges = tags.badges;
+        if (badges === undefined) {
+            return;
+        }
+        badges = badges.split(",").map((x) => {return x.split('/')[0]});
+        var nodes = [];
+        for (var i = 0; i < badges.length; i++) {
+            var imageURL = BadgeImages[badges[i]];
+            if (imageURL !== undefined) {
+                nodes.push(<img src={imageURL} />);
+            }
+        }
+        return nodes;
+    },
     renderMessage: function (message) {
         return (
             <div className="message" key={message.id}>
+                <span className="badges">{this.renderBadges(message)}</span>
                 <span className="nick">{message.nick}:</span>&nbsp;
                 {message.body}
             </div>

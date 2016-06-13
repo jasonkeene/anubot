@@ -48,10 +48,14 @@
             flex-grow: 1;
             display: flex;
 
-            input {
+            .form {
                 flex-grow: 1;
+
+                input {
+                    width: 100%;
+                }
             }
-            span {
+            .spacer {
                 flex-grow: 1;
             }
         }

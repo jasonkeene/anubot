@@ -27,9 +27,12 @@ func (cf *ChatFeature) ChatHandler(user string) func(*client.Conn, *client.Line)
 	return func(conn *client.Conn, line *client.Line) {
 		target := line.Args[0]
 
-		// don't accept messages sent to the streamer conn for the current
-		// channel
-		if target == cf.writer.Channel() && user == "streamer" {
+		// don't accept messages sent over the streamer's connection
+		// to the current channel
+		// by users other than the streamer
+		if user == "streamer" &&
+			target == cf.writer.Channel() &&
+			line.Nick != cf.writer.StreamerUsername() {
 			return
 		}
 

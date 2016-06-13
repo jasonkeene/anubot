@@ -28,6 +28,7 @@ type Bot struct {
 	connected    bool
 	streamerConn *client.Conn
 	botConn      *client.Conn
+	connConfig   *ConnConfig
 
 	channelMu sync.Mutex
 	channel   string
@@ -42,6 +43,9 @@ func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
+	// save off conn config
+	b.connConfig = c
+
 	// check to see if we are connected already
 	if b.connected {
 		return nil, errors.New("This bot is already connected, disconnect first.")
@@ -51,11 +55,19 @@ func (b *Bot) Connect(c *ConnConfig) (chan struct{}, error) {
 	initTLS(c)
 
 	// connect to the server
-	streamerConn, streamerDisconnected, err := connectUser(c.StreamerUsername, c.StreamerPassword, c)
+	streamerConn, streamerDisconnected, err := connectUser(
+		c.StreamerUsername,
+		c.StreamerPassword,
+		c,
+	)
 	if err != nil {
 		return nil, err
 	}
-	botConn, botDisconnected, err := connectUser(c.BotUsername, c.BotPassword, c)
+	botConn, botDisconnected, err := connectUser(
+		c.BotUsername,
+		c.BotPassword,
+		c,
+	)
 	if err != nil {
 		streamerConn.Quit()
 		return nil, err
@@ -106,6 +118,9 @@ func (b *Bot) Disconnect() {
 		b.botConn.Quit()
 		b.botConn = nil
 	}
+	if b.connConfig != nil {
+		b.connConfig = nil
+	}
 }
 
 // Join joins an IRC channel.
@@ -133,6 +148,17 @@ func (b *Bot) Channel() string {
 	b.channelMu.Lock()
 	defer b.channelMu.Unlock()
 	return b.channel
+}
+
+// StreamerUsername returns the streamer's username.
+func (b *Bot) StreamerUsername() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.connConfig == nil {
+		return ""
+	}
+	return b.connConfig.StreamerUsername
 }
 
 // Send sends a raw message to the specified IRC connection.

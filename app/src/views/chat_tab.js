@@ -58,17 +58,55 @@ const ChatTab = React.createClass({
                     <div className="spacer" />
                     {this.props.messages.map(this.renderMessage)}
                 </div>
-                <div className="footer">
-                    <div className="selection">
-                        <select>
-                            <option>postcrypt</option>
-                            <option>pc_anubot</option>
-                        </select>
+                <ChatFooter connection={this.props.connection} />
+            </div>
+        );
+    },
+});
+
+const ChatFooter = React.createClass({
+    getInitialState: function () {
+        return {
+            user: "streamer",
+            message: "",
+        };
+    },
+
+    // event handlers
+    handleSubmit: function (e) {
+        e.preventDefault();
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "send-message",
+            "payload": {
+                "user": this.state.user,
+                "message": this.state.message,
+            },
+        }));
+        this.setState({message: ""});
+    },
+    handleMessageChange: function (e) {
+        this.setState({message: e.target.value});
+    },
+    handleUserChange: function (e) {
+        this.setState({user: e.target.value});
+    },
+
+    render: function () {
+        return (
+            <div className="footer">
+                <div className="selection">
+                    <select onChange={this.handleUserChange}>
+                        <option value="streamer">streamer</option>
+                        <option value="bot">bot</option>
+                    </select>
+                </div>
+                <div className="input">
+                    <div className="form">
+                        <form onSubmit={this.handleSubmit}>
+                            <input onChange={this.handleMessageChange} type="text" placeholder="Enter a message here" value={this.state.message} />
+                        </form>
                     </div>
-                    <div className="input">
-                        <input type="text" placeholder="Enter a message here" />
-                        <span></span>
-                    </div>
+                    <div className="spacer"></div>
                 </div>
             </div>
         );

@@ -126,6 +126,22 @@ func unsubscribeHandler(event Event, session *Session) {
 	// TODO: need to implement
 }
 
+func sendMessageHandler(event Event, session *Session) {
+	data, ok := event.Payload.(map[string]interface{})
+	if !ok {
+		return
+	}
+	user, ok := data["user"].(string)
+	if !ok {
+		return
+	}
+	message, ok := data["message"].(string)
+	if !ok {
+		return
+	}
+	session.bot.ChatFeature().Send(user, message)
+}
+
 type HandlerFunc func(event Event, session *Session)
 
 func (f HandlerFunc) HandleEvent(event Event, session *Session) {
@@ -142,4 +158,5 @@ func init() {
 	eventHandlers["disconnect"] = HandlerFunc(disconnectHandler)
 	eventHandlers["subscribe"] = HandlerFunc(subscribeHandler)
 	eventHandlers["unsubscribe"] = HandlerFunc(unsubscribeHandler)
+	eventHandlers["send-message"] = HandlerFunc(sendMessageHandler)
 }

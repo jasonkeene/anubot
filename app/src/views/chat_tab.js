@@ -58,7 +58,8 @@ const ChatTab = React.createClass({
                     <div className="spacer" />
                     {this.props.messages.map(this.renderMessage)}
                 </div>
-                <ChatFooter connection={this.props.connection} />
+                <ChatFooter listeners={this.props.listeners}
+                            connection={this.props.connection} />
             </div>
         );
     },
@@ -69,7 +70,30 @@ const ChatFooter = React.createClass({
         return {
             user: "streamer",
             message: "",
+            streamerUsername: "streamer",
+            botUsername: "bot",
         };
+    },
+    componentWillMount: function () {
+        this.props.listeners.add("usernames", this.handleUsernames);
+        this.props.connection.sendUTF(JSON.stringify({
+            "cmd": "usernames",
+        }));
+    },
+
+    // network events
+    handleUsernames: function (payload) {
+        if (payload.streamer === "" || payload.bot === "") {
+            this.props.connection.sendUTF(JSON.stringify({
+                "cmd": "usernames",
+            }));
+            return
+        }
+        this.props.listeners.remove("usernames", this.handleUsernames);
+        this.setState({
+            streamerUsername: payload.streamer,
+            botUsername: payload.bot,
+        })
     },
 
     // event handlers
@@ -96,8 +120,8 @@ const ChatFooter = React.createClass({
             <div className="footer">
                 <div className="selection">
                     <select onChange={this.handleUserChange}>
-                        <option value="streamer">streamer</option>
-                        <option value="bot">bot</option>
+                        <option value="streamer">{this.state.streamerUsername}</option>
+                        <option value="bot">{this.state.botUsername}</option>
                     </select>
                 </div>
                 <div className="input">

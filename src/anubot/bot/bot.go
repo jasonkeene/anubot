@@ -161,6 +161,17 @@ func (b *Bot) StreamerUsername() string {
 	return b.connConfig.StreamerUsername
 }
 
+// BotUsername returns the bot's username.
+func (b *Bot) BotUsername() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.connConfig == nil {
+		return ""
+	}
+	return b.connConfig.BotUsername
+}
+
 // Send sends a raw message to the specified IRC connection.
 func (b *Bot) Send(user, message string) {
 	switch user {

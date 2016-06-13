@@ -27,6 +27,8 @@ type Bot interface {
 	Channel() string
 	InitChatFeature(dispatcher *bot.MessageDispatcher)
 	ChatFeature() *bot.ChatFeature
+	StreamerUsername() string
+	BotUsername() string
 }
 
 // Event is the structure sent over websocket connections by both ends.

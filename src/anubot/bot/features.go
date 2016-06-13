@@ -14,4 +14,6 @@ type FeatureWriter interface {
 	HandleFunc(user, command string, handlefunc client.HandlerFunc)
 	Privmsg(user, target, msg string)
 	Channel() (channel string)
+	StreamerUsername() string
+	BotUsername() string
 }

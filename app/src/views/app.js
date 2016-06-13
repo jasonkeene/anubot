@@ -39,6 +39,7 @@ const App = React.createClass({
         switch (this.state.tab) {
         case "chat":
             return <ChatTab messages={this.state.messages}
+                            listeners={this.props.listeners}
                             connection={this.props.connection} />;
         default:
             return <div className="tab">Content for {this.state.tab} tab!</div>;

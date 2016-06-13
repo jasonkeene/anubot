@@ -142,6 +142,17 @@ func sendMessageHandler(event Event, session *Session) {
 	session.bot.ChatFeature().Send(user, message)
 }
 
+func usernamesHandler(event Event, session *Session) {
+	websocket.JSON.Send(session.ws, &Event{
+		Cmd: "usernames",
+		Payload: map[string]string{
+			"streamer": session.bot.StreamerUsername(),
+			"bot":      session.bot.BotUsername(),
+		},
+	})
+
+}
+
 type HandlerFunc func(event Event, session *Session)
 
 func (f HandlerFunc) HandleEvent(event Event, session *Session) {
@@ -159,4 +170,5 @@ func init() {
 	eventHandlers["subscribe"] = HandlerFunc(subscribeHandler)
 	eventHandlers["unsubscribe"] = HandlerFunc(unsubscribeHandler)
 	eventHandlers["send-message"] = HandlerFunc(sendMessageHandler)
+	eventHandlers["usernames"] = HandlerFunc(usernamesHandler)
 }

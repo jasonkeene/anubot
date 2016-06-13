@@ -43,6 +43,7 @@ func (cf *ChatFeature) ChatHandler(user string) func(*client.Conn, *client.Line)
 			Target: target,
 			Body:   line.Args[1],
 			Time:   line.Time,
+			Tags:   line.Tags,
 		}
 		WriteMessageID(&msg)
 		cf.dispatcher.Dispatch(msg)

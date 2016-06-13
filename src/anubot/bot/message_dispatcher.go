@@ -11,11 +11,12 @@ import (
 const minBufferSize = 20
 
 type Message struct {
-	Nick   string    `json:"nick"`
-	Target string    `json:"target"`
-	Body   string    `json:"body"`
-	Time   time.Time `json:"time"`
-	ID     string    `json:"id"`
+	Nick   string            `json:"nick"`
+	Target string            `json:"target"`
+	Body   string            `json:"body"`
+	Time   time.Time         `json:"time"`
+	ID     string            `json:"id"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type MessageDispatcher struct {

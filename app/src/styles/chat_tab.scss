@@ -18,7 +18,7 @@
         }
     }
     .body {
-        padding-bottom: 40px;
+        padding-bottom: 30px;
         display: flex;
         flex-direction: column;
 
@@ -27,6 +27,8 @@
             flex-shrink: 2;
         }
         .message {
+            margin: 5px 0;
+
             .badges {
                 img {
                     margin: 0 2px;
@@ -37,6 +39,9 @@
             .nick {
                 font-weight: 900;
                 color: black;
+            }
+            img.emoji {
+                margin-bottom: -10px;
             }
         }
     }

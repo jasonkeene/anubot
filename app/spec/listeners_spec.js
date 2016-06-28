@@ -1,3 +1,4 @@
+"use strict";
 
 const Listeners = require("../lib/listeners.js");
 

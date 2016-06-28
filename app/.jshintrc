@@ -1,0 +1,15 @@
+{
+    "esversion": 6,
+    "strict": "global",
+    "predef": [
+        "document",
+        "module",
+        "console",
+        "require",
+        "it",
+        "expect",
+        "describe",
+        "jasmine",
+        "beforeEach"
+    ]
+}

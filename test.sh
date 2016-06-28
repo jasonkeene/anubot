@@ -21,6 +21,8 @@ echo running jasmine tests
 
 pushd app
     jasmine
+    jshint lib
+    jshint spec
 popd
 
 echo 'All Tests Passed!'

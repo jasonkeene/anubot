@@ -11,9 +11,9 @@ describe("render", () => {
 
     it("renders global emoji as react elements", () => {
         const fixtures = {
-            "Kappa": "https://static-cdn.jtvnw.net/emoticons/v1/25/1.0",
-            "KappaHD": "https://static-cdn.jtvnw.net/jtv_user_pictures/emoticon-2867-src-f02f9d40f66f0840-28x28.png",
-            "MiniK": "https://static-cdn.jtvnw.net/jtv_user_pictures/emoticon-2868-src-5a7a81bb829e1a4c-28x28.png",
+            "Kappa": emoji._global.Kappa,
+            "KappaHD": emoji._global.KappaHD,
+            "MiniK": emoji._global.MiniK,
         };
         for (var name in fixtures) {
             var msg = "test " + name + " test";

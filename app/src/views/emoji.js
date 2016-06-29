@@ -3,7 +3,7 @@ const React = require("react");
 
 function render(message) {
     var nodes = [message];
-    for (var key in global_emoji) {
+    for (var key in _global) {
         _processNodes(nodes, key);
     }
     return nodes;
@@ -34,7 +34,7 @@ function _processStringNode(node, nodes, nodeIndex, key) {
 
         // splice in react nodes
         var prefix = node.substring(0, searchIndex),
-            imgNode = <img className="emoji" src={global_emoji[key]} />,
+            imgNode = <img className="emoji" src={_global[key]} />,
             rest = node.substring(searchIndex + key.length);
         nodes.splice(nodeIndex, 1, prefix, imgNode, rest);
         return nodeIndex + 2;
@@ -72,7 +72,7 @@ function _rightIsolated(node, key, i) {
     return false;
 }
 
-const robot_emoji = {
+const _robot = {
     ":)": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-ebf60cd72f7aa600-24x18.png",
     ":(": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-d570c4b3b8d8fc4d-24x18.png",
     ":o": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-ae4e17f5b9624e2f-24x18.png",
@@ -88,7 +88,7 @@ const robot_emoji = {
     ">(": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-d31223e81104544a-24x18.png",
     "<3": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-577ade91d46d7edc-24x18.png",
 };
-const turbo_emoji = {
+const _turbo = {
     ":)": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-64f279c77d6f621d-21x18.png",
     ":(": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-c41c5c6c88f481cd-21x18.png",
     ":o": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-a43f189a61cbddbe-21x18.png",
@@ -104,7 +104,7 @@ const turbo_emoji = {
     ">(": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-91a9cf0c00b30760-21x18.png",
     "<3": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-934a78aa6d805cd7-21x18.png",
 };
-const monkey_emoji = {
+const _monkey = {
     "<3": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-3f5d7d20df6ee956-20x18.png",
     "R)": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-7791c28e2e965fdf-20x22.png",
     ":>": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-665aec4773011f44-27x42.png",
@@ -125,7 +125,7 @@ const monkey_emoji = {
     ";)": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-095b4874cbf49881-20x18.png",
     "#/": "https://static-cdn.jtvnw.net/jtv_user_pictures/chansub-global-emoticon-39f51e122c6b2d60-27x18.png",
 };
-const global_emoji = {
+const _global = {
     "KappaHD": "https://static-cdn.jtvnw.net/jtv_user_pictures/emoticon-2867-src-f02f9d40f66f0840-28x28.png",
     "MiniK": "https://static-cdn.jtvnw.net/jtv_user_pictures/emoticon-2868-src-5a7a81bb829e1a4c-28x28.png",
     "imGlitch": "https://static-cdn.jtvnw.net/emoticons/v1/62837/1.0",
@@ -296,4 +296,8 @@ const global_emoji = {
 
 module.exports = {
     render: render,
+    _global: _global,
+    _robot: _robot,
+    _turbo: _turbo,
+    _monkey: _monkey,
 };

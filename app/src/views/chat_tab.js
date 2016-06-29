@@ -46,7 +46,7 @@ const ChatTab = React.createClass({
             <div className="message" key={message.id}>
                 <span className="badges">{badges.render(message)}</span>
                 <span className="nick">{message.nick}:</span>&nbsp;
-                {emoji.render(message.body)}
+                {emoji.render(message)}
             </div>
         );
     },

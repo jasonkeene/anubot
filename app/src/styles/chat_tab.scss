@@ -27,7 +27,8 @@
             flex-shrink: 2;
         }
         .message {
-            margin: 5px 0;
+            margin: 1px 0;
+            line-height: 28px;
 
             .badges {
                 img {
@@ -37,11 +38,12 @@
                 }
             }
             .nick {
+                margin-left: 3px;
                 font-weight: 900;
                 color: black;
             }
             img.emoji {
-                margin-bottom: -10px;
+                vertical-align: middle;
             }
         }
     }

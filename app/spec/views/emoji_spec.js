@@ -5,34 +5,46 @@ const React = require("react"),
 
 describe("render", () => {
     it("returns the bare message if no emojis exist", () => {
-        const msg = "bare message";
-        expect(emoji.render(msg)).toEqual([msg]);
-    });
-
-    it("renders global emoji as react elements", () => {
-        const fixtures = {
-            "Kappa": emoji._global.Kappa,
-            "KappaHD": emoji._global.KappaHD,
-            "MiniK": emoji._global.MiniK,
+        const msg = {
+            body: "bare message",
         };
-        for (var name in fixtures) {
-            var msg = "test " + name + " test";
-            expect(emoji.render(msg)).toEqual([
-                "test ",
-                React.createElement(
-                    "img",
-                    {
-                        className: "emoji",
-                        src: fixtures[name],
-                    }
-                ),
-                " test",
-            ]);
-        }
+        expect(emoji.render(msg)).toEqual([msg.body]);
     });
 
-    it("does not render emojis that are not surrounded by white space", () => {
-        const msg = "test 'Kappa' test";
-        expect(emoji.render(msg)).toEqual([msg]);
+    it("renders emoji as react elements", () => {
+        var msg = {
+            body: "test :) Kappa KappaHD Kappa :) test",
+            tags: {
+                emotes: "25:8-12,22-26/3286:14-20/499:5-6,28-29",
+            },
+        };
+        expect(emoji.render(msg)).toEqual([
+            "test ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/499/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/25/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/3286/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/25/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/499/1.0",
+            }),
+            " test",
+        ]);
     });
 });

@@ -18,10 +18,12 @@ electron.app.on('ready', () => {
         console.log(`child process exited with code ${code}`);
     });
 
-    mainWindow = new electron.BrowserWindow({
+    var windowOpts = {
         width: 1024,
         height: 768,
-    });
+        frame: false,
+    };
+    mainWindow = new electron.BrowserWindow(windowOpts);
     mainWindow.loadURL('file://' + __dirname + '/index.html');
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -33,7 +35,7 @@ electron.app.on('ready', () => {
 // tear down app when windows are closed
 electron.app.on('window-all-closed', () => {
     // on osx processes typically run until the user hits cmd+q
-    if (process.platform != 'darwin') {
+    if (process.platform !== 'darwin') {
         electron.app.quit();
     }
 });

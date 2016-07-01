@@ -45,7 +45,7 @@ const ChatTab = React.createClass({
         return (
             <div className="message" key={message.tags.id}>
                 <span className="badges">{badges.render(message)}</span>
-                <span className="nick">{message.nick}:</span>&nbsp;
+                <span className="nick" style={nickStyle(message)}>{message.tags['display-name']}:</span>&nbsp;
                 {emoji.render(message)}
             </div>
         );
@@ -67,6 +67,16 @@ const ChatTab = React.createClass({
         );
     },
 });
+
+function nickStyle(message) {
+    if (message.tags === undefined) {
+        return {};
+    }
+    if (message.tags.color === undefined) {
+        return {};
+    }
+    return {color: message.tags.color};
+}
 
 const ChatFooter = React.createClass({
     getInitialState: function () {

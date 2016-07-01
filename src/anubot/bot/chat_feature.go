@@ -45,7 +45,6 @@ func (cf *ChatFeature) ChatHandler(user string) func(*client.Conn, *client.Line)
 			Time:   line.Time,
 			Tags:   line.Tags,
 		}
-		WriteMessageID(&msg)
 		cf.dispatcher.Dispatch(msg)
 	}
 }

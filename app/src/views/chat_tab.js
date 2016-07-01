@@ -43,7 +43,7 @@ const ChatTab = React.createClass({
 
     renderMessage: function (message) {
         return (
-            <div className="message" key={message.id}>
+            <div className="message" key={message.tags.id}>
                 <span className="badges">{badges.render(message)}</span>
                 <span className="nick">{message.nick}:</span>&nbsp;
                 {emoji.render(message)}

@@ -1,9 +1,6 @@
 package bot
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
-	"encoding/json"
 	"sync"
 	"time"
 )
@@ -81,16 +78,4 @@ func max(a, b int) int {
 		return a
 	}
 	return b
-}
-
-// TODO: cover this
-// WriteMessageID writes the ID field for a given message.
-func WriteMessageID(message *Message) {
-	message.ID = ""
-	// TODO: handle error case
-	mBytes, _ := json.Marshal(message)
-	h := sha1.New()
-	// TODO: handle error case
-	h.Write(mBytes)
-	message.ID = hex.EncodeToString(h.Sum(nil))
 }

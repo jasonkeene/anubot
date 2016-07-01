@@ -77,7 +77,6 @@ var _ = Describe("ChatFeature", func() {
 					Body:   "test-message",
 					Time:   now,
 				}
-				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
 					With(msg),
 				))
@@ -115,7 +114,6 @@ var _ = Describe("ChatFeature", func() {
 					Body:   "test-message",
 					Time:   now,
 				}
-				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
 					With(msg),
 				))
@@ -135,7 +133,6 @@ var _ = Describe("ChatFeature", func() {
 					Body:   "test-message",
 					Time:   now,
 				}
-				WriteMessageID(&msg)
 				Expect(mockDispatcher.DispatchInput).To(BeCalled(
 					With(msg),
 				))

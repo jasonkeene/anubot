@@ -50,13 +50,60 @@ describe("render", () => {
 
     it("renders bttv emoji", () => {
         var msg = {
-            body: "test FeelsBadMan test",
+            body: "test FeelsGoodMan FeelsBadMan FeelsBadMan FeelsGoodMan test",
         };
         expect(emoji.render(msg)).toEqual([
             "test ",
             React.createElement("img", {
                 className: "emoji",
+                src: emoji._bttv.FeelsGoodMan,
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
                 src: emoji._bttv.FeelsBadMan,
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: emoji._bttv.FeelsBadMan,
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: emoji._bttv.FeelsGoodMan,
+            }),
+            " test",
+        ]);
+    });
+
+    it("renders bttv emoji combined with regular emoji", () => {
+        var msg = {
+            body: "test KappaHD FeelsBadMan :) FeelsGoodMan test",
+            tags: {
+                emotes: "3286:5-11/499:25-26",
+            },
+        };
+        expect(emoji.render(msg)).toEqual([
+            "test ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/3286/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: emoji._bttv.FeelsBadMan,
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: "https://static-cdn.jtvnw.net/emoticons/v1/499/1.0",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                src: emoji._bttv.FeelsGoodMan,
             }),
             " test",
         ]);

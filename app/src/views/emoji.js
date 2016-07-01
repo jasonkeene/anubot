@@ -70,14 +70,15 @@ function _processNodes(nodes, key) {
     while (nodeIndex < nodes.length) {
         var node = nodes[nodeIndex];
         if (typeof node === "string") {
-            nodeIndex = _processStringNode(node, nodes, nodeIndex, key);
+            _processStringNode(node, nodes, nodeIndex, key);
         }
         nodeIndex++;
     }
 }
 
 function _processStringNode(node, nodes, nodeIndex, key) {
-    var searchIndex, offset;
+    var searchIndex = 0,
+        offset = 0;
 
     while ((searchIndex = node.indexOf(key, offset)) !== -1) {
         // update offset for next iteration
@@ -93,7 +94,7 @@ function _processStringNode(node, nodes, nodeIndex, key) {
             imgNode = <img className="emoji" src={_bttv[key]} />,
             rest = node.substring(searchIndex + key.length);
         nodes.splice(nodeIndex, 1, prefix, imgNode, rest);
-        return nodeIndex + 2;
+        break;
     }
 }
 

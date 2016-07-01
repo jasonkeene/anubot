@@ -47,4 +47,18 @@ describe("render", () => {
             " test",
         ]);
     });
+
+    it("renders bttv emoji", () => {
+        var msg = {
+            body: "test FeelsBadMan test",
+        };
+        expect(emoji.render(msg)).toEqual([
+            "test ",
+            React.createElement("img", {
+                className: "emoji",
+                src: emoji._bttv.FeelsBadMan,
+            }),
+            " test",
+        ]);
+    });
 });

@@ -17,7 +17,7 @@ function render(message) {
     for (var i = 0; i < badges.length; i++) {
         var imageURL = _images[badges[i]];
         if (imageURL !== undefined) {
-            nodes.push(<img src={imageURL} />);
+            nodes.push(<img key={badges[i]} src={imageURL} />);
         }
     }
     return nodes;

@@ -10,7 +10,9 @@ function render(message) {
         for (var i = 0; i < splices.length; i++) {
             var splice = splices[i],
                 prefix = message.body.substring(processed, splice[0]),
-                imgNode = <img className="emoji" src={_emoteURL(splice[2])} />,
+                imgNode = <img className="emoji"
+                                key={i + "-" + splice[2]}
+                                src={_emoteURL(splice[2])} />,
                 rest = message.body.substring(splice[1]);
             nodes.splice(insertions, 1, prefix, imgNode, rest);
             insertions += 2;
@@ -91,7 +93,9 @@ function _processStringNode(node, nodes, nodeIndex, key) {
 
         // splice in react nodes
         var prefix = node.substring(0, searchIndex),
-            imgNode = <img className="emoji" src={_bttv[key]} />,
+            imgNode = <img className="emoji"
+                            key={nodeIndex + "-" + key}
+                            src={_bttv[key]} />,
             rest = node.substring(searchIndex + key.length);
         nodes.splice(nodeIndex, 1, prefix, imgNode, rest);
         break;

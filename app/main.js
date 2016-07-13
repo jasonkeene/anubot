@@ -12,13 +12,13 @@ electron.app.on('ready', () => {
     var go_proc = child_process.spawn("./anubot-server")
 
     go_proc.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
+        console.log(`[main] stdout: ${data}`);
     });
     go_proc.stderr.on('data', (data) => {
-        console.log(`stderr: ${data}`);
+        console.log(`[main] stderr: ${data}`);
     });
     go_proc.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
+        console.log(`[main] child process exited with code ${code}`);
     });
 
     var windowOpts = {

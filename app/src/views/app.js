@@ -53,18 +53,18 @@ const App = React.createClass({
             return <div className="tab">Content for {this.state.tab} tab!</div>;
         }
     },
-    render: function () {
+    renderAuthOverlay: function () {
         if (!this.state.authenticated) {
-            return (
-                <div>
-                    <AuthOverlay parent={this}
-                                 listeners={this.props.listeners}
-                                 connection={this.props.connection} />
-                </div>
-            );
+            return <AuthOverlay parent={this}
+                                listeners={this.props.listeners}
+                                connection={this.props.connection} />;
         }
+        return null;
+    },
+    render: function () {
         return (
             <div id="app">
+                {this.renderAuthOverlay()}
                 <Menu parent={this} selected={this.state.tab} />
                 {this.renderTab()}
             </div>

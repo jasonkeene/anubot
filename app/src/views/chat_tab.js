@@ -87,6 +87,12 @@ const ChatHeader = React.createClass({
             game: this.props.game,
         };
     },
+    componentWillReceiveProps: function (nextProps) {
+        this.setState({
+            status: nextProps.status,
+            game: nextProps.game,
+        });
+    },
 
     // event handlers
     handleEditClick: function () {

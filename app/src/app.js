@@ -10,25 +10,27 @@ const client = new websocket.client();
 var conn;
 
 client.on('connect', function(connection) {
+    console.log('[app] WebSocket Client Connected');
+
     conn = connection;
     const listeners = new Listeners();
-    views.render(connection, listeners);
-    console.log('WebSocket Client Connected');
 
     connection.on('message', function(message) {
-        console.log("Received: '" + message.utf8Data + "'");
+        console.log("[app] Received: '" + message.utf8Data + "'");
         listeners.dispatch(...unpack(message.utf8Data));
     });
     connection.on('error', function(error) {
-        console.log("Connection Error: " + error.toString());
+        console.log("[app] Connection Error: " + error.toString());
     });
     connection.on('close', function() {
-        console.log('echo-protocol Connection Closed');
+        console.log('[app] echo-protocol Connection Closed');
     });
+
+    views.render(connection, listeners);
 });
 
 client.on('connectFailed', function(error) {
-    console.log('Connect Error: ' + error.toString());
+    console.log('[app] Connect Error: ' + error.toString());
 });
 
 client.connect('ws://localhost:12345/api', '', 'http://localhost:12345');

@@ -10,6 +10,10 @@ const App = React.createClass({
             authenticated: false,
             tab: "chat",
             messages: [],
+            streamer: "",
+            bot: "",
+            status: "",
+            game: "",
         };
     },
 
@@ -38,7 +42,11 @@ const App = React.createClass({
     renderTab: function () {
         switch (this.state.tab) {
         case "chat":
-            return <ChatTab messages={this.state.messages}
+            return <ChatTab streamer={this.state.streamer}
+                            bot={this.state.bot}
+                            status={this.state.status}
+                            game={this.state.game}
+                            messages={this.state.messages}
                             listeners={this.props.listeners}
                             connection={this.props.connection} />;
         default:
@@ -52,7 +60,6 @@ const App = React.createClass({
                     <AuthOverlay parent={this}
                                  listeners={this.props.listeners}
                                  connection={this.props.connection} />
-                    <span>Some Content</span>
                 </div>
             );
         }

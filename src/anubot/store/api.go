@@ -2,7 +2,6 @@ package store
 
 // SetCredentials stores credentials
 func (s *Store) SetCredentials(kind, user, pass string) error {
-
 	err := s.setValueForKey(kind+"-username", user)
 	if err != nil {
 		return err
@@ -13,10 +12,7 @@ func (s *Store) SetCredentials(kind, user, pass string) error {
 // HasCredentials returns true if valid credentials are set
 func (s *Store) HasCredentials(kind string) bool {
 	user, pass, err := s.Credentials(kind)
-	if err != nil || user == "" || pass == "" {
-		return false
-	}
-	return true
+	return err == nil && user != "" && pass != ""
 }
 
 // Credentials retrieves credentials

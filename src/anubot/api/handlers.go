@@ -2,7 +2,12 @@ package api
 
 import (
 	"anubot/bot"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -11,6 +16,10 @@ const (
 	twitchHost = "irc.chat.twitch.tv"
 	twitchPort = 443
 )
+
+var httpClient = &http.Client{
+	Timeout: time.Second * 5,
+}
 
 var eventHandlers map[string]EventHandler
 
@@ -150,7 +159,101 @@ func usernamesHandler(event Event, session *Session) {
 			"bot":      session.bot.BotUsername(),
 		},
 	})
+}
 
+func authDetailsHandler(event Event, session *Session) {
+	resp := &Event{
+		Cmd: "auth-details",
+		Payload: map[string]interface{}{
+			"authenticated": false,
+			"streamer":      "",
+			"bot":           "",
+			"status":        "",
+			"game":          "",
+		},
+	}
+	defer websocket.JSON.Send(session.ws, resp)
+
+	streamerUser, streamerPass, err := session.store.Credentials("user")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	botUser, botPass, err := session.store.Credentials("bot")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if streamerUser == "" || streamerPass == "" ||
+		botUser == "" || botPass == "" {
+		println("bad creds")
+		return
+	}
+
+	status, game, _ := fetchStreamInfo(streamerUser)
+	resp.Payload = map[string]interface{}{
+		"authenticated": true,
+		"streamer":      streamerUser,
+		"bot":           botUser,
+		"status":        status,
+		"game":          game,
+	}
+}
+
+func fetchStreamInfo(channel string) (string, string, error) {
+	url := fmt.Sprintf("https://api.twitch.tv/kraken/channels/%s", channel)
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		return "", "", err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", err
+	}
+	data := &struct {
+		Status string `json:"status"`
+		Game   string `json:"game"`
+	}{}
+	err = json.Unmarshal(body, data)
+	if err != nil {
+		return "", "", err
+	}
+	return data.Status, data.Game, nil
+}
+
+func updateDescriptionHandler(event Event, session *Session) {
+	payload := event.Payload.(map[string]interface{})
+	game := payload["game"].(string)
+	status := payload["status"].(string)
+	user, pass, err := session.store.Credentials("user")
+	if err != nil {
+		fmt.Println("bad creds!")
+		return
+	}
+	err = updateDescription(game, status, user, pass)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func updateDescription(game, status, channel, pass string) error {
+	url := fmt.Sprintf("https://api.twitch.tv/kraken/channels/%s", channel)
+	req, err := http.NewRequest("PUT", url, nil)
+	if err != nil {
+		return err
+	}
+	// TODO: you need a oauth token that had the api scope!
+	token := fmt.Sprintf("OAuth %s", pass)
+	req.Header.Set("Authorization", token)
+	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Bad status code %d", resp.StatusCode)
+	}
+	return nil
 }
 
 type HandlerFunc func(event Event, session *Session)
@@ -163,6 +266,7 @@ func (f HandlerFunc) HandleEvent(event Event, session *Session) {
 func init() {
 	eventHandlers = make(map[string]EventHandler)
 	eventHandlers["ping"] = HandlerFunc(pingHandler)
+	// TODO: replace with auth-details call
 	eventHandlers["has-credentials-set"] = HandlerFunc(hasCredentialsSetHandler)
 	eventHandlers["set-credentials"] = HandlerFunc(setCredentialsHandler)
 	eventHandlers["connect"] = HandlerFunc(connectHandler)
@@ -170,5 +274,8 @@ func init() {
 	eventHandlers["subscribe"] = HandlerFunc(subscribeHandler)
 	eventHandlers["unsubscribe"] = HandlerFunc(unsubscribeHandler)
 	eventHandlers["send-message"] = HandlerFunc(sendMessageHandler)
+	// TODO: replace with auth-details call
 	eventHandlers["usernames"] = HandlerFunc(usernamesHandler)
+	eventHandlers["auth-details"] = HandlerFunc(authDetailsHandler)
+	eventHandlers["update-description"] = HandlerFunc(updateDescriptionHandler)
 }

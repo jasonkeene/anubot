@@ -15,7 +15,7 @@ import (
 type Store interface {
 	SetCredentials(kind, user, pass string) (err error)
 	HasCredentials(kind string) (has bool)
-	Credentials(kind string) (user string, pass string, err error)
+	Credentials(kind string) (user, pass string, err error)
 }
 
 //go:generate hel -t Bot -o mock_bot_test.go

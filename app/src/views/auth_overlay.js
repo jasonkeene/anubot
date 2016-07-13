@@ -7,11 +7,6 @@ const AuthOverlay = React.createClass({
         return {
             // ui data
             mode: "choice",
-
-            // auth data
-            initCredentialsCheck: 0,
-            userCredentialsSet: false,
-            botCredentialsSet: false,
         };
     },
     componentWillMount: function () {
@@ -20,35 +15,15 @@ const AuthOverlay = React.createClass({
 
     // network events
     checkIfAuthenticated: function () {
-        this.props.listeners.add("has-credentials-set", this.handleHasCredentialsSetEvent);
+        this.props.listeners.add("auth-details", this.authDetailsEvent);
         this.props.connection.sendUTF(JSON.stringify({
-            "cmd": "has-credentials-set",
-            "payload": "user",
-        }));
-        this.props.connection.sendUTF(JSON.stringify({
-            "cmd": "has-credentials-set",
-            "payload": "bot",
+            "cmd": "auth-details",
         }));
     },
-    handleHasCredentialsSetEvent: function (payload) {
-        var setValues = {};
-        setValues[payload.kind + "CredentialsSet"] = payload.result;
-        setValues.initCredentialsCheck = this.state.initCredentialsCheck + 1;
-
-        if (setValues.initCredentialsCheck >= 2) {
-            // at this point we got two response events from the server
-            setValues.initCredentialsCheck = 0;
-            this.props.listeners.remove("has-credentials-set", this.handleHasCredentialsSetEvent);
-        }
-
-        // write state out
-        // TODO: react docs say this isn't guarenteed to happen syncronously
-        // so we can't rely on this.state values afterward
-        this.setState(setValues);
-
-        if (this.state.userCredentialsSet && this.state.botCredentialsSet) {
+    authDetailsEvent: function (payload) {
+        if (payload.authenticated === true) {
             // tell the parent we are authenticated
-            this.props.parent.setState({authenticated: true});
+            this.props.parent.setState(payload);
 
             // connect to the remote irc server
             this.props.parent.connect();

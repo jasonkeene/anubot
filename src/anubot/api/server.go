@@ -1,118 +1,72 @@
 package api
 
 import (
-	"anubot/bot"
 	"io"
 	"log"
-	"sync"
+	"net"
 
 	"golang.org/x/net/websocket"
 )
 
-//go:generate hel -t Store -o mock_store_test.go
+//go:generate hel
 
 // Store is the object the APIServer uses to persist data.
 type Store interface {
-	SetCredentials(kind, user, pass string) (err error)
-	HasCredentials(kind string) (has bool)
-	Credentials(kind string) (user, pass string, err error)
-}
+	RegisterUser(username, password string) (string, error)
+	AuthenticateUser(username, password string) (string, bool)
 
-//go:generate hel -t Bot -o mock_bot_test.go
-
-// Bot is the object reposible for talking to IRC.
-type Bot interface {
-	Connect(connConfig *bot.ConnConfig) (disconnected chan struct{}, err error)
-	Disconnect()
-	Channel() string
-	InitChatFeature(dispatcher *bot.MessageDispatcher)
-	ChatFeature() *bot.ChatFeature
-	StreamerUsername() string
-	BotUsername() string
-}
-
-// Event is the structure sent over websocket connections by both ends.
-type Event struct {
-	Cmd     string      `json:"cmd"`
-	Payload interface{} `json:"payload"`
-}
-
-// Session stores objects handlers need when responding to events.
-type Session struct {
-	ws         *websocket.Conn
-	store      Store
-	bot        Bot
-	dispatcher *bot.MessageDispatcher
-
-	mu            sync.Mutex
-	subscriptions []chan bot.Message
-}
-
-// AddSubscription adds a subscription to the session.
-func (s *Session) AddSubscription(sub chan bot.Message) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.subscriptions = append(s.subscriptions, sub)
-}
-
-// Subscriptions gets the current subscriptions for the session.
-func (s *Session) Subscriptions() []chan bot.Message {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.subscriptions
+	CreateOauthNonce() string
+	OauthNonceExists(nonce string) bool
 }
 
 // APIServer responds to websocket events sent from the client.
 type APIServer struct {
-	store      Store
-	bot        Bot
-	dispatcher *bot.MessageDispatcher
+	twitchOauthClientID string
+	store               Store
 }
 
 // New creates a new APIServer.
-func New(store Store, bot Bot, dispatcher *bot.MessageDispatcher) *APIServer {
+func New(twitchOauthClientID string, store Store) *APIServer {
 	return &APIServer{
-		store:      store,
-		bot:        bot,
-		dispatcher: dispatcher,
+		twitchOauthClientID: twitchOauthClientID,
+		store:               store,
 	}
 }
 
 // Serve reads off of a websocket connection and responds to events.
 func (api *APIServer) Serve(ws *websocket.Conn) {
-	var session *Session
-
 	defer func() {
-		// clean up session subscriptions
-		for _, sub := range session.Subscriptions() {
-			api.dispatcher.Remove(sub)
-		}
-		// disconnect from irc
-		api.bot.Disconnect()
-		// tear down the conn
 		ws.Close()
 	}()
 
-	session = &Session{
-		ws:         ws,
-		store:      api.store,
-		bot:        api.bot,
-		dispatcher: api.dispatcher,
+	s := &session{
+		ws:  ws,
+		api: api,
 	}
 
 	for {
-		var event Event
-		err := websocket.JSON.Receive(ws, &event)
+		event, err := s.Receive()
 		if err != nil {
 			if err == io.EOF {
 				return
 			}
-			log.Panic(err)
+			if _, ok := err.(*net.OpError); ok {
+				log.Print("Encountered an OpErr, tearing down connection: ", err)
+				return
+			}
+			log.Printf("Encountered an error when trying to receive an event from a websocket connection: %T %s", err, err)
+			continue
 		}
 		handler, ok := eventHandlers[event.Cmd]
 		if !ok {
+			log.Printf("Received an event with the command '%s' that does not match any of our handlers.", event.Cmd)
+			s.Send(event{
+				Cmd:   event.Cmd,
+				Error: invalidCommand,
+			})
 			continue
 		}
-		handler.HandleEvent(event, session)
+		log.Printf("Handling '%s' event.", event.Cmd)
+		handler.HandleEvent(event, s)
 	}
 }

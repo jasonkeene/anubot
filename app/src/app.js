@@ -33,4 +33,4 @@ client.on('connectFailed', function(error) {
     console.log('[app] Connect Error: ' + error.toString());
 });
 
-client.connect('ws://localhost:12345/api', '', 'http://localhost:12345');
+client.connect('wss://anubot.io:4443/api', '', 'https://anubot.io:4443');

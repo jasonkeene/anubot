@@ -17,6 +17,7 @@
     "jasmine": "2.4.1",
     "jshint": "^2.9.2",
     "node-sass": "3.7.0",
-    "react-addons-test-utils": "^15.1.0"
+    "react-addons-test-utils": "^15.1.0",
+    "wscat": "^1.0.1"
   }
 }

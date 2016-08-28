@@ -10,7 +10,7 @@ import (
 
 //go:generate hel
 
-// Store is the object the APIServer uses to persist data.
+// Store is the object the Server uses to persist data.
 type Store interface {
 	RegisterUser(username, password string) (string, error)
 	AuthenticateUser(username, password string) (string, bool)
@@ -19,22 +19,22 @@ type Store interface {
 	OauthNonceExists(nonce string) bool
 }
 
-// APIServer responds to websocket events sent from the client.
-type APIServer struct {
+// Server responds to websocket events sent from the client.
+type Server struct {
 	twitchOauthClientID string
 	store               Store
 }
 
-// New creates a new APIServer.
-func New(twitchOauthClientID string, store Store) *APIServer {
-	return &APIServer{
+// New creates a new Server.
+func New(twitchOauthClientID string, store Store) *Server {
+	return &Server{
 		twitchOauthClientID: twitchOauthClientID,
 		store:               store,
 	}
 }
 
 // Serve reads off of a websocket connection and responds to events.
-func (api *APIServer) Serve(ws *websocket.Conn) {
+func (api *Server) Serve(ws *websocket.Conn) {
 	defer func() {
 		ws.Close()
 	}()

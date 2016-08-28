@@ -43,7 +43,7 @@ func registerHandler(e event, s *session) {
 	// attempt to register the user
 	id, err := s.Store().RegisterUser(username, password)
 	if err != nil {
-		if err == store.usernameTaken {
+		if err == store.UsernameTaken {
 			resp.Error = usernameTaken
 		}
 		return
@@ -106,7 +106,7 @@ func authenticateHandler(e event, s *session) {
 // authenticated.
 func authenticateWrapper(f handlerFunc) handlerFunc {
 	return func(e event, s *session) {
-		id, ok := s.Authenticated()
+		_, ok := s.Authenticated()
 		if ok {
 			f(e, s)
 			return

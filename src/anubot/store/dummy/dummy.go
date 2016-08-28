@@ -17,17 +17,17 @@ type Dummy struct {
 
 type users map[string]credentials
 
-func (u users) lookup(username string) (credentials, bool) {
+func (u users) lookup(username string) (string, credentials, bool) {
 	for id, creds := range u {
 		if creds.username == username {
-			return creds, true
+			return id, creds, true
 		}
 	}
-	return credentials{}, false
+	return "", credentials{}, false
 }
 
 func (u users) exists(username string) bool {
-	_, exists := u.lookup(username)
+	_, _, exists := u.lookup(username)
 	return exists
 }
 
@@ -61,15 +61,18 @@ func (d *Dummy) RegisterUser(username, password string) (string, error) {
 }
 
 // AuthenticateUser checks to see if the given user credentials are valid.
-func (d *Dummy) AuthenticateUser(username, password string) bool {
+func (d *Dummy) AuthenticateUser(username, password string) (string, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	c, exists := d.users.lookup(username)
+	id, c, exists := d.users.lookup(username)
 	if !exists {
-		return flase
+		return "", false
 	}
-	return c.password == password
+	if c.password != password {
+		return "", false
+	}
+	return id, true
 }
 
 // CreateOauthNonce creates and returns a unique oauth nonce.

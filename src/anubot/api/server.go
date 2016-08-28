@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/satori/go.uuid"
+
 	"golang.org/x/net/websocket"
 )
 
@@ -40,12 +42,15 @@ func (api *Server) Serve(ws *websocket.Conn) {
 	}()
 
 	s := &session{
+		id:  uuid.NewV4().String(),
 		ws:  ws,
 		api: api,
 	}
+	log.Printf("Serving session %s", s.id)
+	defer log.Printf("done Serving session %s", s.id)
 
 	for {
-		event, err := s.Receive()
+		e, err := s.Receive()
 		if err != nil {
 			if err == io.EOF {
 				return
@@ -57,16 +62,16 @@ func (api *Server) Serve(ws *websocket.Conn) {
 			log.Printf("Encountered an error when trying to receive an event from a websocket connection: %T %s", err, err)
 			continue
 		}
-		handler, ok := eventHandlers[event.Cmd]
+		handler, ok := eventHandlers[e.Cmd]
 		if !ok {
-			log.Printf("Received an event with the command '%s' that does not match any of our handlers.", event.Cmd)
+			log.Printf("Received an event with the command '%s' that does not match any of our handlers.", e.Cmd)
 			s.Send(event{
-				Cmd:   event.Cmd,
+				Cmd:   e.Cmd,
 				Error: invalidCommand,
 			})
 			continue
 		}
-		log.Printf("Handling '%s' event.", event.Cmd)
-		handler.HandleEvent(event, s)
+		log.Printf("Handling '%s' event.", e.Cmd)
+		handler.HandleEvent(e, s)
 	}
 }

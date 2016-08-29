@@ -13,12 +13,6 @@
 [submodule "src/github.com/mattn/go-sqlite3"]
 	path = src/github.com/mattn/go-sqlite3
 	url = https://github.com/mattn/go-sqlite3
-[submodule "src/github.com/onsi/ginkgo"]
-	path = src/github.com/onsi/ginkgo
-	url = https://github.com/onsi/ginkgo
-[submodule "src/github.com/onsi/gomega"]
-	path = src/github.com/onsi/gomega
-	url = https://github.com/onsi/gomega
 [submodule "src/golang.org/x/net"]
 	path = src/golang.org/x/net
 	url = https://go.googlesource.com/net
@@ -70,3 +64,9 @@
 [submodule "src/golang.org/x/crypto"]
 	path = src/golang.org/x/crypto
 	url = https://go.googlesource.com/crypto
+[submodule "src/github.com/stretchr/testify"]
+	path = src/github.com/stretchr/testify
+	url = https://github.com/stretchr/testify
+[submodule "src/golang.org/x/tools"]
+	path = src/golang.org/x/tools
+	url = https://go.googlesource.com/tools

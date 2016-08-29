@@ -30,4 +30,8 @@ var (
 		Code: 4,
 		Text: "authentication error",
 	}
+	twitchAuthenticationError = &apiError{
+		Code: 4,
+		Text: "authentication error with twitch",
+	}
 )

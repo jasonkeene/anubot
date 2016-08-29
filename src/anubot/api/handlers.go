@@ -25,6 +25,7 @@ func init() {
 	{
 		// general
 		eventHandlers["ping"] = handlerFunc(pingHandler)
+		eventHandlers["methods"] = handlerFunc(methodsHandler)
 
 		// authentication
 		eventHandlers["register"] = handlerFunc(registerHandler)
@@ -33,12 +34,31 @@ func init() {
 
 	// authenticated
 	{
-		// twitch auth
-		eventHandlers["twitch-oauth-start"] = authenticateWrapper(handlerFunc(twitchOauthStartHandler))
-		eventHandlers["twtitch-user-details"] = authenticateWrapper(handlerFunc(twitchUserDetailsHandler))
+		// twitch oauth
+		eventHandlers["twitch-oauth-start"] = authenticateWrapper(
+			handlerFunc(twitchOauthStartHandler),
+		)
+	}
+
+	// twitch authenticated
+	{
+		// user information
+		eventHandlers["twitch-user-details"] = authenticateWrapper(
+			twitchAuthenticateWrapper(
+				handlerFunc(twitchUserDetailsHandler),
+			),
+		)
 
 		// twitch chat
-		eventHandlers["twitch-send-message"] = authenticateWrapper(handlerFunc(twitchSendMessageHandler))
-		eventHandlers["twitch-update-chat-description"] = authenticateWrapper(handlerFunc(twitchUpdateChatDescriptionHandler))
+		eventHandlers["twitch-send-message"] = authenticateWrapper(
+			twitchAuthenticateWrapper(
+				handlerFunc(twitchSendMessageHandler),
+			),
+		)
+		eventHandlers["twitch-update-chat-description"] = authenticateWrapper(
+			twitchAuthenticateWrapper(
+				handlerFunc(twitchUpdateChatDescriptionHandler),
+			),
+		)
 	}
 }

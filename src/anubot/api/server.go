@@ -1,6 +1,7 @@
 package api
 
 import (
+	"anubot/twitch/oauth"
 	"io"
 	"log"
 	"net"
@@ -14,11 +15,11 @@ import (
 
 // Store is the object the Server uses to persist data.
 type Store interface {
-	RegisterUser(username, password string) (string, error)
-	AuthenticateUser(username, password string) (string, bool)
+	RegisterUser(username, password string) (userID string, err error)
+	AuthenticateUser(username, password string) (userID string, authenticated bool)
+	TwitchAuthenticated(userID string) (authenticated bool)
 
-	CreateOauthNonce() string
-	OauthNonceExists(nonce string) bool
+	oauth.NonceStore
 }
 
 // Server responds to websocket events sent from the client.

@@ -1,6 +1,9 @@
 package api
 
-import "anubot/twitch/oauth"
+import (
+	"anubot/store"
+	"anubot/twitch/oauth"
+)
 
 const (
 	twitchHost = "irc.chat.twitch.tv"
@@ -9,10 +12,38 @@ const (
 
 // twitchOauthStartHandler responds with a URL to start the Twitch oauth flow.
 func twitchOauthStartHandler(e event, s *session) {
+	// grab the twitch user string from payload
+	tus, ok := e.Payload.(string)
+	if !ok {
+		s.Send(event{
+			Cmd:       "twitch-oauth-start",
+			RequestID: e.RequestID,
+			Error:     invalidPayload,
+		})
+		return
+	}
+
+	// validate twitch user
+	var tu store.TwitchUser
+	switch tus {
+	case "streamer":
+		tu = store.Streamer
+	case "bot":
+		tu = store.Bot
+	default:
+		s.Send(event{
+			Cmd:       "twitch-oauth-start",
+			RequestID: e.RequestID,
+			Error:     invalidPayload,
+		})
+		return
+	}
+
+	userID, _ := s.Authenticated()
 	s.Send(event{
 		Cmd:       "twitch-oauth-start",
 		RequestID: e.RequestID,
-		Payload:   oauth.URL(s.TwitchOauthClientID(), s.Store()),
+		Payload:   oauth.URL(s.TwitchOauthClientID(), userID, tu, s.Store()),
 	})
 }
 
@@ -88,4 +119,21 @@ func twitchUpdateChatDescriptionHandler(e event, s *session) {
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
+}
+
+// twitchAuthenticateWrapper wraps a handler and makes sure the user attached
+// to the session is properly authenticated with twitch.
+func twitchAuthenticateWrapper(f handlerFunc) handlerFunc {
+	return func(e event, s *session) {
+		userID, _ := s.Authenticated()
+		if s.Store().TwitchAuthenticated(userID) {
+			f(e, s)
+			return
+		}
+		s.Send(event{
+			Cmd:       e.Cmd,
+			RequestID: e.RequestID,
+			Error:     twitchAuthenticationError,
+		})
+	}
 }

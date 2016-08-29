@@ -7,3 +7,16 @@ func pingHandler(e event, s *session) {
 		RequestID: e.RequestID,
 	})
 }
+
+// methodsHandler responds with a list of methods the API supports.
+func methodsHandler(e event, s *session) {
+	methods := []string{}
+	for m := range eventHandlers {
+		methods = append(methods, m)
+	}
+	s.Send(event{
+		Cmd:       "methods",
+		RequestID: e.RequestID,
+		Payload:   methods,
+	})
+}

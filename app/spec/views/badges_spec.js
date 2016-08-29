@@ -14,12 +14,14 @@ describe("render", () => {
             React.createElement(
                 "img",
                 {
+                    key: "admin",
                     src: badges._images.admin,
                 }
             ),
             React.createElement(
                 "img",
                 {
+                    key: "turbo",
                     src: badges._images.turbo,
                 }
             ),

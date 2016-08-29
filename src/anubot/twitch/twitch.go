@@ -41,7 +41,7 @@ func (t API) Username(token string) (username string, err error) {
 		return "", err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Bad status code %d", resp.StatusCode)
+		return "", fmt.Errorf("Bad status code %d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)

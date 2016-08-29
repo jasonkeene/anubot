@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 echo building binaries
 
@@ -9,17 +9,17 @@ ls src/anubot/cmd | while read line; do
     go build -o bin/$line anubot/cmd/$line
 done
 
-echo running ginkgo tests
+echo running go tests
 
 pushd src/anubot
-    ginkgo unfocus
     goimports -w .
-    ginkgo -r -race -randomizeAllSpecs
+    go test -race ./...
 popd
 
 echo running jasmine tests
 
 pushd app
+    babel --presets es2015,react --out-dir lib src;
     jasmine
     jshint lib
     jshint spec

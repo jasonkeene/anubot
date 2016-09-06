@@ -18,7 +18,12 @@ func TestConnectingOverTLS(t *testing.T) {
 	go func() {
 		defer close(clientDone)
 		clientConn, err := connectTwitch("test-user", "test-pass", "#test-chan", d)
-		defer clientConn.close()
+		defer func() {
+			err := clientConn.close()
+			if err != nil {
+				log.Panic("error in tearing down client conn")
+			}
+		}()
 		if err != nil {
 			log.Panic("unable to connect to twitch")
 		}
@@ -56,7 +61,12 @@ func TestDispatchingMessages(t *testing.T) {
 		defer close(clientDone)
 		// racey
 		clientConn, err := connectTwitch("test-user", "test-pass", "#test-chan", d)
-		defer clientConn.close()
+		defer func() {
+			err := clientConn.close()
+			if err != nil {
+				log.Panic("error in tearing down client conn")
+			}
+		}()
 		if err != nil {
 			log.Panic("unable to connect to twitch")
 		}
@@ -85,13 +95,21 @@ func TestSendingMessages(t *testing.T) {
 	go func() {
 		defer close(clientDone)
 		clientConn, err := connectTwitch("test-user", "test-pass", "#test-chan", d)
-		defer clientConn.close()
+		defer func() {
+			err := clientConn.close()
+			if err != nil {
+				log.Panic("error in tearing down client conn")
+			}
+		}()
 		if err != nil {
 			log.Panic("unable to connect to twitch")
 		}
 		clientConn.send(TXMessage{
-			To:      "#test-chan",
-			Message: "test-message",
+			Type: Twitch,
+			Twitch: &TXTwitch{
+				To:      "#test-chan",
+				Message: "test-message",
+			},
 		})
 	}()
 

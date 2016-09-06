@@ -28,7 +28,7 @@ type twitchConn struct {
 }
 
 func (c *twitchConn) send(m TXMessage) {
-	c.c.Privmsg(m.To, m.Message)
+	c.c.Privmsg(m.Twitch.To, m.Twitch.Message)
 }
 
 func (c *twitchConn) close() error {
@@ -66,14 +66,7 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 	tc.c.HandleFunc("CONNECTED", func(conn *client.Conn, line *client.Line) {
 		close(connected)
 	})
-	tc.c.HandleFunc("PRIVMSG", func(conn *client.Conn, line *client.Line) {
-		d.Dispatch(RXMessage{
-			Type: Twitch,
-			Twitch: &RXTwitch{
-				Line: line,
-			},
-		})
-	})
+	tc.c.HandleFunc("PRIVMSG", tc.dispatchPrivmsg)
 
 	log.Printf("connectTwitch: connecting to twitch for user: %s", u)
 	if err := tc.c.Connect(); err != nil {
@@ -86,4 +79,13 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 	tc.c.Join(c)
 	log.Printf("connectTwitch: joined channel: %s on twitch for user: %s", c, u)
 	return tc, nil
+}
+
+func (c *twitchConn) dispatchPrivmsg(conn *client.Conn, line *client.Line) {
+	c.d.Dispatch(RXMessage{
+		Type: Twitch,
+		Twitch: &RXTwitch{
+			Line: line,
+		},
+	})
 }

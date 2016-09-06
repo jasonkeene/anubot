@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"os/signal"
+	"strings"
+	"sync"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/fluffle/goirc/logging/golog"
 
 	"anubot/stream"
@@ -15,21 +17,42 @@ func init() {
 	golog.Init()
 }
 
-type fakeDispatcher struct{}
+type fakeDispatcher struct {
+	mu              sync.Mutex
+	lastDiscordChan string
+}
 
-func (fd fakeDispatcher) Dispatch(m stream.RXMessage) {
-	spew.Dump(m)
+func (fd *fakeDispatcher) Dispatch(m stream.RXMessage) {
+	switch m.Type {
+	case stream.Twitch:
+		fmt.Printf("TWITCH: %s\n", m.Twitch.Line.Text())
+	case stream.Discord:
+		fmt.Printf("DISCORD: %s\n", m.Discord.MessageCreate.Content)
+		fd.mu.Lock()
+		defer fd.mu.Unlock()
+		fd.lastDiscordChan = m.Discord.MessageCreate.ChannelID
+	}
+}
+
+func (fd *fakeDispatcher) LastDiscordChannel() string {
+	fd.mu.Lock()
+	defer fd.mu.Unlock()
+	return fd.lastDiscordChan
 }
 
 func main() {
-	u := os.Getenv("TWITCH_USER_USER")
-	p := os.Getenv("TWITCH_USER_PASS")
+	c := "#" + os.Getenv("TWITCH_USER_USER")
+	u := os.Getenv("TWITCH_BOT_USER")
+	p := os.Getenv("TWITCH_BOT_PASS")
+	t := os.Getenv("DISCORD_BOT_PASS")
 
-	manager := stream.NewManager()
-	err := manager.Connect(stream.Twitch, u, p, "#"+u, fakeDispatcher{})
-	if err != nil {
-		panic(err)
-	}
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	d := &fakeDispatcher{}
+	manager := stream.NewManager(d)
+	manager.ConnectTwitch(u, p, c)
+	manager.ConnectDiscord(t)
 
 	go func() {
 		r := bufio.NewReader(os.Stdin)
@@ -38,16 +61,33 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			manager.Send(stream.Twitch, u, stream.TXMessage{
-				To:      "#" + u,
-				Message: string(line),
+			if strings.TrimSpace(string(line)) == "" {
+				continue
+			}
+			manager.Send(stream.TXMessage{
+				Type: stream.Twitch,
+				Twitch: &stream.TXTwitch{
+					Username: u,
+					To:       c,
+					Message:  string(line),
+				},
 			})
+			dchan := d.LastDiscordChannel()
+			if dchan != "" {
+				manager.Send(stream.TXMessage{
+					Type: stream.Discord,
+					Discord: &stream.TXDiscord{
+						To:      dchan,
+						Message: string(line),
+					},
+				})
+			}
 		}
 	}()
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
 	<-interrupt
-	manager.Disconnect(stream.Twitch, u)
+	wait := manager.DisconnectTwitch(u)
+	wait()
+	wait = manager.DisconnectDiscord()
+	wait()
 }

@@ -1,6 +1,9 @@
 package stream
 
-import "github.com/fluffle/goirc/client"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/fluffle/goirc/client"
+)
 
 // Type is the type of the stream (Twitch, Discord).
 type Type int
@@ -14,6 +17,20 @@ const (
 
 // TXMessage is the data writen out to a stream source.
 type TXMessage struct {
+	Type    Type
+	Twitch  *TXTwitch
+	Discord *TXDiscord
+}
+
+// TXTwitch contains information to send to Twitch.
+type TXTwitch struct {
+	Username string
+	To       string
+	Message  string
+}
+
+// TXDiscord contains information to send to Discord.
+type TXDiscord struct {
 	To      string
 	Message string
 }
@@ -32,6 +49,7 @@ type RXTwitch struct {
 
 // RXDiscord contains information received from Discord.
 type RXDiscord struct {
+	MessageCreate *discordgo.MessageCreate
 }
 
 // Dispatcher dispoatches messages from a stream source.

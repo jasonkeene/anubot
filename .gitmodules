@@ -73,3 +73,6 @@
 [submodule "src/github.com/bwmarrin/discordgo"]
 	path = src/github.com/bwmarrin/discordgo
 	url = https://github.com/bwmarrin/discordgo
+[submodule "src/github.com/pebbe/zmq4"]
+	path = src/github.com/pebbe/zmq4
+	url = https://github.com/pebbe/zmq4

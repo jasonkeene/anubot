@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/fluffle/goirc/client"
 )
@@ -19,7 +20,18 @@ var (
 	twitchPort         = defaultTwitchPort
 	insecureSkipVerify = false
 	flood              = false
+
+	capString string
 )
+
+func init() {
+	caps := []string{
+		"twitch.tv/tags",
+		"twitch.tv/commands",
+		"twitch.tv/membership",
+	}
+	capString = strings.Join(caps, " ")
+}
 
 type twitchConn struct {
 	d Dispatcher
@@ -78,6 +90,10 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 	log.Printf("connectTwitch: recieved connection event from twitch for user: %s", u)
 	tc.c.Join(c)
 	log.Printf("connectTwitch: joined channel: %s on twitch for user: %s", c, u)
+
+	tc.c.Raw("CAP REQ :" + capString)
+	log.Printf("connectTwitch: requested capabilities on twitch for user: %s", u)
+
 	return tc, nil
 }
 

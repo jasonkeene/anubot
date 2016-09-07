@@ -43,6 +43,9 @@ func TestConnectingOverTLS(t *testing.T) {
 	join := serverConn.receive("JOIN")
 	require.Equal("JOIN #test-chan", join)
 
+	cap := serverConn.receive("CAP")
+	require.Equal("CAP REQ :"+capString, cap)
+
 	serverConn.receive("QUIT")
 	serverConn.close()
 

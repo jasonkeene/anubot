@@ -37,19 +37,19 @@ type TXDiscord struct {
 
 // RXMessage is the data read from a stream source.
 type RXMessage struct {
-	Type    Type
-	Twitch  *RXTwitch
-	Discord *RXDiscord
+	Type    Type       `json:"type"`
+	Twitch  *RXTwitch  `json:"twitch"`
+	Discord *RXDiscord `json:"discord"`
 }
 
 // RXTwitch contains information received from Twitch.
 type RXTwitch struct {
-	Line *client.Line
+	Line *client.Line `json:"line"`
 }
 
 // RXDiscord contains information received from Discord.
 type RXDiscord struct {
-	MessageCreate *discordgo.MessageCreate
+	MessageCreate *discordgo.MessageCreate `json:"message_create"`
 }
 
 // Dispatcher dispoatches messages from a stream source.

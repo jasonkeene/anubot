@@ -1,4 +1,6 @@
 
+[![Issues in Progress](https://badge.waffle.io/jasonkeene/anubot.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/jasonkeene/anubot)
+
 # A·nu·bot
 
 Anubot is a new bot for Twitch. It is an electron app with a golang core.
@@ -14,6 +16,6 @@ Anubot is a new bot for Twitch. It is an electron app with a golang core.
 
 ## Live Coding
 
-I am currently streaming the creation of this bot [live on Twitch](http://twitch.tv/postcrypt).
+I am streaming the creation of this bot [live on Twitch](http://twitch.tv/postcrypt).
 
-<a href="http://twitch.tv/postcrypt">![](http://streambadge.com/twitch/custom/ffffff/8adaf2/648588/postcrypt.png)</a>
+[![](http://streambadge.com/twitch/custom/ffffff/8adaf2/648588/postcrypt.png)](http://twitch.tv/postcrypt)

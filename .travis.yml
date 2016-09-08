@@ -15,16 +15,16 @@ before_install:
 
   # install node
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
-  - sudo apt-get --assume-yes install nodejs
+  - sudo apt-get --yes install nodejs
   - export PATH=$PWD/app/node_modules/.bin:$PATH
 
   # pull node modules
   - pushd app; npm install; popd
 
   # install 0mq
-  - sudo apt-get --assume-yes install python-software-properties
-  - sudo add-apt-repository ppa:chris-lea/zeromq
+  - sudo apt-get --yes install python-software-properties
+  - sudo add-apt-repository --yes ppa:chris-lea/zeromq
   - sudo apt-get update
   - sudo apt-get install zeromq
-  - sudo apt-get --assume-yes install build-essential pkg-config
+  - sudo apt-get --yes install build-essential pkg-config
   - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig

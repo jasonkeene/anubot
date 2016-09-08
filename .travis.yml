@@ -12,4 +12,5 @@ before_install:
   - sudo apt-get update
   - sudo apt-get --assume-yes install build-essential pkg-config libzmq3-dev
   - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+  - git submodule update --init --recursive
   - pushd app; npm install; popd

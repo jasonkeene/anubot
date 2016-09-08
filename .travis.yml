@@ -8,7 +8,7 @@ go_import_path: github.com/jasonkeene/anubot
 before_install:
   - sudo apt-get --quiet=2 --download-only update
   - sudo apt-get --assume-yes install git nodejs npm
-  - sudo ln -s /usr/bin/node{js,}
+  - sudo ln -s /usr/bin/nodejs /usr/bin/node
   - sudo apt-get --assume-yes install build-essential pkg-config libzmq3-dev
   - git submodule update --init --recursive
   - pushd app; npm install; popd

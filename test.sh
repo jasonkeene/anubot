@@ -6,6 +6,7 @@ echo building binaries
 
 mkdir -p bin
 ls src/anubot/cmd | while read line; do
+    echo building $line
     go build -o bin/$line anubot/cmd/$line
 done
 

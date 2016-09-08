@@ -1,4 +1,5 @@
 
+[![Build Status](https://travis-ci.org/jasonkeene/anubot.svg?branch=master)](https://travis-ci.org/jasonkeene/anubot)
 [![Issues in Progress](https://badge.waffle.io/jasonkeene/anubot.svg?label=in%20progress&title=In%20Progress)](http://waffle.io/jasonkeene/anubot)
 
 # A·nu·bot

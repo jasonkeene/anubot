@@ -14,10 +14,10 @@ before_install:
   - export PATH=$GOPATH/bin:$PATH
 
   # install node
-  - [ "$(which node)" ] && node --version
+  - node --version || true
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --yes install nodejs
-  - [ "$(which node)" ] && node --version
+  - node --version || true
   - export PATH=$PWD/app/node_modules/.bin:$PATH
 
   # pull node modules

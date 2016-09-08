@@ -13,6 +13,9 @@ done
 echo running go tests
 
 pushd src/anubot
+    if [ ! "$(which goimports)" ]; then
+        go install golang.org/x/tools/cmd/goimports
+    fi
     goimports -w .
     go test -race ./...
 popd

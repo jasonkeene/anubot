@@ -15,14 +15,14 @@ before_install:
   # install node
   - node --version || true
   - nodejs --version || true
-  - which -a node
-  - which -a nodejs
+  - which -a node || true
+  - which -a nodejs || true
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --yes install nodejs
   - node --version || true
   - nodejs --version || true
-  - which -a node
-  - which -a nodejs
+  - which -a node || true
+  - which -a nodejs || true
   - export PATH=$PWD/app/node_modules/.bin:$PATH
 
   # pull node modules

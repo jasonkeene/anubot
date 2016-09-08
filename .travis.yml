@@ -16,7 +16,7 @@ before_install:
   # install node
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --yes install nodejs
-  - export PATH=/usr/bin/node:$PWD/app/node_modules/.bin:$PATH
+  - export PATH=/usr/bin:$PWD/app/node_modules/.bin:$PATH
   - which -a node || true
   - hash -d node || true
 

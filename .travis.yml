@@ -1,14 +1,15 @@
-language: go
-go:
-  - 1.7
-env:
-  - PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+language: c
 script: ./test.sh
 go_import_path: github.com/jasonkeene/anubot
 before_install:
+  - sudo wget https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz
+  - sudo tar -xzf go1.7.linux-amd64.tar.gz -C /usr/local
+  - export GOPATH=$PWD
+  - export PATH=$GOPATH/bin:$GOPATH/app/node_modules/.bin:$PATH
   - sudo apt-get --quiet=2 --download-only update
   - sudo apt-get --assume-yes install git nodejs npm software-properties-common
   - sudo add-apt-repository --yes ppa:chris-lea/node.js
   - sudo apt-get update
   - sudo apt-get --assume-yes install build-essential pkg-config libzmq3-dev
+  - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
   - pushd app; npm install; popd

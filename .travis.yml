@@ -1,6 +1,5 @@
 language: c
 script: ./test.sh
-go_import_path: github.com/jasonkeene/anubot
 before_install:
   - sudo cat /etc/lsb-release
 
@@ -15,9 +14,15 @@ before_install:
 
   # install node
   - node --version || true
+  - nodejs --version || true
+  - which -a node
+  - which -a nodejs
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --yes install nodejs
   - node --version || true
+  - nodejs --version || true
+  - which -a node
+  - which -a nodejs
   - export PATH=$PWD/app/node_modules/.bin:$PATH
 
   # pull node modules

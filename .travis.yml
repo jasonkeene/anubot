@@ -10,6 +10,7 @@ before_install:
   - sudo wget https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz
   - sudo tar -xzf go1.7.linux-amd64.tar.gz -C /usr/local
   - export GOPATH=$PWD
+  - export GOROOT=/usr/local/go
   - export PATH=$GOPATH/bin:$PATH
 
   # install node

@@ -7,9 +7,9 @@ before_install:
   - export GOPATH=$PWD
   - export PATH=$GOPATH/bin:$GOPATH/app/node_modules/.bin:$PATH
   - sudo apt-get --quiet=2 --download-only update
-  - sudo apt-get --assume-yes install git nodejs npm software-properties-common
-  - sudo add-apt-repository --yes ppa:chris-lea/node.js
-  - sudo apt-get update
+  - curl -sL https://deb.nodesource.com/setup | sudo bash -
+  - sudo apt-get --assume-yes install nodejs
+  - sudo apt-get --assume-yes install git software-properties-common
   - sudo apt-get --assume-yes install build-essential pkg-config libzmq3-dev
   - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
   - git submodule update --init --recursive

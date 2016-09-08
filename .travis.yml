@@ -14,7 +14,7 @@ before_install:
   - export PATH=$GOPATH/bin:$PATH
 
   # install node
-  - curl -sL https://deb.nodesource.com/setup | sudo bash -
+  - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --assume-yes install nodejs
   - export PATH=$PWD/app/node_modules/.bin:$PATH
 

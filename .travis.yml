@@ -16,6 +16,8 @@ before_install:
   - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
   - sudo apt-get --yes install nodejs
   - export PATH=/usr/bin/node:$PWD/app/node_modules/.bin:$PATH
+  - which -a node || true
+  - hash -d node || true
 
   # pull node modules
   - pushd app; npm install; popd

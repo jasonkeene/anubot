@@ -32,6 +32,6 @@ before_install:
   - sudo apt-get --yes install python-software-properties
   - sudo add-apt-repository --yes ppa:chris-lea/zeromq
   - sudo apt-get update
-  - sudo apt-get install zeromq
+  - sudo apt-get install zeromq3
   - sudo apt-get --yes install build-essential pkg-config
   - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig

@@ -1,32 +1,7 @@
-language: c
-script: ./test.sh
+sudo: required
+services:
+- docker
 before_install:
-  - sudo cat /etc/lsb-release
-
-  # update sources
-  - sudo apt-get --quiet=2 --download-only update
-
-  # install go
-  - sudo wget https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz
-  - sudo tar -xzf go1.7.linux-amd64.tar.gz -C /usr/local
-  - export GOPATH=$PWD
-  - export GOROOT=/usr/local/go
-  - export PATH=$GOPATH/bin:$PATH
-
-  # install node
-  - curl -sL https://deb.nodesource.com/setup_6.x | sudo bash -
-  - sudo apt-get --yes install nodejs
-  - export PATH=/usr/bin:$PWD/app/node_modules/.bin:$PATH
-  - which -a node || true
-  - hash -d node || true
-
-  # pull node modules
-  - pushd app; npm install; popd
-
-  # install 0mq
-  - sudo apt-get --yes install python-software-properties
-  - sudo add-apt-repository --yes ppa:chris-lea/zeromq
-  - sudo apt-get update
-  - sudo apt-get --yes install libzmq3-dev
-  - sudo apt-get --yes install build-essential pkg-config
-  - export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+- docker pull jasonkeene/anubot
+script:
+- docker run -v $PWD:/go anubot ci

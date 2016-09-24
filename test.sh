@@ -2,6 +2,13 @@
 
 set -e
 
+if [ "$1" = "ci" ]; then
+    echo installing node dependencies
+    pushd app
+        npm install
+    popd
+fi
+
 echo building binaries
 
 mkdir -p bin
@@ -23,7 +30,7 @@ popd
 echo running jasmine tests
 
 pushd app
-    babel --presets es2015,react --out-dir lib src;
+    babel --presets es2015,react --out-dir lib src
     jasmine
     jshint lib
     jshint spec

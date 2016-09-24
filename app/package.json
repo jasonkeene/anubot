@@ -4,20 +4,19 @@
   "main": "main.js",
   "private": true,
   "dependencies": {
-    "websocket": "1.0.22",
-    "react": "15.1.0",
-    "react-dom": "15.1.0"
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "websocket": "^1.0.23"
   },
   "devDependencies": {
-    "babel-cli": "6.8.0",
-    "babel-preset-es2015": "6.9.0",
-    "babel-preset-react": "6.5.0",
+    "babel-cli": "^6.8.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
     "devtron": "^1.2.1",
     "electron-debug": "^1.0.1",
-    "jasmine": "2.4.1",
+    "jasmine": "^2.4.1",
     "jshint": "^2.9.2",
-    "node-sass": "3.7.0",
-    "react-addons-test-utils": "^15.1.0",
+    "node-sass": "^3.7.0",
     "wscat": "^1.0.1"
   }
 }

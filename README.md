@@ -24,5 +24,5 @@ I am streaming the creation of this bot [live on Twitch][stream-url].
 [travis-url]:   https://travis-ci.org/jasonkeene/anubot
 [waffle-image]: https://img.shields.io/waffle/label/jasonkeene/anubot/in%20progress.svg?style=flat-square
 [waffle-url]:   https://waffle.io/jasonkeene/anubot
-[stream-image]: https://streambadge.com/twitch/custom/ffffff/8adaf2/648588/postcrypt.png
+[stream-image]: http://streambadge.com/twitch/custom/ffffff/8adaf2/648588/postcrypt.png
 [stream-url]:   https://twitch.tv/postcrypt

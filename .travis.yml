@@ -4,4 +4,4 @@ services:
 before_install:
 - docker pull jasonkeene/anubot
 script:
-- docker run -v $PWD:/go anubot ci
+- docker run -v $PWD:/go jasonkeene/anubot ci

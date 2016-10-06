@@ -5,6 +5,27 @@
 
 package stream
 
+type mockDispatcher struct {
+	DispatchCalled chan bool
+	DispatchInput  struct {
+		Topic   chan string
+		Message chan RXMessage
+	}
+}
+
+func newMockDispatcher() *mockDispatcher {
+	m := &mockDispatcher{}
+	m.DispatchCalled = make(chan bool, 100)
+	m.DispatchInput.Topic = make(chan string, 100)
+	m.DispatchInput.Message = make(chan RXMessage, 100)
+	return m
+}
+func (m *mockDispatcher) Dispatch(topic string, message RXMessage) {
+	m.DispatchCalled <- true
+	m.DispatchInput.Topic <- topic
+	m.DispatchInput.Message <- message
+}
+
 type mockConn struct {
 	sendCalled chan bool
 	sendInput  struct {
@@ -31,22 +52,4 @@ func (m *mockConn) send(arg0 TXMessage) {
 func (m *mockConn) close() error {
 	m.closeCalled <- true
 	return <-m.closeOutput.Ret0
-}
-
-type mockDispatcher struct {
-	DispatchCalled chan bool
-	DispatchInput  struct {
-		Message chan RXMessage
-	}
-}
-
-func newMockDispatcher() *mockDispatcher {
-	m := &mockDispatcher{}
-	m.DispatchCalled = make(chan bool, 100)
-	m.DispatchInput.Message = make(chan RXMessage, 100)
-	return m
-}
-func (m *mockDispatcher) Dispatch(message RXMessage) {
-	m.DispatchCalled <- true
-	m.DispatchInput.Message <- message
 }

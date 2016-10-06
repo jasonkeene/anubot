@@ -18,18 +18,6 @@ func init() {
 	golog.Init()
 }
 
-type fakeStore struct{}
-
-func (fakeStore) TwitchUser(channelName string) (string, error) {
-	println("twitch users called with:", channelName)
-	return "postcrypt", nil
-}
-
-func (fakeStore) DiscordUsers(channelID string) []string {
-	println("discord users called with:", channelID)
-	return []string{"postcrypt"}
-}
-
 func main() {
 	uu := os.Getenv("TWITCH_USER_USER")
 	up := os.Getenv("TWITCH_USER_PASS")
@@ -43,11 +31,9 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	s := fakeStore{}
 	d := dispatch.New(
 		[]string{"inproc://pub"},
 		[]string{"inproc://push"},
-		s,
 	)
 	manager := stream.NewManager(d)
 	manager.ConnectTwitch(u, p, c)
@@ -63,10 +49,7 @@ func main() {
 		log.Panicf("pull not able to connect, got err: %s", err)
 	}
 
-	b, err := bot.New(
-		"postcrypt",
-		[]string{"inproc://pub"},
-	)
+	b, err := bot.New(u, []string{"inproc://pub"})
 	if err != nil {
 		panic(err)
 	}

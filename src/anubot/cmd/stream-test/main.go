@@ -22,7 +22,7 @@ type fakeDispatcher struct {
 	lastDiscordChan string
 }
 
-func (fd *fakeDispatcher) Dispatch(m stream.RXMessage) {
+func (fd *fakeDispatcher) Dispatch(topic string, m stream.RXMessage) {
 	switch m.Type {
 	case stream.Twitch:
 		fmt.Printf("TWITCH: %s\n", m.Twitch.Line.Text())

@@ -54,5 +54,5 @@ type RXDiscord struct {
 
 // Dispatcher dispoatches messages from a stream source.
 type Dispatcher interface {
-	Dispatch(message RXMessage)
+	Dispatch(topic string, message RXMessage)
 }

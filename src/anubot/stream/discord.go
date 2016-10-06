@@ -41,7 +41,8 @@ func connectDiscord(token string, d Dispatcher) (*discordConn, error) {
 }
 
 func (c *discordConn) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	c.d.Dispatch(RXMessage{
+	// TODO: figure out topic to dispatch
+	c.d.Dispatch("", RXMessage{
 		Type: Discord,
 		Discord: &RXDiscord{
 			MessageCreate: m,

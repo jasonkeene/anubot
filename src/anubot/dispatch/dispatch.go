@@ -83,6 +83,7 @@ func (d *Dispatcher) Dispatch(message stream.RXMessage) {
 
 		d.recentMsgIDsMu.Lock()
 		if d.recentMsgIDs.lookup(id) {
+			d.recentMsgIDsMu.Unlock()
 			return
 		}
 		d.recentMsgIDs.insert(id)

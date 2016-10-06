@@ -73,7 +73,7 @@ func (m *Manager) DisconnectTwitch(user string) func() {
 		return func() {}
 	}
 	return func() {
-		// TODO
+		// TODO: block until disconnect completed
 		time.Sleep(time.Second)
 	}
 }
@@ -91,7 +91,7 @@ func (m *Manager) DisconnectDiscord() func() {
 		return func() {}
 	}
 	return func() {
-		// TODO
+		// TODO: block until disconnect completed
 		time.Sleep(time.Second)
 	}
 }
@@ -104,6 +104,10 @@ func (m *Manager) Send(ms TXMessage) {
 		m.mu.Lock()
 		c = m.twitchConns[ms.Twitch.Username]
 		m.mu.Unlock()
+		if c == nil {
+			log.Printf("unable to send message for twitch user: %s", ms.Twitch.Username)
+			return
+		}
 	case Discord:
 		m.mu.Lock()
 		c = m.discordConn

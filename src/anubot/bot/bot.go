@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
-	"time"
+	"syscall"
 
 	"github.com/pebbe/zmq4"
 )
@@ -15,18 +15,22 @@ type Sender interface {
 	Send(ms stream.TXMessage)
 }
 
-// Feature accepts messages and tick signals that are used to implement bot
-// logic.
+// Feature accepts messages and spawns goroutines to implement the logic of
+// the bot.
 type Feature interface {
 	HandleMessage(ms stream.RXMessage)
-	Tick()
+	Start()
+	Stop()
 }
 
 // Bot receives messages and takes actions based on those messages.
 type Bot struct {
-	sub        *zmq4.Socket
-	featuresMu sync.Mutex
-	features   []Feature
+	pubEndpoints []string
+	sub          *zmq4.Socket
+	featuresMu   sync.Mutex
+	features     map[string]Feature
+	stop         chan struct{}
+	done         chan struct{}
 }
 
 // New returns a new Bot that is connected to publishers.
@@ -47,27 +51,33 @@ func New(topic string, pubEndpoints []string) (*Bot, error) {
 	}
 
 	b := &Bot{
-		sub: sub,
+		pubEndpoints: pubEndpoints,
+		sub:          sub,
+		features:     make(map[string]Feature),
 	}
 	return b, nil
 }
 
-// Start spawns goroutines needed to handle messages.
+// Start reads from sub socket and sends messages to features. It needs to run
+// in its own goroutine.
 func (b *Bot) Start() {
-	go b.startSub()
-	go b.startTicker()
-}
+	b.stop = make(chan struct{})
+	b.done = make(chan struct{})
+	defer close(b.done)
+	sub := b.sub
 
-// Stop tears down the goroutines needed to handle messages.
-func (b *Bot) Stop() {
-	// TODO: implement this
-}
-
-func (b *Bot) startSub() {
 	for {
-		rb, err := b.sub.RecvMessageBytes(0)
+		select {
+		case <-b.stop:
+			return
+		default:
+		}
+
+		rb, err := sub.RecvMessageBytes(zmq4.DONTWAIT)
 		if err != nil {
-			log.Printf("messages not read, got err: %s", err)
+			if zmq4.AsErrno(err) != zmq4.Errno(syscall.EAGAIN) {
+				log.Printf("messages not read, got err: %s", err)
+			}
 			continue
 		}
 		if len(rb) < 2 {
@@ -81,9 +91,11 @@ func (b *Bot) startSub() {
 			continue
 		}
 
-		var fs []Feature
 		b.featuresMu.Lock()
-		copy(fs, b.features)
+		fs := make([]Feature, 0, len(b.features))
+		for _, f := range b.features {
+			fs = append(fs, f)
+		}
 		b.featuresMu.Unlock()
 		for _, f := range fs {
 			f.HandleMessage(ms)
@@ -91,22 +103,35 @@ func (b *Bot) startSub() {
 	}
 }
 
-func (b *Bot) startTicker() {
-	t := time.NewTicker(time.Second)
-	for range t.C {
-		var fs []Feature
-		b.featuresMu.Lock()
-		copy(fs, b.features)
-		b.featuresMu.Unlock()
-		for _, f := range fs {
-			f.Tick()
+// Stop tears down the goroutines needed to handle messages.
+func (b *Bot) Stop() {
+	close(b.stop)
+	for _, e := range b.pubEndpoints {
+		err := b.sub.Disconnect(e)
+		if err != nil {
+			log.Printf("got error while disconnecting from pub socket: %s", err)
 		}
 	}
+	err := b.sub.Close()
+	if err != nil {
+		log.Printf("got error while closing pub socket: %s", err)
+	}
+	<-b.done
 }
 
-// AddFeature adds a feature to accept messages and ticks.
-func (b *Bot) AddFeature(f Feature) {
+// SetFeature sets a feature to accept messages and ticks. This will overwrite
+// features previously set with the same name.
+func (b *Bot) SetFeature(name string, f Feature) {
 	b.featuresMu.Lock()
-	b.featuresMu.Unlock()
-	b.features = append(b.features, f)
+	defer b.featuresMu.Unlock()
+	b.features[name] = f
+}
+
+// RemoveFeature removes a feature from the bot and returns it.
+func (b *Bot) RemoveFeature(name string) Feature {
+	b.featuresMu.Lock()
+	defer b.featuresMu.Unlock()
+	f := b.features[name]
+	delete(b.features, name)
+	return f
 }

@@ -1,3 +1,3 @@
 //go:generate hel
 
-package dispatch
+package bot

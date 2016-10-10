@@ -4,11 +4,11 @@ import (
 	"log"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/a8m/expect"
 )
 
 func TestConnectingOverTLS(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
@@ -32,19 +32,19 @@ func TestConnectingOverTLS(t *testing.T) {
 	serverConn := server.accept()
 
 	pass := serverConn.receive("PASS")
-	require.Equal("PASS test-pass", pass)
+	expect(pass).To.Equal("PASS test-pass")
 	nick := serverConn.receive("NICK")
-	require.Equal("NICK test-user", nick)
+	expect(nick).To.Equal("NICK test-user")
 	user := serverConn.receive("USER")
-	require.Equal("USER anubot 12 * :test-user", user)
+	expect(user).To.Equal("USER anubot 12 * :test-user")
 
 	serverConn.send(":127.0.0.1 001 test-user :GLHF!")
 
 	join := serverConn.receive("JOIN")
-	require.Equal("JOIN #test-chan", join)
+	expect(join).To.Equal("JOIN #test-chan")
 
 	cap := serverConn.receive("CAP")
-	require.Equal("CAP REQ :"+capString, cap)
+	expect(cap).To.Equal("CAP REQ :" + capString)
 
 	serverConn.receive("QUIT")
 	serverConn.close()
@@ -53,7 +53,7 @@ func TestConnectingOverTLS(t *testing.T) {
 }
 
 func TestDispatchingMessages(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
@@ -79,10 +79,10 @@ func TestDispatchingMessages(t *testing.T) {
 
 	serverConn.send("PRIVMSG #test-chan :test-message")
 	topic := <-d.DispatchInput.Topic
-	require.Equal(topic, "twitch:test-user")
+	expect(topic).To.Equal("twitch:test-user")
 	msg := <-d.DispatchInput.Message
-	require.Equal(msg.Type, Twitch)
-	require.Equal(msg.Twitch.Line.Raw, "PRIVMSG #test-chan :test-message")
+	expect(msg.Type).To.Equal(Twitch)
+	expect(msg.Twitch.Line.Raw).To.Equal("PRIVMSG #test-chan :test-message")
 
 	cleanup()
 
@@ -90,7 +90,7 @@ func TestDispatchingMessages(t *testing.T) {
 }
 
 func TestSendingMessages(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
@@ -121,7 +121,7 @@ func TestSendingMessages(t *testing.T) {
 	serverConn, cleanup := acceptConn(server)
 
 	msg := serverConn.receive("PRIVMSG")
-	require.Equal(msg, "PRIVMSG #test-chan :test-message")
+	expect(msg).To.Equal("PRIVMSG #test-chan :test-message")
 
 	cleanup()
 
@@ -129,14 +129,14 @@ func TestSendingMessages(t *testing.T) {
 }
 
 func TestConnectingToUnresponsiveServer(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 	server := newFakeIRCServer(t)
 	defer patchTwitch(server.port())()
 	d := newMockDispatcher()
 	server.close()
 
 	_, err := connectTwitch("test-user", "test-pass", "#test-chan", d)
-	require.Error(err)
+	expect(err).Not.To.Be.Nil()
 }
 
 func patchTwitch(port int) func() {

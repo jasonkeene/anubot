@@ -4,82 +4,84 @@ import (
 	"anubot/bot"
 	"anubot/stream"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/a8m/expect"
 	"github.com/fluffle/goirc/client"
 	"github.com/pebbe/zmq4"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBotDispatchesMessagesToFeatures(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 
 	pubTopic, subTopic := "test-topic", "test-topic"
 
 	f := newMockFeature()
-	pub := setupPubSocket(require)
+	pub := setupPubSocket(expect)
 	defer pub.Close()
-	expected, toSend := testMessage(require, "test-message")
+	expected, toSend := testMessage(expect, "test-message")
 
 	b, err := bot.New([]string{subTopic}, []string{"inproc://test-pub"})
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 	b.SetFeature("test-feature", f)
 	go b.Start()
 	defer b.Stop()
 
 	_, err = pub.SendMessage(pubTopic, toSend)
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 
 	select {
 	case actual := <-f.HandleMessageInput.Ms:
-		require.Equal(expected.Type, actual.Type)
-		require.Equal(expected.Twitch.Line.Raw, actual.Twitch.Line.Raw)
+		expect(expected.Type).To.Equal(actual.Type)
+		expect(expected.Twitch.Line.Raw).To.Equal(actual.Twitch.Line.Raw)
 	case <-time.After(3 * time.Second):
-		require.Fail("timed out waiting for bot to dispatch message")
+		fmt.Println("timed out waiting for bot to dispatch message")
+		t.Fail()
 	}
 }
 
 func TestBotDoesNotDispatchMessagesIfTopicDoesNotMatch(t *testing.T) {
-	require := require.New(t)
+	expect := expect.New(t)
 
 	pubTopic, subTopic := "test-a", "test-b"
 
 	f := newMockFeature()
-	pub := setupPubSocket(require)
+	pub := setupPubSocket(expect)
 	defer pub.Close()
-	_, badBytes := testMessage(require, "test-message")
-	expected, finalBytes := testMessage(require, "final-message")
+	_, badBytes := testMessage(expect, "test-message")
+	expected, finalBytes := testMessage(expect, "final-message")
 
 	b, err := bot.New([]string{subTopic}, []string{"inproc://test-pub"})
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 	b.SetFeature("test-feature", f)
 	go b.Start()
 	defer b.Stop()
 
 	_, err = pub.SendMessage(pubTopic, badBytes)
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 	_, err = pub.SendMessage(subTopic, finalBytes)
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 
 	select {
 	case actual := <-f.HandleMessageInput.Ms:
-		require.Equal(expected.Type, actual.Type)
-		require.Equal(expected.Twitch.Line.Raw, actual.Twitch.Line.Raw)
-		//require.Equal(expected, actual)
+		expect(expected.Type).To.Equal(actual.Type)
+		expect(expected.Twitch.Line.Raw).To.Equal(actual.Twitch.Line.Raw)
 	case <-time.After(3 * time.Second):
-		require.Fail("timed out waiting for bot to dispatch message")
+		fmt.Println("timed out waiting for bot to dispatch message")
+		t.Fail()
 	}
 }
 
-func setupPubSocket(require *require.Assertions) *zmq4.Socket {
+func setupPubSocket(expect func(v interface{}) *expect.Expect) *zmq4.Socket {
 	pub, err := zmq4.NewSocket(zmq4.PUB)
-	require.Nil(err)
-	require.Nil(pub.Bind("inproc://test-pub"))
+	expect(err).To.Be.Nil()
+	expect(pub.Bind("inproc://test-pub")).To.Be.Nil()
 	return pub
 }
 
-func testMessage(require *require.Assertions, raw string) (stream.RXMessage, []byte) {
+func testMessage(expect func(v interface{}) *expect.Expect, raw string) (stream.RXMessage, []byte) {
 	msg := stream.RXMessage{
 		Type: stream.Twitch,
 		Twitch: &stream.RXTwitch{
@@ -89,6 +91,6 @@ func testMessage(require *require.Assertions, raw string) (stream.RXMessage, []b
 		},
 	}
 	msgBytes, err := json.Marshal(msg)
-	require.Nil(err)
+	expect(err).To.Be.Nil()
 	return msg, msgBytes
 }

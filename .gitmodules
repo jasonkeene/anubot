@@ -61,9 +61,6 @@
 [submodule "src/golang.org/x/crypto"]
 	path = src/golang.org/x/crypto
 	url = https://go.googlesource.com/crypto
-[submodule "src/github.com/stretchr/testify"]
-	path = src/github.com/stretchr/testify
-	url = https://github.com/stretchr/testify
 [submodule "src/golang.org/x/tools"]
 	path = src/golang.org/x/tools
 	url = https://go.googlesource.com/tools
@@ -76,3 +73,6 @@
 [submodule "src/github.com/pebbe/zmq4"]
 	path = src/github.com/pebbe/zmq4
 	url = https://github.com/pebbe/zmq4
+[submodule "src/github.com/a8m/expect"]
+	path = src/github.com/a8m/expect
+	url = https://github.com/a8m/expect

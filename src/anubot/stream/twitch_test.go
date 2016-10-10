@@ -79,7 +79,7 @@ func TestDispatchingMessages(t *testing.T) {
 
 	serverConn.send("PRIVMSG #test-chan :test-message")
 	topic := <-d.DispatchInput.Topic
-	require.Equal(topic, "test-user")
+	require.Equal(topic, "twitch:test-user")
 	msg := <-d.DispatchInput.Message
 	require.Equal(msg.Type, Twitch)
 	require.Equal(msg.Twitch.Line.Raw, "PRIVMSG #test-chan :test-message")

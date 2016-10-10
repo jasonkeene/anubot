@@ -18,6 +18,7 @@ func main() {
 		panic(err)
 	}
 	// Add session calls here.
+	_ = s
 
 	<-interrupt
 }

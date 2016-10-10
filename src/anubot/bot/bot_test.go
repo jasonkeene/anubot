@@ -22,7 +22,7 @@ func TestBotDispatchesMessagesToFeatures(t *testing.T) {
 	defer pub.Close()
 	expected, toSend := testMessage(require, "test-message")
 
-	b, err := bot.New(subTopic, []string{"inproc://test-pub"})
+	b, err := bot.New([]string{subTopic}, []string{"inproc://test-pub"})
 	require.Nil(err)
 	b.SetFeature("test-feature", f)
 	go b.Start()
@@ -51,7 +51,7 @@ func TestBotDoesNotDispatchMessagesIfTopicDoesNotMatch(t *testing.T) {
 	_, badBytes := testMessage(require, "test-message")
 	expected, finalBytes := testMessage(require, "final-message")
 
-	b, err := bot.New(subTopic, []string{"inproc://test-pub"})
+	b, err := bot.New([]string{subTopic}, []string{"inproc://test-pub"})
 	require.Nil(err)
 	b.SetFeature("test-feature", f)
 	go b.Start()

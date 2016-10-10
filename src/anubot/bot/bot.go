@@ -34,7 +34,7 @@ type Bot struct {
 }
 
 // New returns a new Bot that is connected to publishers.
-func New(topic string, pubEndpoints []string) (*Bot, error) {
+func New(topics []string, pubEndpoints []string) (*Bot, error) {
 	sub, err := zmq4.NewSocket(zmq4.SUB)
 	if err != nil {
 		return nil, err
@@ -45,9 +45,11 @@ func New(topic string, pubEndpoints []string) (*Bot, error) {
 			return nil, err
 		}
 	}
-	err = sub.SetSubscribe(topic)
-	if err != nil {
-		return nil, err
+	for _, topic := range topics {
+		err = sub.SetSubscribe(topic)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	b := &Bot{

@@ -98,7 +98,8 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 }
 
 func (c *twitchConn) dispatchPrivmsg(conn *client.Conn, line *client.Line) {
-	c.d.Dispatch(c.u, RXMessage{
+	topic := "twitch:" + c.u
+	c.d.Dispatch(topic, RXMessage{
 		Type: Twitch,
 		Twitch: &RXTwitch{
 			Line: line,

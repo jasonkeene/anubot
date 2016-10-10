@@ -24,14 +24,31 @@ type TXMessage struct {
 
 // TXTwitch contains information to send to Twitch.
 type TXTwitch struct {
+	// Username is the username to send the message as.
 	Username string
-	To       string
-	Message  string
+	// To is where to send the message to (channel or user).
+	To string
+	// Message is the content of the message.
+	Message string
 }
+
+// TXDiscordType is the type of message to send to Discord ()
+type TXDiscordType int
+
+const (
+	// Channel is used when sending messages to Discord channels.
+	Channel TXDiscordType = iota
+	// Private is used when sending direct messages to Discord.
+	Private
+)
 
 // TXDiscord contains information to send to Discord.
 type TXDiscord struct {
-	To      string
+	// Type is the type of message to send (Channel or Private).
+	Type TXDiscordType
+	// To is where to send the message to (channel ID or user ID).
+	To string
+	// Message is the content of the message.
 	Message string
 }
 
@@ -49,6 +66,7 @@ type RXTwitch struct {
 
 // RXDiscord contains information received from Discord.
 type RXDiscord struct {
+	// TODO: add other types
 	MessageCreate *discordgo.MessageCreate `json:"message_create"`
 }
 

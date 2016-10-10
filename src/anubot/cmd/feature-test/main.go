@@ -19,14 +19,16 @@ func init() {
 }
 
 func main() {
-	uu := os.Getenv("TWITCH_USER_USER")
-	up := os.Getenv("TWITCH_USER_PASS")
-	c := "#" + uu
+	twitchUserUsername := os.Getenv("TWITCH_USER_USER")
+	twitchUserPassword := os.Getenv("TWITCH_USER_PASS")
+	twitchChannel := "#" + twitchUserUsername
 
-	u := os.Getenv("TWITCH_BOT_USER")
-	p := os.Getenv("TWITCH_BOT_PASS")
+	twitchBotUsername := os.Getenv("TWITCH_BOT_USER")
+	twitchBotPassword := os.Getenv("TWITCH_BOT_PASS")
 
-	t := os.Getenv("DISCORD_BOT_PASS")
+	discrodUserID := os.Getenv("DISCORD_USER_ID")
+
+	discordBotPassword := os.Getenv("DISCORD_BOT_PASS")
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -36,9 +38,9 @@ func main() {
 		[]string{"inproc://push"},
 	)
 	manager := stream.NewManager(d)
-	manager.ConnectTwitch(u, p, c)
-	manager.ConnectTwitch(uu, up, c)
-	manager.ConnectDiscord(t)
+	manager.ConnectTwitch(twitchBotUsername, twitchBotPassword, twitchChannel)
+	manager.ConnectTwitch(twitchUserUsername, twitchUserPassword, twitchChannel)
+	manager.ConnectDiscord("Bot " + discordBotPassword)
 
 	pull, err := zmq4.NewSocket(zmq4.PULL)
 	if err != nil {
@@ -49,14 +51,20 @@ func main() {
 		log.Panicf("pull not able to connect, got err: %s", err)
 	}
 
-	b, err := bot.New(u, []string{"inproc://pub"})
+	b, err := bot.New(
+		[]string{
+			"twitch:" + twitchBotUsername,
+			"discord:" + discrodUserID,
+		},
+		[]string{"inproc://pub"},
+	)
 	if err != nil {
 		panic(err)
 	}
 	go b.Start()
 	defer b.Stop()
 
-	f := bot.NewEchoFeature("!echo", u, manager)
+	f := bot.NewEchoFeature("!echo", twitchBotUsername, manager)
 	b.SetFeature("echo", f)
 
 	go func() {
@@ -76,7 +84,7 @@ func main() {
 	}()
 
 	<-interrupt
-	wait := manager.DisconnectTwitch(u)
+	wait := manager.DisconnectTwitch(twitchBotUsername)
 	wait()
 	wait = manager.DisconnectDiscord()
 	wait()

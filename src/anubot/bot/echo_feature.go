@@ -35,24 +35,34 @@ func (e *EchoFeature) HandleMessage(in stream.RXMessage) {
 		if len(in.Twitch.Line.Args) < 2 {
 			return
 		}
-		msg := in.Twitch.Line.Args[1]
-		if !strings.HasPrefix(msg, e.cmd+" ") {
+		msg := e.matchMessage(in.Twitch.Line.Args[1])
+		if msg == "" {
 			return
 		}
-		msg = msg[len(e.cmd)+1:]
 		out.Twitch = &stream.TXTwitch{
 			Username: e.twitchUsername,
 			To:       "#jtv",
 			Message:  fmt.Sprintf("/w %s %s", in.Twitch.Line.Nick, msg),
 		}
 	case stream.Discord:
-		// TODO: validation of discord in message
+		msg := e.matchMessage(in.Discord.MessageCreate.Content)
+		if msg == "" {
+			return
+		}
 		out.Discord = &stream.TXDiscord{
-			To:      in.Discord.MessageCreate.Author.Username,
-			Message: in.Discord.MessageCreate.Content,
+			Type:    stream.Private,
+			To:      in.Discord.MessageCreate.Author.ID,
+			Message: msg,
 		}
 	}
 	e.sman.Send(out)
+}
+
+func (e *EchoFeature) matchMessage(msg string) string {
+	if !strings.HasPrefix(msg, e.cmd+" ") {
+		return ""
+	}
+	return msg[len(e.cmd)+1:]
 }
 
 // Start is a NOOP.

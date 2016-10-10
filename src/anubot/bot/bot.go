@@ -66,7 +66,6 @@ func (b *Bot) Start() {
 	b.stop = make(chan struct{})
 	b.done = make(chan struct{})
 	defer close(b.done)
-	sub := b.sub
 
 	for {
 		select {
@@ -75,7 +74,7 @@ func (b *Bot) Start() {
 		default:
 		}
 
-		rb, err := sub.RecvMessageBytes(zmq4.DONTWAIT)
+		rb, err := b.sub.RecvMessageBytes(zmq4.DONTWAIT)
 		if err != nil {
 			if zmq4.AsErrno(err) != zmq4.Errno(syscall.EAGAIN) {
 				log.Printf("messages not read, got err: %s", err)
@@ -113,10 +112,6 @@ func (b *Bot) Stop() {
 		if err != nil {
 			log.Printf("got error while disconnecting from pub socket: %s", err)
 		}
-	}
-	err := b.sub.Close()
-	if err != nil {
-		log.Printf("got error while closing pub socket: %s", err)
 	}
 	<-b.done
 }

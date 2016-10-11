@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -15,39 +16,54 @@ var httpClient = &http.Client{
 	Timeout: time.Second * 5,
 }
 
+// API makes requests to Twitch's API.
 type API struct {
-	url string
+	url      string
+	clientID string
 }
 
-func New(url string) API {
+// New creates a new API.
+func New(url, clientID string) API {
 	if url == "" {
 		url = twitchAPIURL
 	}
 	return API{
-		url: url,
+		url:      url,
+		clientID: clientID,
 	}
 }
 
+// Username gets the username for a give oauth token.
 func (t API) Username(token string) (username string, err error) {
-	url := t.url + "/user"
-	req, err := http.NewRequest("GET", url, nil)
+	u := t.url + "/user"
+
+	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return "", err
 	}
+
+	values := url.Values{}
+	values.Set("client_id", t.clientID)
+	req.URL.RawQuery = values.Encode()
+
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
 	req.Header.Set("Authorization", "OAuth "+token)
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Bad status code %d", resp.StatusCode)
 	}
+
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
+
 	var userData struct {
 		Name string `json:"name"`
 	}
@@ -63,11 +79,29 @@ func (t API) Username(token string) (username string, err error) {
 
 // StreamInfo returns the status and game for a given channel.
 func (t API) StreamInfo(channel string) (string, string, error) {
-	url := t.url + "/channels/" + channel
-	resp, err := httpClient.Get(url)
+	u := t.url + "/channels/" + channel
+
+	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return "", "", err
 	}
+
+	values := url.Values{}
+	values.Set("client_id", t.clientID)
+	req.URL.RawQuery = values.Encode()
+
+	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("Bad status code %d", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", err
@@ -85,19 +119,28 @@ func (t API) StreamInfo(channel string) (string, string, error) {
 
 // UpdateDescription updates the status and game for the given channel.
 func (t API) UpdateDescription(status, game, channel, token string) error {
-	url := t.url + "/channels/" + channel
-	req, err := http.NewRequest("PUT", url, nil)
+	u := t.url + "/channels/" + channel
+
+	req, err := http.NewRequest("PUT", u, nil)
 	if err != nil {
 		return err
 	}
+
+	values := url.Values{}
+	values.Set("client_id", t.clientID)
+	req.URL.RawQuery = values.Encode()
+
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
 	req.Header.Set("Authorization", "OAuth "+token)
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("Bad status code %d", resp.StatusCode)
 	}
+
 	return nil
 }

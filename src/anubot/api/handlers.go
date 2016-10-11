@@ -30,6 +30,7 @@ func init() {
 		// authentication
 		eventHandlers["register"] = handlerFunc(registerHandler)
 		eventHandlers["authenticate"] = handlerFunc(authenticateHandler)
+		eventHandlers["logout"] = handlerFunc(logoutHandler)
 	}
 
 	// authenticated
@@ -38,17 +39,18 @@ func init() {
 		eventHandlers["twitch-oauth-start"] = authenticateWrapper(
 			handlerFunc(twitchOauthStartHandler),
 		)
+		eventHandlers["twitch-clear-auth"] = authenticateWrapper(
+			handlerFunc(twitchClearAuth),
+		)
+
+		// user information
+		eventHandlers["twitch-user-details"] = authenticateWrapper(
+			handlerFunc(twitchUserDetailsHandler),
+		)
 	}
 
 	// twitch authenticated
 	{
-		// user information
-		eventHandlers["twitch-user-details"] = authenticateWrapper(
-			twitchAuthenticateWrapper(
-				handlerFunc(twitchUserDetailsHandler),
-			),
-		)
-
 		// twitch chat
 		eventHandlers["twitch-send-message"] = authenticateWrapper(
 			twitchAuthenticateWrapper(

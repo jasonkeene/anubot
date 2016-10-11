@@ -34,4 +34,8 @@ var (
 		Code: 4,
 		Text: "authentication error with twitch",
 	}
+	twitchOauthStartOrderError = &apiError{
+		Code: 2,
+		Text: "unable to start oauth flow for bot, streamer not finished",
+	}
 )

@@ -44,3 +44,9 @@ func (s *session) SetAuthentication(id string) {
 func (s *session) Authenticated() (string, bool) {
 	return s.userID, s.authenticated
 }
+
+// Logout clears the authentication for this session.
+func (s *session) Logout() {
+	s.authenticated = false
+	s.userID = ""
+}

@@ -1,14 +1,18 @@
 package api
 
 import (
-	"anubot/twitch/oauth"
 	"io"
 	"log"
 	"net"
 
+	"golang.org/x/net/websocket"
+
 	"github.com/satori/go.uuid"
 
-	"golang.org/x/net/websocket"
+	"anubot/bot"
+	"anubot/stream"
+	"anubot/twitch"
+	"anubot/twitch/oauth"
 )
 
 //go:generate hel
@@ -17,22 +21,42 @@ import (
 type Store interface {
 	RegisterUser(username, password string) (userID string, err error)
 	AuthenticateUser(username, password string) (userID string, authenticated bool)
+	TwitchClearAuth(userID string)
 	TwitchAuthenticated(userID string) (authenticated bool)
+	TwitchStreamerAuthenticated(userID string) (authenticated bool)
+	TwitchStreamerCredentials(userID string) (string, string)
+	TwitchBotAuthenticated(userID string) (authenticated bool)
+	TwitchBotCredentials(userID string) (string, string)
 
 	oauth.NonceStore
 }
 
 // Server responds to websocket events sent from the client.
 type Server struct {
-	twitchOauthClientID string
+	bm                  *bot.Manager
+	sm                  *stream.Manager
+	pubEndpoints        []string
 	store               Store
+	twitch              twitch.API
+	twitchOauthClientID string
 }
 
 // New creates a new Server.
-func New(twitchOauthClientID string, store Store) *Server {
+func New(
+	bm *bot.Manager,
+	sm *stream.Manager,
+	pubEndpoints []string,
+	store Store,
+	twitch twitch.API,
+	twitchOauthClientID string,
+) *Server {
 	return &Server{
-		twitchOauthClientID: twitchOauthClientID,
+		bm:                  bm,
+		sm:                  sm,
+		pubEndpoints:        pubEndpoints,
 		store:               store,
+		twitch:              twitch,
+		twitchOauthClientID: twitchOauthClientID,
 	}
 }
 

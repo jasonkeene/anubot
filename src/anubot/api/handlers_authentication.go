@@ -102,6 +102,15 @@ func authenticateHandler(e event, s *session) {
 	return
 }
 
+// logoutHandler clears the authentication for the session.
+func logoutHandler(e event, s *session) {
+	s.Logout()
+	s.Send(event{
+		Cmd:       "logout",
+		RequestID: e.RequestID,
+	})
+}
+
 // authenticateWrapper wraps a handler and makes sure the session is
 // authenticated.
 func authenticateWrapper(f handlerFunc) handlerFunc {

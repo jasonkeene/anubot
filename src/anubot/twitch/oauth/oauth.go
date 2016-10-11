@@ -1,7 +1,6 @@
 package oauth
 
 import (
-	"anubot/store"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -12,13 +11,15 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"anubot/store"
 )
 
 // NonceStore is used to to store and operate on oauth nonces.
 type NonceStore interface {
 	CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string)
 	OauthNonceExists(nonce string) (exists bool)
-	FinishOauthNonce(nonce string, od OauthData) (err error)
+	FinishOauthNonce(nonce string, od Data) (err error)
 }
 
 const (
@@ -47,18 +48,20 @@ var httpClient = &http.Client{
 	Timeout: time.Second * 5,
 }
 
-type OauthData struct {
+// Data contains the data returned from Twitch when finishing the Oauth flow.
+type Data struct {
 	AccessToken  string   `json:"access_token"`
 	RefreshToken string   `json:"refresh_token"`
 	Scope        []string `json:"scope"`
 }
 
-func parseOauthData(data []byte) (OauthData, error) {
-	var od OauthData
+func parseOauthData(data []byte) (Data, error) {
+	var od Data
 	err := json.Unmarshal(data, &od)
 	return od, err
 }
 
+// DoneHandler is where the redirect URL hits to finsih the Oauth flow.
 type DoneHandler struct {
 	twitchOauthClientID     string
 	twitchOauthClientSecret string
@@ -66,6 +69,7 @@ type DoneHandler struct {
 	ns                      NonceStore
 }
 
+// NewDoneHandler creates a new handler to finish the Oauth flow.
 func NewDoneHandler(twitchOauthClientID, twitchOauthClientSecret,
 	twitchOauthRedirectURI string, ns NonceStore) DoneHandler {
 	return DoneHandler{
@@ -133,7 +137,6 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	od, err := parseOauthData(d)
 	if err != nil {
 		log.Print("unable to parse response from post to twitch oauth for token")
-		fmt.Println(string(d))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

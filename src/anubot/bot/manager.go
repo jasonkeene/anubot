@@ -35,3 +35,13 @@ func (m *Manager) RemoveBot(userID string) {
 	defer m.mu.Unlock()
 	delete(m.m, userID)
 }
+
+// Absent will only run the provided func if the bot for userID is absent.
+func (m *Manager) Absent(userID string, f func()) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	_, ok := m.m[userID]
+	if !ok {
+		f()
+	}
+}

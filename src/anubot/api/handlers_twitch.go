@@ -3,6 +3,9 @@ package api
 import (
 	"anubot/store"
 	"anubot/twitch/oauth"
+	"log"
+
+	"golang.org/x/net/websocket"
 )
 
 const (
@@ -11,8 +14,9 @@ const (
 )
 
 // twitchOauthStartHandler responds with a URL to start the Twitch oauth flow.
+// The streamer user is required to be the first to begin the oauth flow,
+// followed by the bot user.
 func twitchOauthStartHandler(e event, s *session) {
-	// grab the twitch user string from payload
 	tus, ok := e.Payload.(string)
 	if !ok {
 		s.Send(event{
@@ -23,13 +27,22 @@ func twitchOauthStartHandler(e event, s *session) {
 		return
 	}
 
-	// validate twitch user
+	userID, _ := s.Authenticated()
+
 	var tu store.TwitchUser
 	switch tus {
 	case "streamer":
 		tu = store.Streamer
 	case "bot":
 		tu = store.Bot
+		if !s.Store().TwitchStreamerAuthenticated(userID) {
+			s.Send(event{
+				Cmd:       "twitch-oauth-start",
+				RequestID: e.RequestID,
+				Error:     twitchOauthStartOrderError,
+			})
+			return
+		}
 	default:
 		s.Send(event{
 			Cmd:       "twitch-oauth-start",
@@ -39,7 +52,6 @@ func twitchOauthStartHandler(e event, s *session) {
 		return
 	}
 
-	userID, _ := s.Authenticated()
 	s.Send(event{
 		Cmd:       "twitch-oauth-start",
 		RequestID: e.RequestID,
@@ -47,45 +59,56 @@ func twitchOauthStartHandler(e event, s *session) {
 	})
 }
 
+// twitchClearAuth clears all auth data for the user.
+func twitchClearAuth(e event, s *session) {
+	s.Store().TwitchClearAuth(s.userID)
+	s.Send(event{
+		Cmd:       "twitch-clear-auth",
+		RequestID: e.RequestID,
+	})
+}
+
 // twitchUserDetailsHandler provides information on the Twitch streamer and
 // bot users.
 func twitchUserDetailsHandler(e event, s *session) {
-	//resp := &event{
-	//	Cmd: "twitch-user-details",
-	//	Payload: map[string]interface{}{
-	//		"authenticated": false,
-	//		"streamer":      "",
-	//		"bot":           "",
-	//		"status":        "",
-	//		"game":          "",
-	//	},
-	//}
-	//defer websocket.JSON.Send(s.ws, resp)
+	p := map[string]interface{}{
+		"streamer_authenticated": false,
+		"streamer_username":      "",
+		"streamer_status":        "",
+		"streamer_game":          "",
 
-	//streamerUser, streamerPass, err := s.store.Credentials("user")
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//botUser, botPass, err := s.store.Credentials("bot")
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//if streamerUser == "" || streamerPass == "" ||
-	//	botUser == "" || botPass == "" {
-	//	println("bad creds")
-	//	return
-	//}
+		"bot_authenticated": false,
+		"bot_username":      "",
+	}
+	resp := &event{
+		Cmd:     "twitch-user-details",
+		Payload: p,
+	}
+	defer websocket.JSON.Send(s.ws, resp)
 
-	//status, game, _ := fetchStreamInfo(streamerUser)
-	//resp.Payload = map[string]interface{}{
-	//	"authenticated": true,
-	//	"streamer":      streamerUser,
-	//	"bot":           botUser,
-	//	"status":        status,
-	//	"game":          game,
-	//}
+	streamerAuthenticated := s.Store().TwitchStreamerAuthenticated(s.userID)
+	if !streamerAuthenticated {
+		return
+	}
+	streamerUsername, _ := s.Store().TwitchStreamerCredentials(s.userID)
+	status, game, err := s.api.twitch.StreamInfo(streamerUsername)
+	if err != nil {
+		log.Printf("unable to fetch stream info for user %s: %s",
+			streamerUsername, err)
+		return
+	}
+	p["streamer_authenticated"] = streamerAuthenticated
+	p["streamer_username"] = streamerUsername
+	p["streamer_status"] = status
+	p["streamer_game"] = game
+
+	botAuthenticated := s.Store().TwitchBotAuthenticated(s.userID)
+	if !botAuthenticated {
+		return
+	}
+
+	p["bot_authenticated"] = botAuthenticated
+	p["bot_username"], _ = s.Store().TwitchBotCredentials(s.userID)
 }
 
 // twitchSendMessageHandler accepts messages to send via Twitch chat.

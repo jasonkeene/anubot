@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/net/websocket"
 
+	"github.com/fluffle/goirc/logging/golog"
 	"github.com/pebbe/zmq4"
 	"github.com/spf13/viper"
 
@@ -18,6 +19,10 @@ import (
 	"anubot/twitch"
 	"anubot/twitch/oauth"
 )
+
+func init() {
+	golog.Init()
+}
 
 func main() {
 	// load config
@@ -69,7 +74,7 @@ func main() {
 	api := api.New(
 		bm,
 		sm,
-		[]string{},
+		pubEndpoints,
 		store,
 		twitch,
 		v.GetString("twitch_oauth_client_id"),

@@ -28,8 +28,10 @@ const App = React.createClass({
         this.props.listeners.remove("connect", this.handleConnect);
         if (payload) {
             this.props.connection.sendUTF(JSON.stringify({
+                // TODO: this event name changed
                 "cmd": "subscribe",
             }));
+            // TODO: this event name changed
             this.props.listeners.add("chat-message", this.handleChatMessage);
         }
     },

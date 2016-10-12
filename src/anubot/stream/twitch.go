@@ -2,10 +2,12 @@ package stream
 
 import (
 	"crypto/tls"
+	"errors"
 	"log"
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/fluffle/goirc/client"
 )
@@ -86,7 +88,12 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 		return nil, err
 	}
 	log.Printf("connectTwitch: connection to twitch established for user: %s", u)
-	<-connected
+	select {
+	case <-connected:
+	case <-time.After(3 * time.Second):
+		log.Printf("connectTwitch: did not receive CONNECTED event")
+		return nil, errors.New("did not receive CONNECTED event")
+	}
 	log.Printf("connectTwitch: recieved connection event from twitch for user: %s", u)
 	tc.c.Join(c)
 	log.Printf("connectTwitch: joined channel: %s on twitch for user: %s", c, u)

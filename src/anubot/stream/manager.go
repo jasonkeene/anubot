@@ -29,6 +29,13 @@ func NewManager(d Dispatcher) *Manager {
 
 // ConnectTwitch connects to twitch and streams data to the dispatcher.
 func (m *Manager) ConnectTwitch(user, pass, channel string) {
+	m.mu.Lock()
+	_, ok := m.twitchConns[user]
+	m.mu.Unlock()
+	if ok {
+		return
+	}
+
 	for i := 0; i < 10; i++ {
 		c, err := connectTwitch(user, pass, channel, m.d)
 		if err == nil {
@@ -43,6 +50,13 @@ func (m *Manager) ConnectTwitch(user, pass, channel string) {
 
 // ConnectDiscord connects to discord and streams data to the dispatcher.
 func (m *Manager) ConnectDiscord(token string) {
+	m.mu.Lock()
+	dc := m.discordConn
+	m.mu.Unlock()
+	if dc != nil {
+		return
+	}
+
 	for i := 0; i < 10; i++ {
 		c, err := connectDiscord(token, m.d)
 		if err == nil {

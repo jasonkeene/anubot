@@ -52,6 +52,11 @@ func init() {
 	// twitch authenticated
 	{
 		// twitch chat
+		eventHandlers["twitch-stream-messages"] = authenticateWrapper(
+			twitchAuthenticateWrapper(
+				handlerFunc(twitchStreamMessages),
+			),
+		)
 		eventHandlers["twitch-send-message"] = authenticateWrapper(
 			twitchAuthenticateWrapper(
 				handlerFunc(twitchSendMessageHandler),

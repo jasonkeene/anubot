@@ -178,18 +178,40 @@ func twitchSendMessageHandler(e event, s *session) {
 
 // twitchUpdateChatDescriptionHandler updates the chat description for Twitch.
 func twitchUpdateChatDescriptionHandler(e event, s *session) {
-	//payload := e.Payload.(map[string]interface{})
-	//game := payload["game"].(string)
-	//status := payload["status"].(string)
-	//user, pass, err := s.store.Credentials("user")
-	//if err != nil {
-	//	fmt.Println("bad creds!")
-	//	return
-	//}
-	//err = updateDescription(game, status, user, pass)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
+	payload, ok := e.Payload.(map[string]interface{})
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+	status, ok := payload["status"].(string)
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+	game, ok := payload["game"].(string)
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+
+	user, pass := s.Store().TwitchStreamerCredentials(s.userID)
+	err := s.api.twitch.UpdateDescription(status, game, user, pass)
+	if err != nil {
+		log.Println("unable to update chat description, got error:", err)
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: unknownError,
+		})
+	}
 }
 
 // twitchAuthenticateWrapper wraps a handler and makes sure the user attached

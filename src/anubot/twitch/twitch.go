@@ -1,12 +1,12 @@
 package twitch
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -42,11 +42,8 @@ func (t API) Username(token string) (username string, err error) {
 		return "", err
 	}
 
-	values := url.Values{}
-	values.Set("client_id", t.clientID)
-	req.URL.RawQuery = values.Encode()
-
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
+	req.Header.Set("Client-ID", t.clientID)
 	req.Header.Set("Authorization", "OAuth "+token)
 
 	resp, err := httpClient.Do(req)
@@ -86,11 +83,8 @@ func (t API) StreamInfo(channel string) (string, string, error) {
 		return "", "", err
 	}
 
-	values := url.Values{}
-	values.Set("client_id", t.clientID)
-	req.URL.RawQuery = values.Encode()
-
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
+	req.Header.Set("Client-ID", t.clientID)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -121,17 +115,24 @@ func (t API) StreamInfo(channel string) (string, string, error) {
 func (t API) UpdateDescription(status, game, channel, token string) error {
 	u := t.url + "/channels/" + channel
 
-	req, err := http.NewRequest("PUT", u, nil)
+	data, err := json.Marshal(map[string]map[string]string{
+		"channel": {
+			"status": status,
+			"game":   game,
+		},
+	})
 	if err != nil {
 		return err
 	}
 
-	values := url.Values{}
-	values.Set("client_id", t.clientID)
-	req.URL.RawQuery = values.Encode()
+	req, err := http.NewRequest("PUT", u, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
 
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
 	req.Header.Set("Authorization", "OAuth "+token)
+	req.Header.Set("Client-ID", t.clientID)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

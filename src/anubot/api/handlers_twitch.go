@@ -2,6 +2,7 @@ package api
 
 import (
 	"anubot/store"
+	"anubot/stream"
 	"anubot/twitch/oauth"
 	"log"
 
@@ -125,19 +126,54 @@ func twitchStreamMessages(e event, s *session) {
 
 // twitchSendMessageHandler accepts messages to send via Twitch chat.
 func twitchSendMessageHandler(e event, s *session) {
-	//data, ok := e.Payload.(map[string]interface{})
-	//if !ok {
-	//	return
-	//}
-	//user, ok := data["user"].(string)
-	//if !ok {
-	//	return
-	//}
-	//message, ok := data["message"].(string)
-	//if !ok {
-	//	return
-	//}
-	//s.bot.ChatFeature().Send(user, message)
+	data, ok := e.Payload.(map[string]interface{})
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+	userType, ok := data["user_type"].(string)
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+	message, ok := data["message"].(string)
+	if !ok {
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidPayload,
+		})
+		return
+	}
+
+	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	var username, password string
+	switch userType {
+	case "streamer":
+		username, password = streamerUsername, streamerPassword
+	case "bot":
+		username, password = s.Store().TwitchBotCredentials(s.userID)
+	default:
+		s.Send(event{
+			Cmd:   e.Cmd,
+			Error: invalidTwitchUserType,
+		})
+		return
+	}
+	s.api.sm.ConnectTwitch(username, "oauth:"+password, "#"+username)
+	s.api.sm.Send(stream.TXMessage{
+		Type: stream.Twitch,
+		Twitch: &stream.TXTwitch{
+			Username: username,
+			To:       "#" + streamerUsername,
+			Message:  message,
+		},
+	})
 }
 
 // twitchUpdateChatDescriptionHandler updates the chat description for Twitch.

@@ -31,11 +31,15 @@ var (
 		Text: "authentication error",
 	}
 	twitchAuthenticationError = &apiError{
-		Code: 4,
+		Code: 5,
 		Text: "authentication error with twitch",
 	}
 	twitchOauthStartOrderError = &apiError{
-		Code: 2,
+		Code: 6,
 		Text: "unable to start oauth flow for bot, streamer not finished",
+	}
+	invalidTwitchUserType = &apiError{
+		Code: 7,
+		Text: "you specified an invalid user type",
 	}
 )

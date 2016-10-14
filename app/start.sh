@@ -2,14 +2,6 @@
 
 set -e
 
-build_server() {
-    if [ -e anubot-server ]; then
-        echo removing anubot-server
-        rm anubot-server
-    fi
-    go build -o anubot-server anubot/cmd/api-server
-}
-
 build_lib() {
     if [ -e lib ]; then
         echo removing lib
@@ -43,10 +35,6 @@ kill_watchers() {
 }
 
 main() {
-    echo -e "\033[1m\033[34mBuilding API Server\033[0m"
-    build_server
-    echo
-
     echo -e "\033[1m\033[34mBuilding lib\033[0m"
     build_lib
     echo

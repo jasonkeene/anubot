@@ -9,7 +9,6 @@ import (
 	"github.com/a8m/expect"
 
 	"anubot/store"
-	"anubot/twitch"
 )
 
 func TestRegisteringAUserReservesThatUsername(t *testing.T) {
@@ -42,7 +41,7 @@ func TestAuthenticationWorks(t *testing.T) {
 
 func setupDB(t *testing.T) (*Bolt, func()) {
 	path, tmpFileCleanup := tempFile(t)
-	b, err := New(path, twitch.API{})
+	b, err := New(path)
 	if err != nil {
 		fmt.Println(err.Error())
 		t.FailNow()

@@ -9,7 +9,6 @@ import (
 	"github.com/satori/go.uuid"
 
 	"anubot/store"
-	"anubot/twitch"
 	"anubot/twitch/oauth"
 )
 
@@ -18,7 +17,6 @@ type Dummy struct {
 	mu     sync.Mutex
 	users  users
 	nonces map[string]nonceRecord
-	twitch twitch.API
 }
 
 type nonceRecord struct {
@@ -53,11 +51,10 @@ type userRecord struct {
 }
 
 // New creates a new Dummy store.
-func New(twitch twitch.API) *Dummy {
+func New() *Dummy {
 	return &Dummy{
 		users:  make(users),
 		nonces: make(map[string]nonceRecord),
-		twitch: twitch,
 	}
 }
 
@@ -134,19 +131,13 @@ func (d *Dummy) OauthNonceExists(nonce string) (exists bool) {
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing
 // the oauth data.
-func (d *Dummy) FinishOauthNonce(nonce string, od oauth.Data) error {
+func (d *Dummy) FinishOauthNonce(nonce, username string, od oauth.Data) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	nr, ok := d.nonces[nonce]
 	if !ok {
 		return store.BadNonce
-	}
-	delete(d.nonces, nonce)
-
-	username, err := d.twitch.Username(od.AccessToken)
-	if err != nil {
-		return err
 	}
 
 	userRecord := d.users[nr.userID]
@@ -161,6 +152,7 @@ func (d *Dummy) FinishOauthNonce(nonce string, od oauth.Data) error {
 		panic(fmt.Sprintf("bad twitch user type, this should never happen"))
 	}
 
+	delete(d.nonces, nonce)
 	d.users[nr.userID] = userRecord
 	return nil
 }

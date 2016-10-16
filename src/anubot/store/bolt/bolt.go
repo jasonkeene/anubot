@@ -9,18 +9,16 @@ import (
 	uuid "github.com/satori/go.uuid"
 
 	"anubot/store"
-	"anubot/twitch"
 	"anubot/twitch/oauth"
 )
 
 // Bolt is a store backend for boltdb.
 type Bolt struct {
-	db     *bolt.DB
-	twitch twitch.API
+	db *bolt.DB
 }
 
 // New creates a new bolt store.
-func New(path string, twitch twitch.API) (*Bolt, error) {
+func New(path string) (*Bolt, error) {
 	db, err := bolt.Open(path, 0600, &bolt.Options{
 		Timeout: time.Second,
 	})
@@ -28,8 +26,7 @@ func New(path string, twitch twitch.API) (*Bolt, error) {
 		return nil, err
 	}
 	b := &Bolt{
-		db:     db,
-		twitch: twitch,
+		db: db,
 	}
 	err = b.createBuckets()
 	if err != nil {
@@ -126,7 +123,7 @@ func (b *Bolt) OauthNonceExists(nonce string) (exists bool) {
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing
 // the oauth data.
-func (b *Bolt) FinishOauthNonce(nonce string, od oauth.Data) error {
+func (b *Bolt) FinishOauthNonce(nonce, username string, od oauth.Data) error {
 	// TODO: implement
 	return nil
 }

@@ -37,7 +37,7 @@ func main() {
 	)
 
 	// create store
-	store := dummy.New(twitch)
+	store := dummy.New()
 
 	// create message dispatcher
 	pubEndpoints := []string{
@@ -87,6 +87,7 @@ func main() {
 		v.GetString("twitch_oauth_client_secret"),
 		v.GetString("twitch_oauth_redirect_uri"),
 		store,
+		twitch,
 	))
 
 	// bind websocket API

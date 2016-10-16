@@ -13,13 +13,14 @@ import (
 	"time"
 
 	"anubot/store"
+	"anubot/twitch"
 )
 
 // NonceStore is used to to store and operate on oauth nonces.
 type NonceStore interface {
 	CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string)
 	OauthNonceExists(nonce string) (exists bool)
-	FinishOauthNonce(nonce string, od Data) (err error)
+	FinishOauthNonce(nonce, username string, od Data) (err error)
 }
 
 const (
@@ -67,16 +68,23 @@ type DoneHandler struct {
 	twitchOauthClientSecret string
 	twitchOauthRedirectURI  string
 	ns                      NonceStore
+	twitch                  twitch.API
 }
 
 // NewDoneHandler creates a new handler to finish the Oauth flow.
-func NewDoneHandler(twitchOauthClientID, twitchOauthClientSecret,
-	twitchOauthRedirectURI string, ns NonceStore) DoneHandler {
+func NewDoneHandler(
+	twitchOauthClientID,
+	twitchOauthClientSecret,
+	twitchOauthRedirectURI string,
+	ns NonceStore,
+	twitch twitch.API,
+) DoneHandler {
 	return DoneHandler{
 		twitchOauthClientID:     twitchOauthClientID,
 		twitchOauthClientSecret: twitchOauthClientSecret,
 		twitchOauthRedirectURI:  twitchOauthRedirectURI,
-		ns: ns,
+		ns:     ns,
+		twitch: twitch,
 	}
 }
 
@@ -125,7 +133,12 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// read response body
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Printf("DoneHandler got err in closing resp body: %s", err)
+		}
+	}()
 	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Print("unable to read response body from post to twitch oauth for token")
@@ -142,7 +155,13 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send oauth data to the store
-	err = h.ns.FinishOauthNonce(nonce, od)
+	username, err := h.twitch.Username(od.AccessToken)
+	if err != nil {
+		log.Print("unable to get username from access token")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err = h.ns.FinishOauthNonce(nonce, username, od)
 	if err != nil {
 		log.Print("unable finish oauth")
 		w.WriteHeader(http.StatusBadRequest)

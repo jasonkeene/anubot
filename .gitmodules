@@ -76,3 +76,6 @@
 [submodule "src/github.com/a8m/expect"]
 	path = src/github.com/a8m/expect
 	url = https://github.com/a8m/expect
+[submodule "src/github.com/boltdb/bolt"]
+	path = src/github.com/boltdb/bolt
+	url = https://github.com/boltdb/bolt

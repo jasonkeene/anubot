@@ -13,7 +13,7 @@ import (
 	"anubot/twitch/oauth"
 )
 
-// Dummy is a store that stores everything in memory.
+// Dummy is a store backend that stores everything in memory.
 type Dummy struct {
 	mu     sync.Mutex
 	users  users
@@ -61,8 +61,13 @@ func New(twitch twitch.API) *Dummy {
 	}
 }
 
+// Close is a NOP on the dummy store.
+func (d *Dummy) Close() error {
+	return nil
+}
+
 // RegisterUser registers a new user returning the user ID.
-func (d *Dummy) RegisterUser(username, password string) (string, error) {
+func (d *Dummy) RegisterUser(username, password string) (userID string, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -79,8 +84,7 @@ func (d *Dummy) RegisterUser(username, password string) (string, error) {
 }
 
 // AuthenticateUser checks to see if the given user credentials are valid.
-func (d *Dummy) AuthenticateUser(username, password string) (userID string,
-	authenticated bool) {
+func (d *Dummy) AuthenticateUser(username, password string) (userID string, authenticated bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -116,8 +120,8 @@ func (d *Dummy) CreateOauthNonce(userID string, tu store.TwitchUser) (nonce stri
 	return nonce
 }
 
-// OauthNonceExists tells you if the provided nonce was recently created by
-// this server.
+// OauthNonceExists tells you if the provided nonce was recently created and
+// not yet finished.
 func (d *Dummy) OauthNonceExists(nonce string) (exists bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

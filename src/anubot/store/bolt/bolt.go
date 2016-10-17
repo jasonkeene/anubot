@@ -1,8 +1,8 @@
 package bolt
 
 import (
-	"encoding/json"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -56,117 +56,213 @@ func (b *Bolt) Close() error {
 }
 
 // RegisterUser registers a new user returning the user ID.
-func (b *Bolt) RegisterUser(username, password string) (userID string, err error) {
-	userID = uuid.NewV4().String()
-	err = b.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("users"))
+func (b *Bolt) RegisterUser(username, password string) (string, error) {
+	userID := uuid.NewV4().String()
+	ur := userRecord{
+		UserID:   userID,
+		Username: username,
+		Password: password,
+	}
 
-		existingData := b.Get([]byte(username))
-		if existingData != nil {
-			return store.UsernameTaken
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		_, err := getUserRecordByUsername(username, tx)
+		if err == nil {
+			return store.ErrUsernameTaken
 		}
-
-		ur := userRecord{
-			UserID:   userID,
-			Username: username,
-			Password: password,
-		}
-		urb, err := json.Marshal(ur)
-		if err != nil {
-			return err
-		}
-
-		return b.Put([]byte(username), urb)
+		return upsertUserRecord(ur, tx)
 	})
-
 	if err != nil {
 		return "", err
 	}
+
 	return userID, nil
 }
 
-// AuthenticateUser checks to see if the given user credentials are valid.
-func (b *Bolt) AuthenticateUser(username, password string) (userID string, authenticated bool) {
+// AuthenticateUser checks to see if the given user credentials are valid. If
+// they are the user ID is returned with a bool to indicate success.
+func (b *Bolt) AuthenticateUser(username, password string) (string, bool) {
+	var ur userRecord
 	err := b.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("users"))
-		data := b.Get([]byte(username))
-		var ur userRecord
-		err := json.Unmarshal(data, &ur)
-		if err != nil {
-			return err
-		}
-		if ur.Password != password {
-			return errors.New("bad auth")
-		}
-		userID = ur.UserID
-		return nil
+		var err error
+		ur, err = getUserRecordByUsername(username, tx)
+		return err
 	})
-
 	if err != nil {
 		return "", false
 	}
-	return userID, true
+
+	if ur.Password != password {
+		return "", false
+	}
+	return ur.UserID, true
 }
 
 // CreateOauthNonce creates and returns a unique oauth nonce.
-func (b *Bolt) CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string) {
-	// TODO: implement
-	return ""
+func (b *Bolt) CreateOauthNonce(userID string, tu store.TwitchUser) (string, error) {
+	switch tu {
+	case store.Streamer:
+	case store.Bot:
+	default:
+		return "", store.ErrInvalidTwitchUserType
+	}
+
+	nonce := oauth.GenerateNonce()
+	nr := nonceRecord{
+		Nonce:   nonce,
+		UserID:  userID,
+		TU:      tu,
+		Created: time.Now(),
+	}
+
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		return upsertNonceRecord(nr, tx)
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return nonce, nil
 }
 
 // OauthNonceExists tells you if the provided nonce was recently created and
 // not yet finished.
-func (b *Bolt) OauthNonceExists(nonce string) (exists bool) {
-	// TODO: implement
-	return false
+func (b *Bolt) OauthNonceExists(nonce string) bool {
+	err := b.db.View(func(tx *bolt.Tx) error {
+		_, err := getNonceRecord(nonce, tx)
+		return err
+	})
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing
 // the oauth data.
 func (b *Bolt) FinishOauthNonce(nonce, username string, od oauth.Data) error {
-	// TODO: implement
-	return nil
+	return b.db.Update(func(tx *bolt.Tx) error {
+		nr, err := getNonceRecord(nonce, tx)
+		if err != nil {
+			return err
+		}
+
+		ur, err := getUserRecord(nr.UserID, tx)
+		if err != nil {
+			return err
+		}
+
+		switch nr.TU {
+		case store.Streamer:
+			ur.StreamerOD = od
+			ur.StreamerUsername = username
+		case store.Bot:
+			ur.BotOD = od
+			ur.BotUsername = username
+		default:
+			return errors.New("bad twitch user type, this should never happen")
+		}
+
+		err = deleteNonceRecord(nr.Nonce, tx)
+		if err != nil {
+			return err
+		}
+
+		return upsertUserRecord(ur, tx)
+	})
 }
 
 // TwitchStreamerAuthenticated tells you if the user has authenticated with
 // twitch and that we have valid oauth credentials.
 func (b *Bolt) TwitchStreamerAuthenticated(userID string) bool {
-	// TODO: implement
-	return false
+	var ur userRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		ur, err = getUserRecord(userID, tx)
+		return err
+	})
+	if err != nil {
+		return false
+	}
+
+	return ur.StreamerOD.AccessToken != ""
 }
 
 // TwitchStreamerCredentials gives you the credentials for the streamer user.
 func (b *Bolt) TwitchStreamerCredentials(userID string) (string, string) {
-	// TODO: implement
-	return "", ""
+	var ur userRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		ur, err = getUserRecord(userID, tx)
+		return err
+	})
+	if err != nil {
+		return "", ""
+	}
+
+	return ur.StreamerUsername, ur.StreamerOD.AccessToken
 }
 
 // TwitchBotAuthenticated tells you if the user has authenticated his bot with
 // twitch and that we have valid oauth credentials.
 func (b *Bolt) TwitchBotAuthenticated(userID string) bool {
-	// TODO: implement
-	return false
+	var ur userRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		ur, err = getUserRecord(userID, tx)
+		return err
+	})
+	if err != nil {
+		return false
+	}
+
+	return ur.BotOD.AccessToken != ""
 }
 
 // TwitchBotCredentials gives you the credentials for the streamer user.
 func (b *Bolt) TwitchBotCredentials(userID string) (string, string) {
-	// TODO: implement
-	return "", ""
+	var ur userRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		ur, err = getUserRecord(userID, tx)
+		return err
+	})
+	if err != nil {
+		return "", ""
+	}
+
+	return ur.BotUsername, ur.BotOD.AccessToken
 }
 
-type userRecord struct {
-	UserID           string     `json:"user_id"`
-	Username         string     `json:"username"`
-	Password         string     `json:"password"`
-	StreamerUsername string     `json:"streamer_username"`
-	StreamerOD       oauth.Data `json:"streamer_od"`
-	BotUsername      string     `json:"bot_username"`
-	BotOD            oauth.Data `json:"bot_od"`
+// TwitchAuthenticated tells you if the user has authenticated his bot and
+// his streamer user with twitch and that we have valid oauth credentials.
+func (b *Bolt) TwitchAuthenticated(userID string) bool {
+	var ur userRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		ur, err = getUserRecord(userID, tx)
+		return err
+	})
+	if err != nil {
+		return false
+	}
+
+	return ur.StreamerOD.AccessToken != "" && ur.BotOD.AccessToken != ""
 }
 
-type nonceRecord struct {
-	nonce   string
-	userID  string
-	tu      store.TwitchUser
-	created time.Time
+// TwitchClearAuth removes all the auth data for twitch for the user.
+func (b *Bolt) TwitchClearAuth(userID string) {
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		ur, err := getUserRecord(userID, tx)
+		if err != nil {
+			return err
+		}
+		ur.StreamerUsername = ""
+		ur.StreamerOD = oauth.Data{}
+		ur.BotUsername = ""
+		ur.BotOD = oauth.Data{}
+		return upsertUserRecord(ur, tx)
+	})
+	if err != nil {
+		log.Printf("could not clear twitch auth: %s", err)
+	}
 }

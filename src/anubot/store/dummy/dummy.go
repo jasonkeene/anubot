@@ -1,11 +1,10 @@
 package dummy
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/satori/go.uuid"
 
 	"anubot/store"
@@ -17,37 +16,6 @@ type Dummy struct {
 	mu     sync.Mutex
 	users  users
 	nonces map[string]nonceRecord
-}
-
-type nonceRecord struct {
-	userID  string
-	tu      store.TwitchUser
-	created time.Time
-}
-
-type users map[string]userRecord
-
-func (u users) lookup(username string) (string, userRecord, bool) {
-	for id, creds := range u {
-		if creds.username == username {
-			return id, creds, true
-		}
-	}
-	return "", userRecord{}, false
-}
-
-func (u users) exists(username string) bool {
-	_, _, exists := u.lookup(username)
-	return exists
-}
-
-type userRecord struct {
-	username         string
-	password         string
-	streamerUsername string
-	streamerOD       oauth.Data
-	botUsername      string
-	botOD            oauth.Data
 }
 
 // New creates a new Dummy store.
@@ -64,12 +32,12 @@ func (d *Dummy) Close() error {
 }
 
 // RegisterUser registers a new user returning the user ID.
-func (d *Dummy) RegisterUser(username, password string) (userID string, err error) {
+func (d *Dummy) RegisterUser(username, password string) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
 	if d.users.exists(username) {
-		return "", store.UsernameTaken
+		return "", store.ErrUsernameTaken
 	}
 
 	id := uuid.NewV4().String()
@@ -80,8 +48,9 @@ func (d *Dummy) RegisterUser(username, password string) (userID string, err erro
 	return id, nil
 }
 
-// AuthenticateUser checks to see if the given user credentials are valid.
-func (d *Dummy) AuthenticateUser(username, password string) (userID string, authenticated bool) {
+// AuthenticateUser checks to see if the given user credentials are valid. If
+// they are the user ID is returned with a bool to indicate success.
+func (d *Dummy) AuthenticateUser(username, password string) (string, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -96,36 +65,32 @@ func (d *Dummy) AuthenticateUser(username, password string) (userID string, auth
 }
 
 // CreateOauthNonce creates and returns a unique oauth nonce.
-func (d *Dummy) CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string) {
+func (d *Dummy) CreateOauthNonce(userID string, tu store.TwitchUser) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// validate twitch user type
 	switch tu {
 	case store.Streamer:
 	case store.Bot:
 	default:
-		panic(fmt.Sprintf("bad twitch user type in CreateOauthNonce"))
+		return "", errors.New("bad twitch user type in CreateOauthNonce")
 	}
 
-	nonce = oauth.GenerateNonce()
+	nonce := oauth.GenerateNonce()
 	d.nonces[nonce] = nonceRecord{
 		userID:  userID,
 		tu:      tu,
 		created: time.Now(),
 	}
-	return nonce
+	return nonce, nil
 }
 
 // OauthNonceExists tells you if the provided nonce was recently created and
 // not yet finished.
-func (d *Dummy) OauthNonceExists(nonce string) (exists bool) {
+func (d *Dummy) OauthNonceExists(nonce string) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	_, ok := d.nonces[nonce]
-	if !ok {
-		spew.Dump(d)
-	}
 	return ok
 }
 
@@ -137,7 +102,7 @@ func (d *Dummy) FinishOauthNonce(nonce, username string, od oauth.Data) error {
 
 	nr, ok := d.nonces[nonce]
 	if !ok {
-		return store.BadNonce
+		return store.ErrUnknownNonce
 	}
 
 	userRecord := d.users[nr.userID]
@@ -149,7 +114,7 @@ func (d *Dummy) FinishOauthNonce(nonce, username string, od oauth.Data) error {
 		userRecord.botOD = od
 		userRecord.botUsername = username
 	default:
-		panic(fmt.Sprintf("bad twitch user type, this should never happen"))
+		return errors.New("bad twitch user type, this should never happen")
 	}
 
 	delete(d.nonces, nonce)

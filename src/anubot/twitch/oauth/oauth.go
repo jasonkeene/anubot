@@ -18,7 +18,7 @@ import (
 
 // NonceStore is used to to store and operate on oauth nonces.
 type NonceStore interface {
-	CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string)
+	CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string, err error)
 	OauthNonceExists(nonce string) (exists bool)
 	FinishOauthNonce(nonce, username string, od Data) (err error)
 }
@@ -198,8 +198,12 @@ func GenerateNonce() string {
 }
 
 // URL returns a URL that will start the oauth flow.
-func URL(clientID, userID string, tu store.TwitchUser, ns NonceStore) string {
-	nonce := ns.CreateOauthNonce(userID, tu)
+func URL(clientID, userID string, tu store.TwitchUser, ns NonceStore) (string, error) {
+	nonce, err := ns.CreateOauthNonce(userID, tu)
+	if err != nil {
+		return "", err
+	}
+
 	v := url.Values{}
 	v.Set("response_type", "code")
 	v.Set("redirect_uri", redirectURL)
@@ -207,5 +211,5 @@ func URL(clientID, userID string, tu store.TwitchUser, ns NonceStore) string {
 	v.Set("client_id", clientID)
 	v.Set("state", nonce)
 
-	return authorizeURL + "?" + v.Encode()
+	return authorizeURL + "?" + v.Encode(), nil
 }

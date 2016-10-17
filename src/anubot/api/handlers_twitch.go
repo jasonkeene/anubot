@@ -53,10 +53,21 @@ func twitchOauthStartHandler(e event, s *session) {
 		return
 	}
 
+	url, err := oauth.URL(s.TwitchOauthClientID(), userID, tu, s.Store())
+	if err != nil {
+		log.Printf("got an err trying to create oauth url: %s", err)
+		s.Send(event{
+			Cmd:       "twitch-oauth-start",
+			RequestID: e.RequestID,
+			Error:     unknownError,
+		})
+		return
+	}
+
 	s.Send(event{
 		Cmd:       "twitch-oauth-start",
 		RequestID: e.RequestID,
-		Payload:   oauth.URL(s.TwitchOauthClientID(), userID, tu, s.Store()),
+		Payload:   url,
 	})
 }
 

@@ -43,7 +43,7 @@ func registerHandler(e event, s *session) {
 	// attempt to register the user
 	id, err := s.Store().RegisterUser(username, password)
 	if err != nil {
-		if err == store.UsernameTaken {
+		if err == store.ErrUsernameTaken {
 			resp.Error = usernameTaken
 		}
 		return

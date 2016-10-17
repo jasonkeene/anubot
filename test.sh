@@ -7,6 +7,14 @@ if [ "$1" = "ci" ]; then
     pushd app
         npm install
     popd
+else
+    echo running go imports
+    pushd src/anubot
+        if [ ! "$(which goimports)" ]; then
+            go install golang.org/x/tools/cmd/goimports
+        fi
+        goimports -w .
+    popd
 fi
 
 echo building binaries
@@ -20,10 +28,6 @@ done
 echo running go tests
 
 pushd src/anubot
-    if [ ! "$(which goimports)" ]; then
-        go install golang.org/x/tools/cmd/goimports
-    fi
-    goimports -w .
     go test -race ./...
 popd
 

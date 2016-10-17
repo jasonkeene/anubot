@@ -56,6 +56,8 @@ func New(topics []string, pubEndpoints []string) (*Bot, error) {
 		pubEndpoints: pubEndpoints,
 		sub:          sub,
 		features:     make(map[string]Feature),
+		stop:         make(chan struct{}),
+		done:         make(chan struct{}),
 	}
 	return b, nil
 }
@@ -63,8 +65,6 @@ func New(topics []string, pubEndpoints []string) (*Bot, error) {
 // Start reads from sub socket and sends messages to features. It needs to run
 // in its own goroutine.
 func (b *Bot) Start() {
-	b.stop = make(chan struct{})
-	b.done = make(chan struct{})
 	defer close(b.done)
 
 	for {
@@ -107,12 +107,6 @@ func (b *Bot) Start() {
 // Stop tears down the goroutines needed to handle messages.
 func (b *Bot) Stop() {
 	close(b.stop)
-	for _, e := range b.pubEndpoints {
-		err := b.sub.Disconnect(e)
-		if err != nil {
-			log.Printf("got error while disconnecting from pub socket: %s", err)
-		}
-	}
 	<-b.done
 }
 

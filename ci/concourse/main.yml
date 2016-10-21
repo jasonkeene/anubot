@@ -1,0 +1,33 @@
+resources:
+- name: anubot
+  type: git
+  source:
+    uri: https://github.com/jasonkeene/anubot
+    branch: master
+
+jobs:
+- name: unit-tests
+  plan:
+  - get: anubot
+    trigger: true
+  - task: unit-tests
+    config:
+      image_resource:
+        type: docker-image
+        source:
+          repository: jasonkeene/anubot
+          tag: latest
+      platform: linux
+      inputs:
+      - name: anubot
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -e
+          cd anubot
+          export GOPATH=$PWD
+          export PATH=$PWD/bin:$PWD/app/node_modules/.bin:$PATH
+          ./test.sh ci

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"syscall"
 	"time"
 
 	"github.com/pebbe/zmq4"
@@ -28,89 +27,139 @@ type twitchMessage struct {
 type discordMessage struct{}
 
 type messageWriter struct {
-	sub *zmq4.Socket
-	ws  *websocket.Conn
+	streamerUsername string
+	streamerSub      *zmq4.Socket
+	botSub           *zmq4.Socket
+	ws               *websocket.Conn
 }
 
 func newMessageWriter(
-	topic string,
+	streamerUsername string,
+	streamerTopic string,
+	botTopic string,
 	pubEndpoints []string,
 	ws *websocket.Conn,
 ) (*messageWriter, error) {
-	println("creating message writer for topic:", topic)
-	fmt.Printf("pub endpoints: %v", pubEndpoints)
-	sub, err := zmq4.NewSocket(zmq4.SUB)
+	streamerSub, err := zmq4.NewSocket(zmq4.SUB)
 	if err != nil {
 		return nil, err
 	}
+	err = streamerSub.SetSubscribe(streamerTopic)
+	if err != nil {
+		return nil, err
+	}
+
+	botSub, err := zmq4.NewSocket(zmq4.SUB)
+	if err != nil {
+		return nil, err
+	}
+	err = botSub.SetSubscribe(botTopic)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, endpoint := range pubEndpoints {
-		err = sub.Connect(endpoint)
+		err = streamerSub.Connect(endpoint)
+		if err != nil {
+			return nil, err
+		}
+		err = botSub.Connect(endpoint)
 		if err != nil {
 			return nil, err
 		}
 	}
-	err = sub.SetSubscribe(topic)
-	if err != nil {
-		return nil, err
-	}
+
 	return &messageWriter{
-		sub: sub,
-		ws:  ws,
+		streamerSub: streamerSub,
+		botSub:      botSub,
+		ws:          ws,
 	}, nil
 }
 
-// start reads messages off its sub sock and writes them to its ws conn
-func (mw *messageWriter) start() {
-	println("starting message writer")
+// startStreamer reads messages off of the streamer sub socket and writes them
+// to the ws conn.
+func (mw *messageWriter) startStreamer() {
 	for {
-		rb, err := mw.sub.RecvMessageBytes(0) //zmq4.DONTWAIT)
-		println("something read")
+		ms, err := readMessage(mw.streamerSub)
 		if err != nil {
-			if zmq4.AsErrno(err) != zmq4.Errno(syscall.EAGAIN) {
-				log.Printf("messages not read, got err: %s", err)
-			}
+			log.Printf("got err reading from streamer socket: %s", err)
 			continue
 		}
-		if len(rb) < 2 {
-			log.Printf("received message bytes had invalid length: %#v", rb)
-			continue
-		}
-
-		println("got message")
-
-		var ms stream.RXMessage
-		err = json.Unmarshal(rb[1], &ms)
-		if err != nil {
-			log.Printf("could not unmarshal, got err: %s", err)
-			continue
-		}
-
-		p := message{
-			Type: ms.Type,
-		}
-		switch ms.Type {
-		case stream.Twitch:
-			p.Twitch = &twitchMessage{
-				Nick: ms.Twitch.Line.Nick,
-				Body: ms.Twitch.Line.Args[1],
-				Time: ms.Twitch.Line.Time,
-				Tags: ms.Twitch.Line.Tags,
-			}
-		case stream.Discord:
-			// TODO: add support for discord messages
-			continue
-		default:
-			log.Println("got unknow message type while reading from sub sock")
-			continue
-		}
-		e := event{
-			Cmd:     "chat-message",
-			Payload: p,
-		}
-		err = websocket.JSON.Send(mw.ws, e)
+		err = mw.writeMessage(ms)
 		if err != nil {
 			log.Printf("got error when writing to ws conn, aborting: %s", err)
 			return
 		}
 	}
+}
+
+// startBot reads messages off of the bot sub socket and writes them  to the
+// ws conn.
+func (mw *messageWriter) startBot() {
+	for {
+		ms, err := readMessage(mw.botSub)
+		if err != nil {
+			log.Printf("got err reading from streamer socket: %s", err)
+			continue
+		}
+		if !mw.streamerFilter(ms) {
+			continue
+		}
+		err = mw.writeMessage(ms)
+		if err != nil {
+			log.Printf("got error when writing to ws conn, aborting: %s", err)
+			return
+		}
+	}
+}
+
+func readMessage(sub *zmq4.Socket) (*stream.RXMessage, error) {
+	rb, err := sub.RecvMessageBytes(0)
+	if err != nil {
+		return nil, fmt.Errorf("messages not read, got err: %s", err)
+	}
+	if len(rb) < 2 {
+		return nil, fmt.Errorf("received message bytes had invalid length: %#v", rb)
+	}
+
+	var ms stream.RXMessage
+	err = json.Unmarshal(rb[1], &ms)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal, got err: %s", err)
+	}
+	return &ms, nil
+}
+
+// streamerFilter will filter out all messages not sent from the streamer.
+func (mw *messageWriter) streamerFilter(ms *stream.RXMessage) bool {
+	if ms.Type != stream.Twitch {
+		return false
+	}
+	return ms.Twitch.Line.Nick == mw.streamerUsername
+}
+
+func (mw *messageWriter) writeMessage(ms *stream.RXMessage) error {
+	p := message{
+		Type: ms.Type,
+	}
+	switch ms.Type {
+	case stream.Twitch:
+		p.Twitch = &twitchMessage{
+			Nick: ms.Twitch.Line.Nick,
+			Body: ms.Twitch.Line.Args[1],
+			Time: ms.Twitch.Line.Time,
+			Tags: ms.Twitch.Line.Tags,
+		}
+	case stream.Discord:
+		// TODO: add support for discord messages
+		return nil
+	default:
+		log.Println("got unknown message type while reading from sub sock")
+		return nil
+	}
+	e := event{
+		Cmd:     "chat-message",
+		Payload: p,
+	}
+	return websocket.JSON.Send(mw.ws, e)
 }

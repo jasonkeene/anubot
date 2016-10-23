@@ -24,14 +24,14 @@ Listeners.prototype.remove = function (cmd, listener) {
     }
 };
 
-Listeners.prototype.dispatch = function (cmd, payload) {
+Listeners.prototype.dispatch = function (cmd, payload, error) {
     var l = this.listenersMap[cmd];
     if (l === undefined) {
         // no listeners for this cmd
         return;
     }
     for (var i = 0; i < l.length; i++) {
-        l[i](payload);
+        l[i](payload, error);
     }
 };
 

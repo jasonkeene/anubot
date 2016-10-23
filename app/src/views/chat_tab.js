@@ -42,27 +42,27 @@ const ChatTab = React.createClass({
     },
 
     nickStyle: (message) => {
-        if (message.tags === undefined) {
-            return {};
-        }
-        if (message.tags.color === undefined) {
-            return {};
+        const defaultColor = "#9ACD32";
+        if (message.tags === undefined ||
+            message.tags.color === undefined ||
+            message.tags.color === "") {
+            return {color: defaultColor};
         }
         return {color: message.tags.color};
     },
     renderMessage: function (message) {
         return (
-            <div className="message" key={message.tags.id}>
-                <span className="badges">{badges.render(message)}</span>
-                <span className="nick" style={this.nickStyle(message)}>{message.tags['display-name']}:</span>&nbsp;
-                {emoji.render(message)}
+            <div className="message" key={message.twitch.tags.id}>
+                <span className="badges">{badges.render(message.twitch)}</span>
+                <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}:</span>&nbsp;
+                {emoji.render(message.twitch)}
             </div>
         );
     },
     render: function () {
         return (
             <div id="chat-tab" className="tab">
-                <ChatHeader channel={"#" + this.props.streamer}
+                <ChatHeader channel={"#" + this.props.streamer_username}
                             status={this.props.status}
                             game={this.props.game}
                             connection={this.props.connection} />
@@ -70,8 +70,8 @@ const ChatTab = React.createClass({
                     <div className="spacer" />
                     {this.props.messages.map(this.renderMessage)}
                 </div>
-                <ChatFooter streamer={this.props.streamer}
-                            bot={this.props.bot}
+                <ChatFooter streamer_username={this.props.streamer_username}
+                            bot_username={this.props.bot_username}
                             listeners={this.props.listeners}
                             connection={this.props.connection} />
             </div>
@@ -113,7 +113,7 @@ const ChatHeader = React.createClass({
     handleSubmit: function (e) {
         e.preventDefault();
         this.props.connection.sendUTF(JSON.stringify({
-            "cmd": "update-description",
+            "cmd": "twitch-update-chat-description",
             "payload": {
                 "status": this.state.status,
                 "game": this.state.game,
@@ -155,7 +155,7 @@ const ChatHeader = React.createClass({
 const ChatFooter = React.createClass({
     getInitialState: function () {
         return {
-            user: "streamer",
+            user_type: "streamer",
             message: "",
         };
     },
@@ -164,10 +164,10 @@ const ChatFooter = React.createClass({
     handleSubmit: function (e) {
         e.preventDefault();
         this.props.connection.sendUTF(JSON.stringify({
-            "cmd": "send-message",
-            "payload": {
-                "user": this.state.user,
-                "message": this.state.message,
+            cmd: "twitch-send-message",
+            payload: {
+                user_type: this.state.user_type,
+                message: this.state.message,
             },
         }));
         this.setState({message: ""});
@@ -176,7 +176,7 @@ const ChatFooter = React.createClass({
         this.setState({message: e.target.value});
     },
     handleUserChange: function (e) {
-        this.setState({user: e.target.value});
+        this.setState({user_type: e.target.value});
     },
 
     render: function () {
@@ -184,8 +184,8 @@ const ChatFooter = React.createClass({
             <div className="footer">
                 <div className="selection">
                     <select onChange={this.handleUserChange}>
-                        <option value="streamer">{this.props.streamer}</option>
-                        <option value="bot">{this.props.bot}</option>
+                        <option value="streamer">{this.props.streamer_username}</option>
+                        <option value="bot">{this.props.bot_username}</option>
                     </select>
                 </div>
                 <div className="input">

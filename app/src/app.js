@@ -26,7 +26,7 @@ client.on('connect', function(connection) {
         console.log('[app] echo-protocol Connection Closed');
     });
 
-    views.render(connection, listeners);
+    views.render(connection, listeners, localStorage);
 });
 
 client.on('connectFailed', function(error) {

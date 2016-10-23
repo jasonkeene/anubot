@@ -125,14 +125,25 @@ func twitchUserDetailsHandler(e event, s *session) {
 
 // twitchStreamMessages writes chat messages to websocket connection.
 func twitchStreamMessages(e event, s *session) {
-	username, password := s.Store().TwitchStreamerCredentials(s.userID)
-	s.api.sm.ConnectTwitch(username, "oauth:"+password, "#"+username)
-	mw, err := newMessageWriter("twitch:"+username, s.api.pubEndpoints, s.ws)
+	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	s.api.sm.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
+
+	botUsername, botPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	s.api.sm.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
+
+	mw, err := newMessageWriter(
+		streamerUsername,
+		"twitch:"+streamerUsername,
+		"twitch:"+botUsername,
+		s.api.pubEndpoints,
+		s.ws,
+	)
 	if err != nil {
 		log.Printf("unable to stream messages: %s", err)
 		return
 	}
-	go mw.start()
+	go mw.startStreamer()
+	go mw.startBot()
 }
 
 // twitchSendMessageHandler accepts messages to send via Twitch chat.

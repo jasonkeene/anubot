@@ -15,35 +15,35 @@ describe("Listeners", () => {
         var uncalledMockListener = jasmine.createSpy("mockListener");
 
         listeners.add("test-command", mockListener);
-        listeners.dispatch("test-command", "test-payload");
-        expect(mockListener).toHaveBeenCalledWith("test-payload");
+        listeners.dispatch("test-command", "test-payload", "test-error");
+        expect(mockListener).toHaveBeenCalledWith("test-payload", "test-error");
         expect(uncalledMockListener).not.toHaveBeenCalled();
     });
 
     it("does not dispatch commands that have no listeners", () => {
         listeners.add("test-command", mockListener);
 
-        listeners.dispatch("bad-test-command", "test-payload");
+        listeners.dispatch("bad-test-command", "test-payload", "test-error");
         expect(mockListener).not.toHaveBeenCalled();
     });
 
     it("can remove listeners by command name", () => {
         // dispatch an event
         listeners.add("test-command", mockListener);
-        listeners.dispatch("test-command", "test-payload");
-        expect(mockListener).toHaveBeenCalledWith("test-payload");
+        listeners.dispatch("test-command", "test-payload", "test-error");
+        expect(mockListener).toHaveBeenCalledWith("test-payload", "test-error");
         mockListener.calls.reset();
 
         // now remove this listener and it shouldn't get the second event
         listeners.remove("test-command", mockListener);
-        listeners.dispatch("test-command", "test-payload");
+        listeners.dispatch("test-command", "test-payload", "test-error");
         expect(mockListener).not.toHaveBeenCalled();
     });
 
     it("does not attempt to remove listeners from unknown commands", () => {
         listeners.add("test-command", mockListener);
         listeners.remove("bad-test-command", mockListener);
-        listeners.dispatch("test-command", "test-payload");
-        expect(mockListener).toHaveBeenCalledWith("test-payload");
+        listeners.dispatch("test-command", "test-payload", "test-error");
+        expect(mockListener).toHaveBeenCalledWith("test-payload", "test-error");
     });
 });

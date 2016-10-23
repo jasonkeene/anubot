@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/user"
 
 	"golang.org/x/net/websocket"
 
@@ -14,7 +15,7 @@ import (
 	"anubot/api"
 	"anubot/bot"
 	"anubot/dispatch"
-	"anubot/store/dummy"
+	"anubot/store/bolt"
 	"anubot/stream"
 	"anubot/twitch"
 	"anubot/twitch/oauth"
@@ -37,7 +38,14 @@ func main() {
 	)
 
 	// create store
-	store := dummy.New()
+	usr, err := user.Current()
+	if err != nil {
+		log.Panicf("unable to get current user: %s", err)
+	}
+	store, err := bolt.New(usr.HomeDir + "/anubot.bolt")
+	if err != nil {
+		log.Panicf("unable to craete bolt database: %s", err)
+	}
 
 	// create message dispatcher
 	pubEndpoints := []string{

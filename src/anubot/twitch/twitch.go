@@ -130,6 +130,7 @@ func (t API) UpdateDescription(status, game, channel, token string) error {
 		return err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
 	req.Header.Set("Authorization", "OAuth "+token)
 	req.Header.Set("Client-ID", t.clientID)

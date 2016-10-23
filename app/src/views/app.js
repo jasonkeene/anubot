@@ -1,76 +1,129 @@
 
 const React = require('react'),
-      AuthOverlay = require('./auth_overlay.js'),
+      Setup = require('./setup.js'),
       Menu = require('./menu.js'),
       ChatTab = require('./chat_tab.js');
 
 const App = React.createClass({
     getInitialState: function () {
         return {
+            loaded: false,
             authenticated: false,
+
             tab: "chat",
             messages: [],
-            streamer: "",
-            bot: "",
+
+            streamer_username: "",
+            bot_username: "",
             status: "",
             game: "",
         };
     },
+    componentWillMount: function () {
+        var credentials = this.getLocalCredentials();
+        if (credentials !== null) {
+            this.props.listeners.add("authenticate", this.handleAuthenticate);
+            console.log("authenticating");
+            this.props.connection.sendUTF(JSON.stringify({
+                cmd: "authenticate",
+                payload: credentials,
+            }));
+            return;
+        }
+        this.setState({
+            loaded: true,
+        });
+    },
 
     // network events
-    connect: function () {
-        this.props.listeners.add("connect", this.handleConnect);
-        this.props.connection.sendUTF(JSON.stringify({
-            "cmd": "connect",
-        }));
-    },
-    handleConnect: function (payload) {
-        this.props.listeners.remove("connect", this.handleConnect);
-        if (payload) {
+    handleAuthenticate: function (payload, error) {
+        if (error === null) {
+            this.setState({
+                loaded: true,
+                authenticated: true,
+            });
+            this.props.listeners.add("twitch-user-details", this.handleUserDetails);
             this.props.connection.sendUTF(JSON.stringify({
-                // TODO: this event name changed
-                "cmd": "subscribe",
+                cmd: "twitch-user-details",
             }));
-            // TODO: this event name changed
             this.props.listeners.add("chat-message", this.handleChatMessage);
+            this.props.connection.sendUTF(JSON.stringify({
+                cmd: "twitch-stream-messages",
+            }));
+            return
         }
+        this.setState({
+            loaded: true,
+        })
     },
-    handleChatMessage: function (payload) {
+    handleUserDetails: function (payload, error) {
+        this.setState({
+            streamer_username: payload.streamer_username,
+            bot_username: payload.bot_username,
+            status: payload.streamer_status,
+            game: payload.streamer_game,
+        });
+    },
+    handleChatMessage: function (payload, error) {
         var messages = this.state.messages;
         messages.push(payload);
         this.setState({messages: messages});
     },
 
+    getLocalCredentials: function () {
+        var username = this.props.localStorage.getItem("username"),
+            password = this.props.localStorage.getItem("password");
+        if (!username || !password) {
+            return null;
+        }
+        return {
+            username: username,
+            password: password,
+        };
+    },
+
     renderTab: function () {
         switch (this.state.tab) {
         case "chat":
-            return <ChatTab streamer={this.state.streamer}
-                            bot={this.state.bot}
+            return <ChatTab streamer_username={this.state.streamer_username}
+                            bot_username={this.state.bot_username}
                             status={this.state.status}
                             game={this.state.game}
                             messages={this.state.messages}
                             listeners={this.props.listeners}
-                            connection={this.props.connection} />;
+                            connection={this.props.connection}
+                            key="chat-tab" />;
         default:
             return <div className="tab">Content for {this.state.tab} tab!</div>;
         }
     },
-    renderAuthOverlay: function () {
-        if (!this.state.authenticated) {
-            return <AuthOverlay parent={this}
-                                listeners={this.props.listeners}
-                                connection={this.props.connection} />;
+    renderLoading: function () {
+        return <div id="loading">Loading</div>;
+    },
+    renderSetup: function () {
+        return <Setup parent={this}
+                      listeners={this.props.listeners}
+                      connection={this.props.connection} />;
+    },
+    renderNormal: function () {
+        return [
+            <Menu parent={this} selected={this.state.tab} key="menu" />,
+            this.renderTab()
+        ];
+    },
+    renderApp: function () {
+        if (!this.state.loaded) {
+            return this.renderLoading();
         }
-        return null;
+        if (!this.state.authenticated) {
+            return this.renderSetup();
+        }
+        return this.renderNormal();
     },
     render: function () {
-        return (
-            <div id="app">
-                {this.renderAuthOverlay()}
-                <Menu parent={this} selected={this.state.tab} />
-                {this.renderTab()}
-            </div>
-        );
+        return <div id="app">
+            {this.renderApp()}
+        </div>;
     },
 });
 

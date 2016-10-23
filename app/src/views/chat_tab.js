@@ -65,15 +65,14 @@ const ChatTab = React.createClass({
                 <ChatHeader channel={"#" + this.props.streamer_username}
                             status={this.props.status}
                             game={this.props.game}
-                            connection={this.props.connection} />
+                            net={this.props.net} />
                 <div className="body">
                     <div className="spacer" />
                     {this.props.messages.map(this.renderMessage)}
                 </div>
                 <ChatFooter streamer_username={this.props.streamer_username}
                             bot_username={this.props.bot_username}
-                            listeners={this.props.listeners}
-                            connection={this.props.connection} />
+                            net={this.props.net} />
             </div>
         );
     },
@@ -112,13 +111,13 @@ const ChatHeader = React.createClass({
     },
     handleSubmit: function (e) {
         e.preventDefault();
-        this.props.connection.sendUTF(JSON.stringify({
+        this.props.net.send({
             "cmd": "twitch-update-chat-description",
             "payload": {
                 "status": this.state.status,
                 "game": this.state.game,
             },
-        }));
+        });
         this.setState({
             editing: false,
         });
@@ -163,13 +162,13 @@ const ChatFooter = React.createClass({
     // event handlers
     handleSubmit: function (e) {
         e.preventDefault();
-        this.props.connection.sendUTF(JSON.stringify({
+        this.props.net.send({
             cmd: "twitch-send-message",
             payload: {
                 user_type: this.state.user_type,
                 message: this.state.message,
             },
-        }));
+        });
         this.setState({message: ""});
     },
     handleMessageChange: function (e) {

@@ -22,12 +22,10 @@ const App = React.createClass({
     componentWillMount: function () {
         var credentials = this.getLocalCredentials();
         if (credentials !== null) {
-            this.props.listeners.add("authenticate", this.handleAuthenticate);
-            console.log("authenticating");
-            this.props.connection.sendUTF(JSON.stringify({
-                cmd: "authenticate",
-                payload: credentials,
-            }));
+            this.props.net.request("authenticate", credentials).then(
+                this.handleAuthenticateSuccess,
+                this.handleAuthenticateFailure,
+            );
             return;
         }
         this.setState({
@@ -36,33 +34,36 @@ const App = React.createClass({
     },
 
     // network events
-    handleAuthenticate: function (payload, error) {
-        if (error === null) {
-            this.setState({
-                loaded: true,
-                authenticated: true,
-            });
-            this.props.listeners.add("twitch-user-details", this.handleUserDetails);
-            this.props.connection.sendUTF(JSON.stringify({
-                cmd: "twitch-user-details",
-            }));
-            this.props.listeners.add("chat-message", this.handleChatMessage);
-            this.props.connection.sendUTF(JSON.stringify({
-                cmd: "twitch-stream-messages",
-            }));
-            return
-        }
+    handleAuthenticateSuccess: function (payload) {
+        this.setState({
+            loaded: true,
+            authenticated: true,
+        });
+        this.props.net.request("twitch-user-details", null).then(
+            this.handleUserDetailsSuccess,
+            this.handleUserDetailsFailure,
+        );
+
+        this.props.net.listeners.cmd("chat-message", this.handleChatMessage);
+        this.props.net.send({
+            cmd: "twitch-stream-messages",
+        });
+    },
+    handleAuthenticateFailure: function () {
         this.setState({
             loaded: true,
         })
     },
-    handleUserDetails: function (payload, error) {
+    handleUserDetailsSuccess: function (payload) {
         this.setState({
             streamer_username: payload.streamer_username,
             bot_username: payload.bot_username,
             status: payload.streamer_status,
             game: payload.streamer_game,
         });
+    },
+    handleUserDetailsFailure: function (error) {
+        console.log("got error while getting user details:", error);
     },
     handleChatMessage: function (payload, error) {
         var messages = this.state.messages;
@@ -90,8 +91,7 @@ const App = React.createClass({
                             status={this.state.status}
                             game={this.state.game}
                             messages={this.state.messages}
-                            listeners={this.props.listeners}
-                            connection={this.props.connection}
+                            net={this.props.net}
                             key="chat-tab" />;
         default:
             return <div className="tab">Content for {this.state.tab} tab!</div>;
@@ -101,9 +101,7 @@ const App = React.createClass({
         return <div id="loading">Loading</div>;
     },
     renderSetup: function () {
-        return <Setup parent={this}
-                      listeners={this.props.listeners}
-                      connection={this.props.connection} />;
+        return <Setup parent={this} net={this.props.net} />;
     },
     renderNormal: function () {
         return [

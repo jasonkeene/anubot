@@ -2,22 +2,23 @@
 
 const websocket = require('websocket'),
       Listeners = require('./lib/listeners.js'),
+      Net = require('./lib/net.js'),
       unpack = require('./lib/unpack.js'),
       views = require('./lib/views/main.js');
 
 const client = new websocket.client();
 
-// save off connection for development/debugging
-var conn;
+// save off net for development/debugging
+var net;
 
 client.on('connect', function(connection) {
     console.log('[app] WebSocket Client Connected');
 
-    conn = connection;
     const listeners = new Listeners();
+    net = new Net(listeners, connection);
 
     connection.on('message', function(message) {
-        console.log("[app] Received: '" + message.utf8Data + "'");
+        console.log("[app] Received:", JSON.parse(message.utf8Data));
         listeners.dispatch(...unpack(message.utf8Data));
     });
     connection.on('error', function(error) {
@@ -27,7 +28,8 @@ client.on('connect', function(connection) {
         console.log('[app] echo-protocol Connection Closed');
     });
 
-    views.render(connection, listeners, window.localStorage);
+    views.render(net, window.localStorage);
+
 });
 
 client.on('connectFailed', function(error) {

@@ -91,8 +91,9 @@ func twitchUserDetailsHandler(e event, s *session) {
 		"bot_username":      "",
 	}
 	resp := event{
-		Cmd:     "twitch-user-details",
-		Payload: p,
+		Cmd:       "twitch-user-details",
+		RequestID: e.RequestID,
+		Payload:   p,
 	}
 	defer s.Send(resp)
 

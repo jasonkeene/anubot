@@ -1,37 +1,71 @@
 
+const uuid = require('./uuid.js');
+
 const Listeners = function () {
-    this.listenersMap = {};
+    this.cmdSet = {};
+    this.cmdListeners = {};
+    this.requestListeners = {};
 }
 
-Listeners.prototype.add = function (cmd, listener) {
-    if (this.listenersMap[cmd] === undefined) {
-        this.listenersMap[cmd] = [];
+Listeners.prototype.cmd = function (cmd, listener) {
+    var id = uuid();
+
+    this.cmdSet[id] = cmd;
+
+    if (this.cmdListeners[cmd] === undefined) {
+        this.cmdListeners[cmd] = [];
     }
-    this.listenersMap[cmd].push(listener);
+    this.cmdListeners[cmd].push({
+        listener,
+        id,
+    });
+    return id;
 };
 
-Listeners.prototype.remove = function (cmd, listener) {
-    var l = this.listenersMap[cmd];
-    if (l === undefined) {
-        // no listeners for this cmd
+Listeners.prototype.request = function (request_id, listener) {
+    this.requestListeners[request_id] = listener;
+    return request_id;
+};
+
+Listeners.prototype.remove = function (id) {
+    if (this.requestListeners[id] !== undefined) {
+        delete this.requestListeners[id];
         return;
     }
-    for (var i = 0; i < l.length; i++) {
-        var j = -1;
-        while ((j = l.indexOf(listener)) !== -1) {
-            l.splice(j, 1);
+
+    var cmd = this.cmdSet[id];
+    if (cmd !== undefined) {
+        delete this.cmdSet[id];
+        var listeners = this.cmdListeners[cmd];
+
+        if (listeners === undefined) {
+            return;
+        }
+
+        for (var i = 0; i < listeners.length; i++) {
+            var l = listeners[i];
+            if (l.id === id) {
+                listeners.splice(i, 1);
+                return;
+            }
         }
     }
 };
 
-Listeners.prototype.dispatch = function (cmd, payload, error) {
-    var l = this.listenersMap[cmd];
-    if (l === undefined) {
-        // no listeners for this cmd
+Listeners.prototype.dispatch = function (cmd, request_id, payload, error) {
+    if (request_id) {
+        var l = this.requestListeners[request_id];
+        if (l !== undefined) {
+            l(payload, error);
+        }
+    }
+
+    var listeners = this.cmdListeners[cmd];
+    if (listeners === undefined) {
         return;
     }
-    for (var i = 0; i < l.length; i++) {
-        l[i](payload, error);
+    for (var i = 0; i < listeners.length; i++) {
+        listeners[i].listener(payload, error);
     }
 };
 

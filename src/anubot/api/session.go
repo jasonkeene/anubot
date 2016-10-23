@@ -1,6 +1,10 @@
 package api
 
-import "golang.org/x/net/websocket"
+import (
+	"log"
+
+	"golang.org/x/net/websocket"
+)
 
 // session stores objects handlers need when responding to events.
 type session struct {
@@ -14,7 +18,10 @@ type session struct {
 
 // Send sends an event to the user over the websocket connection.
 func (s *session) Send(e event) {
-	websocket.JSON.Send(s.ws, e)
+	err := websocket.JSON.Send(s.ws, e)
+	if err != nil {
+		log.Printf("got err while sending event to ws client: %s", err)
+	}
 }
 
 // Receive returns the next event from the websocket connection.

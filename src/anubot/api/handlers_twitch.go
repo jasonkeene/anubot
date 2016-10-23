@@ -5,8 +5,6 @@ import (
 	"anubot/stream"
 	"anubot/twitch/oauth"
 	"log"
-
-	"golang.org/x/net/websocket"
 )
 
 const (
@@ -71,8 +69,8 @@ func twitchOauthStartHandler(e event, s *session) {
 	})
 }
 
-// twitchClearAuth clears all auth data for the user.
-func twitchClearAuth(e event, s *session) {
+// twitchClearAuthHandler clears all auth data for the user.
+func twitchClearAuthHandler(e event, s *session) {
 	s.Store().TwitchClearAuth(s.userID)
 	s.Send(event{
 		Cmd:       "twitch-clear-auth",
@@ -92,11 +90,11 @@ func twitchUserDetailsHandler(e event, s *session) {
 		"bot_authenticated": false,
 		"bot_username":      "",
 	}
-	resp := &event{
+	resp := event{
 		Cmd:     "twitch-user-details",
 		Payload: p,
 	}
-	defer websocket.JSON.Send(s.ws, resp)
+	defer s.Send(resp)
 
 	streamerAuthenticated := s.Store().TwitchStreamerAuthenticated(s.userID)
 	if !streamerAuthenticated {
@@ -123,12 +121,12 @@ func twitchUserDetailsHandler(e event, s *session) {
 	p["bot_username"], _ = s.Store().TwitchBotCredentials(s.userID)
 }
 
-// twitchStreamMessages writes chat messages to websocket connection.
-func twitchStreamMessages(e event, s *session) {
+// twitchStreamMessagesHandler writes chat messages to websocket connection.
+func twitchStreamMessagesHandler(e event, s *session) {
 	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)
 	s.api.sm.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
 
-	botUsername, botPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	botUsername, botPassword := s.Store().TwitchBotCredentials(s.userID)
 	s.api.sm.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
 
 	mw, err := newMessageWriter(

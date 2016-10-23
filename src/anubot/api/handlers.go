@@ -40,7 +40,7 @@ func init() {
 			handlerFunc(twitchOauthStartHandler),
 		)
 		eventHandlers["twitch-clear-auth"] = authenticateWrapper(
-			handlerFunc(twitchClearAuth),
+			handlerFunc(twitchClearAuthHandler),
 		)
 
 		// user information
@@ -54,7 +54,7 @@ func init() {
 		// twitch chat
 		eventHandlers["twitch-stream-messages"] = authenticateWrapper(
 			twitchAuthenticateWrapper(
-				handlerFunc(twitchStreamMessages),
+				handlerFunc(twitchStreamMessagesHandler),
 			),
 		)
 		eventHandlers["twitch-send-message"] = authenticateWrapper(

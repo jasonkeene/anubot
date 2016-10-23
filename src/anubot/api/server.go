@@ -63,7 +63,10 @@ func New(
 // Serve reads off of a websocket connection and responds to events.
 func (api *Server) Serve(ws *websocket.Conn) {
 	defer func() {
-		ws.Close()
+		err := ws.Close()
+		if err != nil {
+			log.Printf("got error while closing ws conn: %s", err)
+		}
 	}()
 
 	s := &session{

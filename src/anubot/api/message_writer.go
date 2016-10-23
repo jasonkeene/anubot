@@ -70,9 +70,10 @@ func newMessageWriter(
 	}
 
 	return &messageWriter{
-		streamerSub: streamerSub,
-		botSub:      botSub,
-		ws:          ws,
+		streamerUsername: streamerUsername,
+		streamerSub:      streamerSub,
+		botSub:           botSub,
+		ws:               ws,
 	}, nil
 }
 

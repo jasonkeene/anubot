@@ -1,3 +1,4 @@
+/* global window: false */
 
 const websocket = require('websocket'),
       Listeners = require('./lib/listeners.js'),
@@ -26,7 +27,7 @@ client.on('connect', function(connection) {
         console.log('[app] echo-protocol Connection Closed');
     });
 
-    views.render(connection, listeners, localStorage);
+    views.render(connection, listeners, window.localStorage);
 });
 
 client.on('connectFailed', function(error) {

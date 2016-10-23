@@ -5,6 +5,21 @@ resources:
     uri: https://github.com/jasonkeene/anubot
     branch: master
 
+- name: version
+  type: semver
+  source:
+    bucket: anubot
+    key: version
+    access_key_id: {{s3_access_key_id}}
+    secret_access_key: {{s3_secret_access_key}}
+
+- name: release
+  type: github-release
+  source:
+    user: jasonkeene
+    repository: anubot
+    access_token: {{github_access_token}}
+
 jobs:
 - name: unit-tests
   plan:
@@ -31,3 +46,124 @@ jobs:
           export GOPATH=$PWD
           export PATH=$PWD/bin:$PWD/app/node_modules/.bin:$PATH
           ./test.sh ci
+
+- name: build
+  plan:
+  - get: anubot
+    trigger: false
+    passed:
+    - unit-tests
+  - get: version
+    trigger: true
+  - aggregate:
+    - task: build-electron-windows
+      config:
+        image_resource:
+          type: docker-image
+          source:
+            repository: jasonkeene/anubot
+            tag: latest
+        platform: linux
+        inputs:
+        - name: anubot
+        outputs:
+        - name: electron-windows
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -e
+            echo "need to build electron app for windows"
+    - task: build-electron-mac
+      config:
+        image_resource:
+          type: docker-image
+          source:
+            repository: jasonkeene/anubot
+            tag: latest
+        platform: linux
+        inputs:
+        - name: anubot
+        outputs:
+        - name: electron-mac
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -e
+            echo "need to build electron app for mac"
+    - task: build-electron-linux
+      config:
+        image_resource:
+          type: docker-image
+          source:
+            repository: jasonkeene/anubot
+            tag: latest
+        platform: linux
+        inputs:
+        - name: anubot
+        outputs:
+        - name: electron-linux
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -e
+            echo "need to build electron app for linux"
+    - task: build-server
+      config:
+        image_resource:
+          type: docker-image
+          source:
+            repository: jasonkeene/anubot
+            tag: latest
+        platform: linux
+        inputs:
+        - name: anubot
+        outputs:
+        - name: server
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -e
+            echo "need to build server compononents"
+  - task: build-release
+    config:
+      image_resource:
+        type: docker-image
+        source:
+          repository: jasonkeene/anubot
+          tag: latest
+      platform: linux
+      inputs:
+      - name: version
+      - name: electron-windows
+      - name: electron-mac
+      - name: electron-linux
+      - name: server
+      outputs:
+      - name: release
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -e
+          echo "need to build release objects"
+  - put: release
+    params:
+      name: release/name
+      tag: release/tag
+      body: release/body
+      globs:
+      - release/files/*

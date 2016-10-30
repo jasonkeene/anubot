@@ -93,61 +93,313 @@ const ChatHeader = React.createClass({
         });
     },
 
-    // event handlers
     handleEditClick: function () {
         this.setState({
             editing: true,
         });
     },
-    handleStatusChange: function (e) {
-        this.setState({
-            status: e.target.value,
-        });
-    },
-    handleGameChange: function (e) {
-        this.setState({
-            game: e.target.value,
-        });
-    },
-    handleSubmit: function (e) {
-        e.preventDefault();
-        this.props.net.send({
-            "cmd": "twitch-update-chat-description",
-            "payload": {
-                "status": this.state.status,
-                "game": this.state.game,
-            },
-        });
-        this.setState({
-            editing: false,
-        });
-    },
 
-    render: function () {
-        if (this.state.editing) {
-            return (
-                <div className="header">
-                    <div className="channel">{this.props.channel}</div>
-                    <div className="description">
-                        <form onSubmit={this.handleSubmit}>
-                            <input type="text" className="game-input" onChange={this.handleGameChange} value={this.state.game} />&nbsp;
-                            <input type="text" className="status-input" onChange={this.handleStatusChange} value={this.state.status} />&nbsp;
-                            <input type="submit" value="Done" />
-                        </form>
-                    </div>
+    renderEditing: function () {
+        return (
+            <div className="header">
+                <div className="channel">{this.props.channel}</div>
+                <div className="description">
+                    <ChatHeaderInput parent={this}
+                                     net={this.props.net}
+                                     inputGame={this.state.game}
+                                     inputStatus={this.state.status} />
                 </div>
-            );
-        }
+            </div>
+        );
+    },
+    renderDisplay: function () {
         return (
             <div className="header">
                 <div className="channel">{this.props.channel}</div>
                 <div className="description" onClick={this.handleEditClick}>
                     <b>{this.state.game}:</b>&nbsp;
                     {this.state.status}
-                    &nbsp;<i className="material-icons">edit</i>
+                    &nbsp;<i className="material-icons edit">edit</i>
                 </div>
             </div>
         );
+    },
+    render: function () {
+        if (this.state.editing) {
+            return this.renderEditing();
+        }
+        return this.renderDisplay();
+    },
+});
+
+const ChatHeaderInput = React.createClass({
+    getInitialState: function () {
+        this.props.net.request("twitch-games").then((payload) => {
+            this.setState({
+                games: payload,
+            });
+        });
+        return {
+            inputStatus: this.props.inputStatus,
+            inputGame: this.props.inputGame,
+            // tracks if the game field has changed, in which case display the
+            // games menu.
+            editedGame: false,
+            // tracks if the games menu should be displayed.
+            displayGamesMenu: false,
+            // id of the selected game in the games menu.
+            selectedGame: -1,
+            // available games.
+            games: [],
+            // displays an error.
+            displayError: false,
+        };
+    },
+    componentDidMount(){
+        // select and focus games text input
+        var node = ReactDOM.findDOMNode(this.refs.gameInput);
+        node.focus();
+        node.setSelectionRange(0, node.value.length);
+    },
+
+    handleStatusChange: function (e) {
+        this.setState({
+            inputStatus: e.target.value,
+        });
+    },
+    handleStatusKeyDown: function (e) {
+        switch (e.keyCode) {
+        case 27: // escape
+            this.abort();
+            break;
+        case 13: // return
+            this.complete();
+            break;
+        }
+    },
+
+    handleGameFocus: function (e) {
+        if (this.state.editedGame) {
+            this.setState({
+                displayGamesMenu: true,
+            });
+        }
+    },
+    handleGameBlur: function (e) {
+        setTimeout(() => {
+            this.setState({
+                displayGamesMenu: false,
+            });
+        }, 300);
+    },
+    handleGameChange: function (e) {
+        this.setState({
+            editedGame: true,
+            displayError: false,
+            displayGamesMenu: true,
+            inputGame: e.target.value,
+            selectedGame: -1,
+        });
+    },
+    handleGameKeyDown: function (e) {
+        switch (e.keyCode) {
+        case 27: // escape
+            this.abort();
+            break;
+        case 13: // return
+            if (this.gameSelected()) {
+                this.captureGame();
+                break;
+            }
+            this.complete();
+            break;
+        case 40: // down
+            e.preventDefault();
+            this.moveMenu("down");
+            break;
+        case 38: // up
+            e.preventDefault();
+            this.moveMenu("up");
+            break;
+        }
+    },
+
+    handleGameMenuClick: function (e) {
+        var node = e.target,
+            count = 0;
+        while (node.attributes["data-name"] === undefined && count < 4) {
+            node = node.parentNode;
+            count++;
+        }
+        if (node.attributes["data-name"] === undefined) {
+            return;
+        }
+        this.setState({
+            inputGame: node.attributes["data-name"].value,
+            displayGamesMenu: false,
+        });
+        ReactDOM.findDOMNode(this.refs.statusInput).focus();
+    },
+    handleGameMenuMouseOver: function (e) {
+        var node = e.target,
+            count = 0;
+        while (node.attributes["data-id"] === undefined && count < 4) {
+            node = node.parentNode;
+            count++;
+        }
+        if (node.attributes["data-id"] === undefined) {
+            return;
+        }
+        this.setState({
+            selectedGame: parseInt(node.attributes["data-id"].value),
+        });
+    },
+
+    moveMenu: function (direction) {
+        var games = this.filterGames();
+
+        if (this.state.selectedGame === -1) {
+            if (games.length > 0) {
+                var game = direction === "up" ? games[games.length-1] : games[0];
+                this.setState({
+                    selectedGame: game.id,
+                });
+            }
+            return;
+        }
+
+        var i = -1;
+        for (var j = 0; j < games.length; j++) {
+            var game = games[j];
+            if (game.id === this.state.selectedGame) {
+                var delta = direction === "up" ? -1 : 1;
+                i = j + delta;
+                break;
+            }
+        }
+        if (i > -1 && i < games.length) {
+            var game = games[i];
+            this.setState({
+                selectedGame: game.id,
+            });
+        }
+    },
+    captureGame: function () {
+        var gameName = "";
+        for (var i = 0; i < this.state.games.length; i++) {
+            var game = this.state.games[i];
+            if (game.id === this.state.selectedGame) {
+                gameName = game.name;
+                break;
+            }
+        }
+        this.setState({
+            selectedGame: -1,
+            editedGame: false,
+            displayGamesMenu: false,
+            inputGame: gameName,
+        })
+        var node = ReactDOM.findDOMNode(this.refs.statusInput);
+        node.focus();
+        node.setSelectionRange(0, node.value.length);
+    },
+    gameSelected: function () {
+        return this.state.selectedGame !== -1
+    },
+    abort: function () {
+        this.props.parent.setState({
+            editing: false,
+        });
+    },
+    complete: function () {
+        var game = this.validateGame(this.state.inputGame);
+        if (game !== null) {
+            this.props.net.send({
+                "cmd": "twitch-update-chat-description",
+                "payload": {
+                    "status": this.state.inputStatus,
+                    "game": game,
+                },
+            });
+            this.props.parent.setState({
+                editing: false,
+                status: this.state.inputStatus,
+                game: game,
+            });
+            return;
+        }
+
+        var node = ReactDOM.findDOMNode(this.refs.gameInput);
+        node.focus();
+        node.setSelectionRange(0, node.value.length);
+        this.setState({
+            displayError: true,
+        });
+    },
+    validateGame: function (input) {
+        var games = this.state.games;
+        input = input.toLowerCase();
+
+        for (var i = 0; i < games.length; i++) {
+            var game = games[i],
+                match = game.name.toLowerCase();
+            if (match === input) {
+                return game.name;
+            }
+        }
+        return null;
+    },
+    filterGames: function (game) {
+        var input = this.state.inputGame.toLowerCase(),
+            games = this.state.games,
+            result = [];
+
+        for (var i = 0; i < games.length; i++) {
+            var game = games[i],
+                match = game.name.toLowerCase();
+            if (match.indexOf(input) !== -1) {
+                result.push(game);
+            }
+        }
+        return result.slice(0, 5);
+    },
+
+    renderError: function () {
+        return <div className="error">
+            {'"' + this.state.inputGame + '" is not a valid game.'}
+        </div>;
+    },
+    renderGamesMenuItem: function (game) {
+        return <li key={"game-"+game.id}
+                   className={game.id === this.state.selectedGame ? "selected" : ""}
+                   data-id={game.id}
+                   data-name={game.name}
+                   onClick={this.handleGameMenuClick}
+                   onMouseOver={this.handleGameMenuMouseOver}>
+                   <img src={game.image} width="30" height="40" />
+                   <span className="name">{game.name}</span>
+                </li>;
+    },
+    renderGamesMenu: function () {
+        return <ol>
+            {this.filterGames().map(this.renderGamesMenuItem)}
+        </ol>;
+    },
+    render: function () {
+        return <div className="input">
+            {this.state.displayGamesMenu ? this.renderGamesMenu() : ""}
+            {this.state.displayError ? this.renderError() : ""}
+            <input type="text" ref="gameInput" className="game-input"
+                onChange={this.handleGameChange}
+                onKeyDown={this.handleGameKeyDown}
+                onFocus={this.handleGameFocus}
+                onBlur={this.handleGameBlur}
+                value={this.state.inputGame} />&nbsp;
+            <input type="text" ref="statusInput" className="status-input"
+                onChange={this.handleStatusChange}
+                onKeyDown={this.handleStatusKeyDown}
+                value={this.state.inputStatus} />
+        </div>;
     },
 });
 

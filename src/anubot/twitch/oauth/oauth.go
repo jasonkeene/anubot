@@ -68,7 +68,7 @@ type DoneHandler struct {
 	twitchOauthClientSecret string
 	twitchOauthRedirectURI  string
 	ns                      NonceStore
-	twitch                  twitch.API
+	twitch                  *twitch.API
 }
 
 // NewDoneHandler creates a new handler to finish the Oauth flow.
@@ -77,7 +77,7 @@ func NewDoneHandler(
 	twitchOauthClientSecret,
 	twitchOauthRedirectURI string,
 	ns NonceStore,
-	twitch twitch.API,
+	twitch *twitch.API,
 ) DoneHandler {
 	return DoneHandler{
 		twitchOauthClientID:     twitchOauthClientID,

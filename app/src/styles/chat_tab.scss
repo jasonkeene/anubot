@@ -18,11 +18,69 @@
         }
     }
     .header {
-        .material-icons {
-            font-size: 16px;
-        }
-        .status-input {
-            width: 50%;
+        .description {
+            .edit {
+                display: none;
+                font-size: 16px;
+            }
+            &:hover {
+                .edit {
+                    display: inline;
+                }
+            }
+            .input {
+                ol {
+                    list-style-type: none;
+                    margin: 0;
+                    padding: 0;
+                    position: fixed;
+                    top: 88px;
+                    background-color: white;
+                    z-index: 50;
+
+                    li {
+                        height: 40px;
+                        line-height: 40px;
+                        margin: 5px;
+
+                        &.selected{
+                            color: white;
+                            background-color: rgb(33, 37, 43);
+                        }
+
+                        img {
+                            vertical-align: bottom;
+                            margin-right: 10px;
+                        }
+
+                        .name {
+                            margin-right: 10px;
+                        }
+                    }
+                }
+                .error {
+                    margin: 0;
+                    padding: 10px;
+                    position: fixed;
+                    top: 88px;
+                    background-color: white;
+                    z-index: 49;
+                    font-weight: bold;
+                    color: #d01800;
+                }
+
+                .game-input, .status-input {
+                    padding: 3px;
+                    outline-width: 0;
+                    border: 1px solid #acb1b8;
+                }
+                .game-input {
+                    width: 175px;
+                }
+                .status-input {
+                    width: 350px;
+                }
+            }
         }
     }
     .body {

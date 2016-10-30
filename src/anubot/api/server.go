@@ -37,7 +37,7 @@ type Server struct {
 	sm                  *stream.Manager
 	pubEndpoints        []string
 	store               Store
-	twitch              twitch.API
+	twitch              *twitch.API
 	twitchOauthClientID string
 }
 
@@ -47,7 +47,7 @@ func New(
 	sm *stream.Manager,
 	pubEndpoints []string,
 	store Store,
-	twitch twitch.API,
+	twitch *twitch.API,
 	twitchOauthClientID string,
 ) *Server {
 	return &Server{

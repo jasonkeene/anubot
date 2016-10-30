@@ -122,6 +122,15 @@ func twitchUserDetailsHandler(e event, s *session) {
 	p["bot_username"], _ = s.Store().TwitchBotCredentials(s.userID)
 }
 
+// twitchGamesHandler returns the available games.
+func twitchGamesHandler(e event, s *session) {
+	s.Send(event{
+		Cmd:       e.Cmd,
+		RequestID: e.RequestID,
+		Payload:   s.api.twitch.Games(),
+	})
+}
+
 // twitchStreamMessagesHandler writes chat messages to websocket connection.
 func twitchStreamMessagesHandler(e event, s *session) {
 	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)

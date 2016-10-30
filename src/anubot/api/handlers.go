@@ -47,6 +47,11 @@ func init() {
 		eventHandlers["twitch-user-details"] = authenticateWrapper(
 			handlerFunc(twitchUserDetailsHandler),
 		)
+
+		// twitch
+		eventHandlers["twitch-games"] = authenticateWrapper(
+			handlerFunc(twitchGamesHandler),
+		)
 	}
 
 	// twitch authenticated

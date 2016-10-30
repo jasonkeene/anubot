@@ -42,4 +42,8 @@ var (
 		Code: 7,
 		Text: "you specified an invalid user type",
 	}
+	bttvUnavailable = &apiError{
+		Code: 8,
+		Text: "unable to gather emoji from bttv api",
+	}
 )

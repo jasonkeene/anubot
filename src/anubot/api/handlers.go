@@ -52,6 +52,11 @@ func init() {
 		eventHandlers["twitch-games"] = authenticateWrapper(
 			handlerFunc(twitchGamesHandler),
 		)
+
+		// bttv
+		eventHandlers["bttv-emoji"] = authenticateWrapper(
+			handlerFunc(bttvEmojiHandler),
+		)
 	}
 
 	// twitch authenticated

@@ -4,6 +4,13 @@ const React = require("react"),
       emoji = require("../../lib/views/emoji.js");
 
 describe("render", () => {
+    beforeEach(() => {
+        emoji.initBTTV({
+            "FeelsGoodMan": "feels-good-man-url",
+            "FeelsBadMan": "feels-bad-man-url",
+        });
+    });
+
     it("returns the bare message if no emojis exist", () => {
         const msg = {
             body: "bare message",
@@ -57,30 +64,31 @@ describe("render", () => {
         var msg = {
             body: "test FeelsGoodMan FeelsBadMan FeelsBadMan FeelsGoodMan test",
         };
+
         expect(emoji.render(msg)).toEqual([
             "test ",
             React.createElement("img", {
                 className: "emoji",
                 key: "0-FeelsGoodMan",
-                src: emoji._bttv.FeelsGoodMan,
-            }),
-            " ",
-            React.createElement("img", {
-                className: "emoji",
-                key: "0-FeelsBadMan",
-                src: emoji._bttv.FeelsBadMan,
+                src: "feels-good-man-url",
             }),
             " ",
             React.createElement("img", {
                 className: "emoji",
                 key: "2-FeelsBadMan",
-                src: emoji._bttv.FeelsBadMan,
+                src: "feels-bad-man-url",
             }),
             " ",
             React.createElement("img", {
                 className: "emoji",
-                key: "6-FeelsGoodMan",
-                src: emoji._bttv.FeelsGoodMan,
+                key: "4-FeelsBadMan",
+                src: "feels-bad-man-url",
+            }),
+            " ",
+            React.createElement("img", {
+                className: "emoji",
+                key: "2-FeelsGoodMan",
+                src: "feels-good-man-url",
             }),
             " test",
         ]);
@@ -93,6 +101,7 @@ describe("render", () => {
                 emotes: "3286:5-11/499:25-26",
             },
         };
+
         expect(emoji.render(msg)).toEqual([
             "test ",
             React.createElement("img", {
@@ -104,7 +113,7 @@ describe("render", () => {
             React.createElement("img", {
                 className: "emoji",
                 key: "2-FeelsBadMan",
-                src: emoji._bttv.FeelsBadMan,
+                src: "feels-bad-man-url",
             }),
             " ",
             React.createElement("img", {
@@ -115,8 +124,8 @@ describe("render", () => {
             " ",
             React.createElement("img", {
                 className: "emoji",
-                key: "6-FeelsGoodMan",
-                src: emoji._bttv.FeelsGoodMan,
+                key: "4-FeelsGoodMan",
+                src: "feels-good-man-url",
             }),
             " test",
         ]);

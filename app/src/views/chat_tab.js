@@ -1,3 +1,4 @@
+/* global window: false */
 
 const React = require('react'),
       ReactDOM = require('react-dom'),
@@ -6,6 +7,9 @@ const React = require('react'),
 
 const ChatTab = React.createClass({
     getInitialState: function () {
+        this.props.net.request("bttv-emoji").then((payload) => {
+            emoji.initBTTV(payload);
+        })
         return {
             scroll: true,
         };
@@ -186,7 +190,7 @@ const ChatHeaderInput = React.createClass({
         }
     },
     handleGameBlur: function (e) {
-        setTimeout(() => {
+        window.setTimeout(() => {
             this.setState({
                 displayGamesMenu: false,
             });
@@ -256,11 +260,12 @@ const ChatHeaderInput = React.createClass({
     },
 
     moveMenu: function (direction) {
-        var games = this.filterGames();
+        var games = this.filterGames(),
+            game = null;
 
         if (this.state.selectedGame === -1) {
             if (games.length > 0) {
-                var game = direction === "up" ? games[games.length-1] : games[0];
+                game = direction === "up" ? games[games.length-1] : games[0];
                 this.setState({
                     selectedGame: game.id,
                 });
@@ -270,7 +275,7 @@ const ChatHeaderInput = React.createClass({
 
         var i = -1;
         for (var j = 0; j < games.length; j++) {
-            var game = games[j];
+            game = games[j];
             if (game.id === this.state.selectedGame) {
                 var delta = direction === "up" ? -1 : 1;
                 i = j + delta;
@@ -278,7 +283,7 @@ const ChatHeaderInput = React.createClass({
             }
         }
         if (i > -1 && i < games.length) {
-            var game = games[i];
+            game = games[i];
             this.setState({
                 selectedGame: game.id,
             });
@@ -349,7 +354,7 @@ const ChatHeaderInput = React.createClass({
         }
         return null;
     },
-    filterGames: function (game) {
+    filterGames: function () {
         var input = this.state.inputGame.toLowerCase(),
             games = this.state.games,
             result = [];

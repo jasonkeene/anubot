@@ -12,7 +12,7 @@ func bttvEmojiHandler(e event, s *session) {
 	var streamerUsername string
 	streamerAuthenticated := s.Store().TwitchStreamerAuthenticated(s.userID)
 	if streamerAuthenticated {
-		streamerUsername, _ = s.Store().TwitchStreamerCredentials(s.userID)
+		streamerUsername, _, _ = s.Store().TwitchStreamerCredentials(s.userID)
 	}
 	payload, err := bttv.Emoji(streamerUsername)
 	if err != nil {

@@ -3,12 +3,15 @@ package bolt
 import (
 	"errors"
 	"log"
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
 
 	"anubot/store"
+	"anubot/stream"
 	"anubot/twitch/oauth"
 )
 
@@ -43,6 +46,10 @@ func (b *Bolt) createBuckets() error {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte("nonces"))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte("messages"))
 		if err != nil {
 			return err
 		}
@@ -139,7 +146,12 @@ func (b *Bolt) OauthNonceExists(nonce string) bool {
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing
 // the oauth data.
-func (b *Bolt) FinishOauthNonce(nonce, username string, od oauth.Data) error {
+func (b *Bolt) FinishOauthNonce(
+	nonce string,
+	username string,
+	userID int,
+	od store.OauthData,
+) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		nr, err := getNonceRecord(nonce, tx)
 		if err != nil {
@@ -155,9 +167,11 @@ func (b *Bolt) FinishOauthNonce(nonce, username string, od oauth.Data) error {
 		case store.Streamer:
 			ur.StreamerOD = od
 			ur.StreamerUsername = username
+			ur.StreamerID = userID
 		case store.Bot:
 			ur.BotOD = od
 			ur.BotUsername = username
+			ur.BotID = userID
 		default:
 			return errors.New("bad twitch user type, this should never happen")
 		}
@@ -188,7 +202,7 @@ func (b *Bolt) TwitchStreamerAuthenticated(userID string) bool {
 }
 
 // TwitchStreamerCredentials gives you the credentials for the streamer user.
-func (b *Bolt) TwitchStreamerCredentials(userID string) (string, string) {
+func (b *Bolt) TwitchStreamerCredentials(userID string) (string, string, int) {
 	var ur userRecord
 	err := b.db.View(func(tx *bolt.Tx) error {
 		var err error
@@ -196,10 +210,10 @@ func (b *Bolt) TwitchStreamerCredentials(userID string) (string, string) {
 		return err
 	})
 	if err != nil {
-		return "", ""
+		return "", "", 0
 	}
 
-	return ur.StreamerUsername, ur.StreamerOD.AccessToken
+	return ur.StreamerUsername, ur.StreamerOD.AccessToken, ur.StreamerID
 }
 
 // TwitchBotAuthenticated tells you if the user has authenticated his bot with
@@ -219,7 +233,7 @@ func (b *Bolt) TwitchBotAuthenticated(userID string) bool {
 }
 
 // TwitchBotCredentials gives you the credentials for the streamer user.
-func (b *Bolt) TwitchBotCredentials(userID string) (string, string) {
+func (b *Bolt) TwitchBotCredentials(userID string) (string, string, int) {
 	var ur userRecord
 	err := b.db.View(func(tx *bolt.Tx) error {
 		var err error
@@ -227,10 +241,10 @@ func (b *Bolt) TwitchBotCredentials(userID string) (string, string) {
 		return err
 	})
 	if err != nil {
-		return "", ""
+		return "", "", 0
 	}
 
-	return ur.BotUsername, ur.BotOD.AccessToken
+	return ur.BotUsername, ur.BotOD.AccessToken, ur.BotID
 }
 
 // TwitchAuthenticated tells you if the user has authenticated his bot and
@@ -257,12 +271,75 @@ func (b *Bolt) TwitchClearAuth(userID string) {
 			return err
 		}
 		ur.StreamerUsername = ""
-		ur.StreamerOD = oauth.Data{}
+		ur.StreamerOD = store.OauthData{}
 		ur.BotUsername = ""
-		ur.BotOD = oauth.Data{}
+		ur.BotOD = store.OauthData{}
 		return upsertUserRecord(ur, tx)
 	})
 	if err != nil {
 		log.Printf("could not clear twitch auth: %s", err)
 	}
+}
+
+// StoreMessage stores a message for a given user for later searching and
+// scrollback history.
+func (b *Bolt) StoreMessage(msg stream.RXMessage) error {
+	return b.db.Update(func(tx *bolt.Tx) error {
+		return upsertMessage(msg, tx)
+	})
+}
+
+type byTimestamp []stream.RXMessage
+
+func (a byTimestamp) Len() int           { return len(a) }
+func (a byTimestamp) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byTimestamp) Less(i, j int) bool { return a[i].Twitch.Line.Time.Before(a[j].Twitch.Line.Time) }
+
+// FetchRecentMessages gets the recent messages for the user's channel.
+func (b *Bolt) FetchRecentMessages(userID string) ([]stream.RXMessage, error) {
+	if !b.TwitchAuthenticated(userID) {
+		return nil, errors.New("user must be authenticated via twitch before requesting recent messages")
+	}
+
+	var messages []stream.RXMessage
+	_, _, streamerUserID := b.TwitchStreamerCredentials(userID)
+	_, _, botUserID := b.TwitchBotCredentials(userID)
+
+	var mr messageRecord
+	err := b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		mr, err = getMessageRecord("twitch:"+strconv.Itoa(streamerUserID), tx)
+		return err
+	})
+	if err != nil {
+		log.Printf("could not query messages for streamer: %s", err)
+	}
+
+	messages = []stream.RXMessage(mr)
+
+	err = b.db.View(func(tx *bolt.Tx) error {
+		var err error
+		mr, err = getMessageRecord("twitch:"+strconv.Itoa(botUserID), tx)
+		return err
+	})
+	if err != nil {
+		log.Printf("could not query messages for bot: %s", err)
+	}
+
+	messages = append(messages, []stream.RXMessage(mr)...)
+	sort.Sort(byTimestamp(messages))
+	return messages[:min(len(messages), 500)], nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// QueryMessages allows the user to search for messages that match a
+// search string.
+func (b *Bolt) QueryMessages(userID, search string) ([]stream.RXMessage, error) {
+	panic("not implemented")
 }

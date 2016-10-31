@@ -1,22 +1,27 @@
 package bolt
 
 import (
-	"anubot/store"
-	"anubot/twitch/oauth"
 	"encoding/json"
+	"errors"
+	"strconv"
 	"time"
 
 	"github.com/boltdb/bolt"
+
+	"anubot/store"
+	"anubot/stream"
 )
 
 type userRecord struct {
-	UserID           string     `json:"user_id"`
-	Username         string     `json:"username"`
-	Password         string     `json:"password"`
-	StreamerUsername string     `json:"streamer_username"`
-	StreamerOD       oauth.Data `json:"streamer_od"`
-	BotUsername      string     `json:"bot_username"`
-	BotOD            oauth.Data `json:"bot_od"`
+	UserID           string          `json:"user_id"`
+	Username         string          `json:"username"`
+	Password         string          `json:"password"`
+	StreamerUsername string          `json:"streamer_username"`
+	StreamerOD       store.OauthData `json:"streamer_od"`
+	StreamerID       int             `json:"streamer_id"`
+	BotUsername      string          `json:"bot_username"`
+	BotOD            store.OauthData `json:"bot_od"`
+	BotID            int             `json:"bot_id"`
 }
 
 type nonceRecord struct {
@@ -25,6 +30,8 @@ type nonceRecord struct {
 	TU      store.TwitchUser `json:"tu"`
 	Created time.Time        `json:"created"`
 }
+
+type messageRecord []stream.RXMessage
 
 func upsertNonceRecord(nr nonceRecord, tx *bolt.Tx) error {
 	b := tx.Bucket([]byte("nonces"))
@@ -104,4 +111,66 @@ func getUserRecordByUsername(username string, tx *bolt.Tx) (userRecord, error) {
 func deleteUserRecord(userID string, tx *bolt.Tx) error {
 	b := tx.Bucket([]byte("users"))
 	return b.Delete([]byte(userID))
+}
+
+func upsertMessage(msg stream.RXMessage, tx *bolt.Tx) error {
+	b := tx.Bucket([]byte("messages"))
+
+	key, err := getMessageKey(msg)
+	if err != nil {
+		println("return via nil key")
+		return err
+	}
+
+	mrb := b.Get([]byte(key))
+	var mr messageRecord
+	if mrb != nil {
+		err = json.Unmarshal(mrb, &mr)
+		if err != nil {
+			println("return via unmarshal err")
+			return err
+		}
+	}
+
+	mr = append(mr, msg)
+	mrb, err = json.Marshal(mr)
+	if err != nil {
+		println("return via marshal err")
+		return err
+	}
+
+	return b.Put([]byte(key), mrb)
+}
+
+func getMessageRecord(key string, tx *bolt.Tx) (messageRecord, error) {
+	b := tx.Bucket([]byte("messages"))
+
+	read := b.Get([]byte(key))
+	if read == nil {
+		return make(messageRecord, 0), nil
+	}
+
+	var mr messageRecord
+	err := json.Unmarshal(read, &mr)
+	if err != nil {
+		return nil, err
+	}
+	return mr, nil
+}
+
+func deleteMessageRecord(key string, tx *bolt.Tx) error {
+	b := tx.Bucket([]byte("messages"))
+
+	return b.Delete([]byte(key))
+}
+
+func getMessageKey(msg stream.RXMessage) (string, error) {
+	switch msg.Type {
+	case stream.Twitch:
+		return "twitch:" + strconv.Itoa(msg.Twitch.OwnerID), nil
+	case stream.Discord:
+		return "discord:" + msg.Discord.OwnerID, nil
+	default:
+		return "", errors.New("invalid message type")
+	}
 }

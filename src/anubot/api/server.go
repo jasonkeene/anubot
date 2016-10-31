@@ -24,9 +24,10 @@ type Store interface {
 	TwitchClearAuth(userID string)
 	TwitchAuthenticated(userID string) (authenticated bool)
 	TwitchStreamerAuthenticated(userID string) (authenticated bool)
-	TwitchStreamerCredentials(userID string) (string, string)
+	TwitchStreamerCredentials(userID string) (string, string, int)
 	TwitchBotAuthenticated(userID string) (authenticated bool)
-	TwitchBotCredentials(userID string) (string, string)
+	TwitchBotCredentials(userID string) (string, string, int)
+	FetchRecentMessages(userID string) ([]stream.RXMessage, error)
 
 	oauth.NonceStore
 }

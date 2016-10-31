@@ -9,8 +9,10 @@ import (
 	"sync"
 
 	"github.com/fluffle/goirc/logging/golog"
+	"github.com/spf13/viper"
 
 	"anubot/stream"
+	"anubot/twitch"
 )
 
 func init() {
@@ -41,6 +43,11 @@ func (fd *fakeDispatcher) LastDiscordChannel() string {
 }
 
 func main() {
+	// load config
+	v := viper.New()
+	v.SetEnvPrefix("anubot")
+	v.AutomaticEnv()
+
 	c := "#" + os.Getenv("TWITCH_USER_USER")
 	u := os.Getenv("TWITCH_BOT_USER")
 	p := os.Getenv("TWITCH_BOT_PASS")
@@ -50,7 +57,12 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt)
 
 	d := &fakeDispatcher{}
-	manager := stream.NewManager(d)
+	twitch := twitch.New(
+		v.GetString("twitch_api_url"),
+		v.GetString("twitch_oauth_client_id"),
+	)
+
+	manager := stream.NewManager(d, twitch)
 	manager.ConnectTwitch(u, p, c)
 	manager.ConnectDiscord(t)
 

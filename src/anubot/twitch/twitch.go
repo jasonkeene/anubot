@@ -40,13 +40,24 @@ func New(url, clientID string) *API {
 	}
 }
 
-// Username gets the username for a give oauth token.
-func (t *API) Username(token string) (username string, err error) {
+// UserData represents data associated with a Twitch user.
+type UserData struct {
+	ID          int    `json:"_id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Email       string `json:"email"`
+	Partnered   bool   `json:"partnered"`
+	Logo        string `json:"logo"`
+	Bio         string `json:"bio"`
+}
+
+// User gets the user data for a give oauth token.
+func (t *API) User(token string) (UserData, error) {
 	u := t.url + "/user"
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		return "", err
+		return UserData{}, err
 	}
 
 	req.Header.Set("Accept", "application/vnd.twitchtv.v3+json")
@@ -55,11 +66,11 @@ func (t *API) Username(token string) (username string, err error) {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return "", err
+		return UserData{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Bad status code %d", resp.StatusCode)
+		return UserData{}, fmt.Errorf("Bad status code %d", resp.StatusCode)
 	}
 
 	defer func() {
@@ -70,20 +81,62 @@ func (t *API) Username(token string) (username string, err error) {
 	}()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return UserData{}, err
+	}
+
+	var userData UserData
+	err = json.Unmarshal(data, &userData)
+	if err != nil {
+		return UserData{}, err
+	}
+	if userData.Name == "" {
+		return UserData{}, errors.New("Empty username response from twitch")
+	}
+	return userData, nil
+}
+
+// UserID fetches the userID for a give username.
+func (t *API) UserID(username string) (userID int, err error) {
+	if username == "" {
+		return 0, errors.New("empty username")
+	}
+	u := t.url + "/users/" + username
+
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Client-ID", t.clientID)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("Bad status code %d", resp.StatusCode)
+	}
+
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Printf("got error in closing response body: %s", err)
+		}
+	}()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
 	}
 
 	var userData struct {
-		Name string `json:"name"`
+		ID int `json:"_id"`
 	}
 	err = json.Unmarshal(data, &userData)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	if userData.Name == "" {
-		return "", errors.New("Empty username response from twitch")
-	}
-	return userData.Name, nil
+	return userData.ID, nil
 }
 
 // StreamInfo returns the status and game for a given channel.

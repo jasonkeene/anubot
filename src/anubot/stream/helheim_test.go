@@ -5,25 +5,29 @@
 
 package stream
 
-type mockDispatcher struct {
-	DispatchCalled chan bool
-	DispatchInput  struct {
-		Topic   chan string
-		Message chan RXMessage
+type mockTwitchUserIDFetcher struct {
+	UserIDCalled chan bool
+	UserIDInput  struct {
+		Username chan string
+	}
+	UserIDOutput struct {
+		UserID chan int
+		Err    chan error
 	}
 }
 
-func newMockDispatcher() *mockDispatcher {
-	m := &mockDispatcher{}
-	m.DispatchCalled = make(chan bool, 100)
-	m.DispatchInput.Topic = make(chan string, 100)
-	m.DispatchInput.Message = make(chan RXMessage, 100)
+func newMockTwitchUserIDFetcher() *mockTwitchUserIDFetcher {
+	m := &mockTwitchUserIDFetcher{}
+	m.UserIDCalled = make(chan bool, 100)
+	m.UserIDInput.Username = make(chan string, 100)
+	m.UserIDOutput.UserID = make(chan int, 100)
+	m.UserIDOutput.Err = make(chan error, 100)
 	return m
 }
-func (m *mockDispatcher) Dispatch(topic string, message RXMessage) {
-	m.DispatchCalled <- true
-	m.DispatchInput.Topic <- topic
-	m.DispatchInput.Message <- message
+func (m *mockTwitchUserIDFetcher) UserID(username string) (userID int, err error) {
+	m.UserIDCalled <- true
+	m.UserIDInput.Username <- username
+	return <-m.UserIDOutput.UserID, <-m.UserIDOutput.Err
 }
 
 type mockConn struct {
@@ -52,4 +56,25 @@ func (m *mockConn) send(arg0 TXMessage) {
 func (m *mockConn) close() error {
 	m.closeCalled <- true
 	return <-m.closeOutput.Ret0
+}
+
+type mockDispatcher struct {
+	DispatchCalled chan bool
+	DispatchInput  struct {
+		Topic   chan string
+		Message chan RXMessage
+	}
+}
+
+func newMockDispatcher() *mockDispatcher {
+	m := &mockDispatcher{}
+	m.DispatchCalled = make(chan bool, 100)
+	m.DispatchInput.Topic = make(chan string, 100)
+	m.DispatchInput.Message = make(chan RXMessage, 100)
+	return m
+}
+func (m *mockDispatcher) Dispatch(topic string, message RXMessage) {
+	m.DispatchCalled <- true
+	m.DispatchInput.Topic <- topic
+	m.DispatchInput.Message <- message
 }

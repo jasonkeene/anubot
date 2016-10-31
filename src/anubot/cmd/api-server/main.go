@@ -9,12 +9,12 @@ import (
 	"golang.org/x/net/websocket"
 
 	"github.com/fluffle/goirc/logging/golog"
-	"github.com/pebbe/zmq4"
 	"github.com/spf13/viper"
 
 	"anubot/api"
 	"anubot/bot"
 	"anubot/dispatch"
+	"anubot/store"
 	"anubot/store/bolt"
 	"anubot/stream"
 	"anubot/twitch"
@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Panicf("unable to get current user: %s", err)
 	}
-	store, err := bolt.New(usr.HomeDir + "/anubot.bolt")
+	s, err := bolt.New(usr.HomeDir + "/anubot.bolt")
 	if err != nil {
 		log.Panicf("unable to craete bolt database: %s", err)
 	}
@@ -56,26 +56,18 @@ func main() {
 	}
 	d := dispatch.New(pubEndpoints, pushEndpoints)
 
-	// setup dummy pull sock to prevent the push sock from blocking
-	pull, err := zmq4.NewSocket(zmq4.PULL)
-	if err != nil {
-		log.Panicf("pull not created, got err: %s", err)
-	}
-	err = pull.Connect("inproc://push")
+	// setup puller to store messages
+	puller, err := store.NewPuller(s, []string{"inproc://push"})
 	if err != nil {
 		log.Panicf("pull not able to connect, got err: %s", err)
 	}
-	go func() {
-		for {
-			pull.RecvBytes(0)
-		}
-	}()
+	go puller.Start()
 
 	// create bot manager
 	bm := bot.NewManager()
 
 	// create stream manager
-	sm := stream.NewManager(d)
+	sm := stream.NewManager(d, twitch)
 
 	// setup websocket API server
 	mux := http.NewServeMux()
@@ -83,7 +75,7 @@ func main() {
 		bm,
 		sm,
 		pubEndpoints,
-		store,
+		s,
 		twitch,
 		v.GetString("twitch_oauth_client_id"),
 	)
@@ -94,7 +86,7 @@ func main() {
 		v.GetString("twitch_oauth_client_id"),
 		v.GetString("twitch_oauth_client_secret"),
 		v.GetString("twitch_oauth_redirect_uri"),
-		store,
+		s,
 		twitch,
 	))
 

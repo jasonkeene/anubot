@@ -8,10 +8,12 @@ import (
 
 	"github.com/fluffle/goirc/logging/golog"
 	"github.com/pebbe/zmq4"
+	"github.com/spf13/viper"
 
 	"anubot/bot"
 	"anubot/dispatch"
 	"anubot/stream"
+	"anubot/twitch"
 )
 
 func init() {
@@ -19,6 +21,11 @@ func init() {
 }
 
 func main() {
+	// load config
+	v := viper.New()
+	v.SetEnvPrefix("anubot")
+	v.AutomaticEnv()
+
 	twitchUserUsername := os.Getenv("TWITCH_USER_USER")
 	twitchUserPassword := os.Getenv("TWITCH_USER_PASS")
 	twitchChannel := "#" + twitchUserUsername
@@ -37,7 +44,11 @@ func main() {
 		[]string{"inproc://pub"},
 		[]string{"inproc://push"},
 	)
-	manager := stream.NewManager(d)
+	twitch := twitch.New(
+		v.GetString("twitch_api_url"),
+		v.GetString("twitch_oauth_client_id"),
+	)
+	manager := stream.NewManager(d, twitch)
 	manager.ConnectTwitch(twitchBotUsername, twitchBotPassword, twitchChannel)
 	manager.ConnectTwitch(twitchUserUsername, twitchUserPassword, twitchChannel)
 	manager.ConnectDiscord("Bot " + discordBotPassword)

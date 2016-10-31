@@ -61,11 +61,13 @@ type RXMessage struct {
 
 // RXTwitch contains information received from Twitch.
 type RXTwitch struct {
-	Line *client.Line `json:"line"`
+	OwnerID int          `json:"owner_id"`
+	Line    *client.Line `json:"line"`
 }
 
 // RXDiscord contains information received from Discord.
 type RXDiscord struct {
+	OwnerID string `json:"owner_id"`
 	// TODO: add other types
 	MessageCreate *discordgo.MessageCreate `json:"message_create"`
 }

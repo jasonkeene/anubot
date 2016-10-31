@@ -10,9 +10,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/fluffle/goirc/logging/golog"
 	"github.com/pebbe/zmq4"
+	"github.com/spf13/viper"
 
 	"anubot/dispatch"
 	"anubot/stream"
+	"anubot/twitch"
 )
 
 func init() {
@@ -20,6 +22,11 @@ func init() {
 }
 
 func main() {
+	// load config
+	v := viper.New()
+	v.SetEnvPrefix("anubot")
+	v.AutomaticEnv()
+
 	uu := os.Getenv("TWITCH_USER_USER")
 	up := os.Getenv("TWITCH_USER_PASS")
 	c := "#" + uu
@@ -33,7 +40,11 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt)
 
 	d := dispatch.New([]string{"inproc://pub"}, []string{"inproc://push"})
-	manager := stream.NewManager(d)
+	twitch := twitch.New(
+		v.GetString("twitch_api_url"),
+		v.GetString("twitch_oauth_client_id"),
+	)
+	manager := stream.NewManager(d, twitch)
 	manager.ConnectTwitch(u, p, c)
 	manager.ConnectTwitch(uu, up, c)
 	manager.ConnectDiscord(t)

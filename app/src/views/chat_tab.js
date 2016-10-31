@@ -394,13 +394,13 @@ const ChatHeaderInput = React.createClass({
         return <div className="input">
             {this.state.displayGamesMenu ? this.renderGamesMenu() : ""}
             {this.state.displayError ? this.renderError() : ""}
-            <input type="text" ref="gameInput" className="game-input"
+            <input type="text" ref="gameInput" className="game-input text-input"
                 onChange={this.handleGameChange}
                 onKeyDown={this.handleGameKeyDown}
                 onFocus={this.handleGameFocus}
                 onBlur={this.handleGameBlur}
                 value={this.state.inputGame} />&nbsp;
-            <input type="text" ref="statusInput" className="status-input"
+            <input type="text" ref="statusInput" className="status-input text-input"
                 onChange={this.handleStatusChange}
                 onKeyDown={this.handleStatusKeyDown}
                 value={this.state.inputStatus} />
@@ -439,7 +439,8 @@ const ChatFooter = React.createClass({
         return (
             <div className="footer">
                 <div className="selection">
-                    <select onChange={this.handleUserChange}>
+                    <select onChange={this.handleUserChange}
+                            className="select-input">
                         <option value="streamer">{this.props.streamer_username}</option>
                         <option value="bot">{this.props.bot_username}</option>
                     </select>
@@ -447,7 +448,11 @@ const ChatFooter = React.createClass({
                 <div className="input">
                     <div className="form">
                         <form onSubmit={this.handleSubmit}>
-                            <input onChange={this.handleMessageChange} type="text" placeholder="Enter a message here" value={this.state.message} />
+                            <input className="text-input"
+                                   onChange={this.handleMessageChange}
+                                   type="text"
+                                   placeholder="Send a message"
+                                   value={this.state.message} />
                         </form>
                     </div>
                     <div className="spacer"></div>

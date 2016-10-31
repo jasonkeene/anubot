@@ -12,6 +12,7 @@ type Manager struct {
 	mu          sync.Mutex
 	twitchConns map[string]conn
 	discordConn conn
+	twitch      TwitchUserIDFetcher
 }
 
 type conn interface {
@@ -19,11 +20,16 @@ type conn interface {
 	close() error
 }
 
+type TwitchUserIDFetcher interface {
+	UserID(username string) (userID int, err error)
+}
+
 // NewManager creates a new manager.
-func NewManager(d Dispatcher) *Manager {
+func NewManager(d Dispatcher, twitch TwitchUserIDFetcher) *Manager {
 	return &Manager{
 		d:           d,
 		twitchConns: make(map[string]conn),
+		twitch:      twitch,
 	}
 }
 
@@ -37,7 +43,7 @@ func (m *Manager) ConnectTwitch(user, pass, channel string) {
 	}
 
 	for i := 0; i < 10; i++ {
-		c, err := connectTwitch(user, pass, channel, m.d)
+		c, err := connectTwitch(user, pass, channel, m.d, m.twitch)
 		if err == nil {
 			m.mu.Lock()
 			defer m.mu.Unlock()

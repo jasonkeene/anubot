@@ -101,7 +101,7 @@ func twitchUserDetailsHandler(e event, s *session) {
 	if !streamerAuthenticated {
 		return
 	}
-	streamerUsername, _ := s.Store().TwitchStreamerCredentials(s.userID)
+	streamerUsername, _, _ := s.Store().TwitchStreamerCredentials(s.userID)
 	status, game, err := s.api.twitch.StreamInfo(streamerUsername)
 	if err != nil {
 		log.Printf("unable to fetch stream info for user %s: %s",
@@ -119,7 +119,7 @@ func twitchUserDetailsHandler(e event, s *session) {
 	}
 
 	p["bot_authenticated"] = botAuthenticated
-	p["bot_username"], _ = s.Store().TwitchBotCredentials(s.userID)
+	p["bot_username"], _, _ = s.Store().TwitchBotCredentials(s.userID)
 }
 
 // twitchGamesHandler returns the available games.
@@ -133,10 +133,31 @@ func twitchGamesHandler(e event, s *session) {
 
 // twitchStreamMessagesHandler writes chat messages to websocket connection.
 func twitchStreamMessagesHandler(e event, s *session) {
-	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	recent, err := s.Store().FetchRecentMessages(s.userID)
+	if err == nil {
+		for _, msg := range recent {
+			if msg.Type != stream.Twitch {
+				continue
+			}
+			s.Send(event{
+				Cmd: "chat-message",
+				Payload: message{
+					Type: msg.Type,
+					Twitch: &twitchMessage{
+						Nick: msg.Twitch.Line.Nick,
+						Body: msg.Twitch.Line.Args[1],
+						Time: msg.Twitch.Line.Time,
+						Tags: msg.Twitch.Line.Tags,
+					},
+				},
+			})
+		}
+	}
+
+	streamerUsername, streamerPassword, _ := s.Store().TwitchStreamerCredentials(s.userID)
 	s.api.sm.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
 
-	botUsername, botPassword := s.Store().TwitchBotCredentials(s.userID)
+	botUsername, botPassword, _ := s.Store().TwitchBotCredentials(s.userID)
 	s.api.sm.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
 
 	mw, err := newMessageWriter(
@@ -181,13 +202,13 @@ func twitchSendMessageHandler(e event, s *session) {
 		return
 	}
 
-	streamerUsername, streamerPassword := s.Store().TwitchStreamerCredentials(s.userID)
+	streamerUsername, streamerPassword, _ := s.Store().TwitchStreamerCredentials(s.userID)
 	var username, password string
 	switch userType {
 	case "streamer":
 		username, password = streamerUsername, streamerPassword
 	case "bot":
-		username, password = s.Store().TwitchBotCredentials(s.userID)
+		username, password, _ = s.Store().TwitchBotCredentials(s.userID)
 	default:
 		s.Send(event{
 			Cmd:   e.Cmd,
@@ -233,7 +254,7 @@ func twitchUpdateChatDescriptionHandler(e event, s *session) {
 		return
 	}
 
-	user, pass := s.Store().TwitchStreamerCredentials(s.userID)
+	user, pass, _ := s.Store().TwitchStreamerCredentials(s.userID)
 	err := s.api.twitch.UpdateDescription(status, game, user, pass)
 	if err != nil {
 		log.Println("unable to update chat description, got error:", err)

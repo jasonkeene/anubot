@@ -36,9 +36,10 @@ func init() {
 }
 
 type twitchConn struct {
-	d Dispatcher
-	c *client.Conn
-	u string
+	d  Dispatcher
+	c  *client.Conn
+	u  string
+	id int
 }
 
 func (c *twitchConn) send(m TXMessage) {
@@ -58,7 +59,12 @@ func (c *twitchConn) close() error {
 	return nil
 }
 
-func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
+func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*twitchConn, error) {
+	userID, err := twitch.UserID(u)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := client.NewConfig(u)
 	cfg.Me.Name = u
 	cfg.Me.Ident = "anubot"
@@ -71,9 +77,10 @@ func connectTwitch(u, p, c string, d Dispatcher) (*twitchConn, error) {
 	}
 	cfg.Server = net.JoinHostPort(twitchHost, strconv.Itoa(twitchPort))
 	tc := &twitchConn{
-		d: d,
-		c: client.Client(cfg),
-		u: u,
+		d:  d,
+		c:  client.Client(cfg),
+		u:  u,
+		id: userID,
 	}
 
 	connected := make(chan struct{})
@@ -109,7 +116,8 @@ func (c *twitchConn) dispatchPrivmsg(conn *client.Conn, line *client.Line) {
 	c.d.Dispatch(topic, RXMessage{
 		Type: Twitch,
 		Twitch: &RXTwitch{
-			Line: line,
+			OwnerID: c.id,
+			Line:    line,
 		},
 	})
 }

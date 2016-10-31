@@ -20,7 +20,7 @@ import (
 type NonceStore interface {
 	CreateOauthNonce(userID string, tu store.TwitchUser) (nonce string, err error)
 	OauthNonceExists(nonce string) (exists bool)
-	FinishOauthNonce(nonce, username string, od Data) (err error)
+	FinishOauthNonce(nonce, username string, userID int, od store.OauthData) (err error)
 }
 
 const (
@@ -49,15 +49,8 @@ var httpClient = &http.Client{
 	Timeout: time.Second * 5,
 }
 
-// Data contains the data returned from Twitch when finishing the Oauth flow.
-type Data struct {
-	AccessToken  string   `json:"access_token"`
-	RefreshToken string   `json:"refresh_token"`
-	Scope        []string `json:"scope"`
-}
-
-func parseOauthData(data []byte) (Data, error) {
-	var od Data
+func parseOauthData(data []byte) (store.OauthData, error) {
+	var od store.OauthData
 	err := json.Unmarshal(data, &od)
 	return od, err
 }
@@ -112,7 +105,7 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// create request to send to twitch
 	r, err := http.NewRequest("POST", tokenURL, h.createPayload(nonce, code))
 	if err != nil {
-		log.Print("unable to create request for posting to twitch oauth for token")
+		log.Printf("unable to create request for posting to twitch oauth for token: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -120,7 +113,7 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// make request to twitch
 	resp, err := httpClient.Do(r)
 	if err != nil {
-		log.Print("error in response from post to twitch oauth for token")
+		log.Printf("error in response from post to twitch oauth for token: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -141,7 +134,7 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 	d, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Print("unable to read response body from post to twitch oauth for token")
+		log.Printf("unable to read response body from post to twitch oauth for token: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -149,21 +142,21 @@ func (h DoneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// parse out the oauth data
 	od, err := parseOauthData(d)
 	if err != nil {
-		log.Print("unable to parse response from post to twitch oauth for token")
+		log.Printf("unable to parse response from post to twitch oauth for token: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// send oauth data to the store
-	username, err := h.twitch.Username(od.AccessToken)
+	user, err := h.twitch.User(od.AccessToken)
 	if err != nil {
-		log.Print("unable to get username from access token")
+		log.Printf("unable to get user data from access token: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = h.ns.FinishOauthNonce(nonce, username, od)
+	err = h.ns.FinishOauthNonce(nonce, user.Name, user.ID, od)
 	if err != nil {
-		log.Print("unable finish oauth")
+		log.Printf("unable finish oauth: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

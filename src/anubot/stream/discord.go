@@ -62,19 +62,21 @@ func connectDiscord(token string, d Dispatcher) (*discordConn, error) {
 }
 
 func (c *discordConn) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	topic, err := c.resolveTopic(m)
+	ownerID, err := c.resolveOwnerID(m)
 	if err != nil {
 		log.Printf("got err attempting to resolve discord topic: %s", err)
 	}
+	topic := "discord:" + ownerID
 	c.d.Dispatch(topic, RXMessage{
 		Type: Discord,
 		Discord: &RXDiscord{
+			OwnerID:       ownerID,
 			MessageCreate: m,
 		},
 	})
 }
 
-func (c *discordConn) resolveTopic(m *discordgo.MessageCreate) (string, error) {
+func (c *discordConn) resolveOwnerID(m *discordgo.MessageCreate) (string, error) {
 	ch, err := c.dg.Channel(m.ChannelID)
 	if err != nil {
 		return "", err
@@ -86,5 +88,5 @@ func (c *discordConn) resolveTopic(m *discordgo.MessageCreate) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "discord:" + gld.OwnerID, nil
+	return gld.OwnerID, nil
 }

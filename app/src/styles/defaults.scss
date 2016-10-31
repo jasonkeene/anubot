@@ -64,3 +64,18 @@ body, div, span, p, li {
         padding: 20px;
     }
 }
+
+.text-input {
+    padding: 3px;
+    outline-width: 0;
+    border: 1px solid #acb1b8;
+
+    &::-webkit-input-placeholder {
+        color: #555;
+    }
+}
+
+.select-input {
+    padding: 3px;
+    border: 1px solid #acb1b8;
+}

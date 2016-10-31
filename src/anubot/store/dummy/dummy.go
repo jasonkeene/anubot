@@ -8,6 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"anubot/store"
+	"anubot/stream"
 	"anubot/twitch/oauth"
 )
 
@@ -96,7 +97,12 @@ func (d *Dummy) OauthNonceExists(nonce string) bool {
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing
 // the oauth data.
-func (d *Dummy) FinishOauthNonce(nonce, username string, od oauth.Data) error {
+func (d *Dummy) FinishOauthNonce(
+	nonce string,
+	username string,
+	userID int,
+	od store.OauthData,
+) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -132,11 +138,11 @@ func (d *Dummy) TwitchStreamerAuthenticated(userID string) bool {
 }
 
 // TwitchStreamerCredentials gives you the credentials for the streamer user.
-func (d *Dummy) TwitchStreamerCredentials(userID string) (string, string) {
+func (d *Dummy) TwitchStreamerCredentials(userID string) (string, string, int) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	ur := d.users[userID]
-	return ur.streamerUsername, ur.streamerOD.AccessToken
+	return ur.streamerUsername, ur.streamerOD.AccessToken, 0
 }
 
 // TwitchBotAuthenticated tells you if the user has authenticated his bot with
@@ -149,11 +155,11 @@ func (d *Dummy) TwitchBotAuthenticated(userID string) bool {
 }
 
 // TwitchBotCredentials gives you the credentials for the streamer user.
-func (d *Dummy) TwitchBotCredentials(userID string) (string, string) {
+func (d *Dummy) TwitchBotCredentials(userID string) (string, string, int) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	ur := d.users[userID]
-	return ur.botUsername, ur.botOD.AccessToken
+	return ur.botUsername, ur.botOD.AccessToken, 0
 }
 
 // TwitchAuthenticated tells you if the user has authenticated his bot and
@@ -171,8 +177,25 @@ func (d *Dummy) TwitchClearAuth(userID string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	userRecord := d.users[userID]
-	userRecord.streamerOD = oauth.Data{}
+	userRecord.streamerOD = store.OauthData{}
 	userRecord.streamerUsername = ""
-	userRecord.botOD = oauth.Data{}
+	userRecord.botOD = store.OauthData{}
 	userRecord.botUsername = ""
+}
+
+// StoreMessage stores a message for a given user for later searching and
+// scrollback history.
+func (d *Dummy) StoreMessage(msg stream.RXMessage) error {
+	panic("not implemented")
+}
+
+// FetchRecentMessages gets the recent messages for the user's channel.
+func (d *Dummy) FetchRecentMessages(userID string) ([]stream.RXMessage, error) {
+	panic("not implemented")
+}
+
+// QueryMessages allows the user to search for messages that match a search
+// string.
+func (d *Dummy) QueryMessages(userID, search string) ([]stream.RXMessage, error) {
+	panic("not implemented")
 }

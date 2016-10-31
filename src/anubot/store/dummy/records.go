@@ -1,9 +1,9 @@
 package dummy
 
 import (
-	"anubot/store"
-	"anubot/twitch/oauth"
 	"time"
+
+	"anubot/store"
 )
 
 type nonceRecord struct {
@@ -32,7 +32,7 @@ type userRecord struct {
 	username         string
 	password         string
 	streamerUsername string
-	streamerOD       oauth.Data
+	streamerOD       store.OauthData
 	botUsername      string
-	botOD            oauth.Data
+	botOD            store.OauthData
 }

@@ -33,7 +33,10 @@ func New(path string) (*Bolt, error) {
 	}
 	err = b.createBuckets()
 	if err != nil {
-		db.Close()
+		closeErr := db.Close()
+		if closeErr != nil {
+			log.Printf("got an error closing bolt db while in error state: %s", err)
+		}
 		return nil, err
 	}
 	return b, nil
@@ -50,10 +53,7 @@ func (b *Bolt) createBuckets() error {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte("messages"))
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 }
 
@@ -138,10 +138,7 @@ func (b *Bolt) OauthNonceExists(nonce string) bool {
 		_, err := getNonceRecord(nonce, tx)
 		return err
 	})
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // FinishOauthNonce completes the oauth flow, removing the nonce and storing

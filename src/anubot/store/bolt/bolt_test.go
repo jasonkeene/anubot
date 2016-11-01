@@ -3,6 +3,7 @@ package bolt
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 
@@ -198,7 +199,11 @@ func setupDB(t *testing.T) (*Bolt, func()) {
 	}
 
 	return b, func() {
-		b.Close()
+		err := b.Close()
+		if err != nil {
+			log.Println("unable to close boltdb")
+			t.FailNow()
+		}
 		tmpFileCleanup()
 	}
 }
@@ -210,6 +215,10 @@ func tempFile(t *testing.T) (string, func()) {
 		t.FailNow()
 	}
 	return tf.Name(), func() {
-		os.Remove(tf.Name())
+		err := os.Remove(tf.Name())
+		if err != nil {
+			log.Println("unable to remove temp file")
+			t.FailNow()
+		}
 	}
 }

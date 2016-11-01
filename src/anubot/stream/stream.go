@@ -15,7 +15,7 @@ const (
 	Discord
 )
 
-// TXMessage is the data writen out to a stream source.
+// TXMessage is the data written out to a stream source.
 type TXMessage struct {
 	Type    Type
 	Twitch  *TXTwitch

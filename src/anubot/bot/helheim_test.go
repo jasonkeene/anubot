@@ -7,24 +7,6 @@ package bot_test
 
 import "anubot/stream"
 
-type mockSender struct {
-	SendCalled chan bool
-	SendInput  struct {
-		Ms chan stream.TXMessage
-	}
-}
-
-func newMockSender() *mockSender {
-	m := &mockSender{}
-	m.SendCalled = make(chan bool, 100)
-	m.SendInput.Ms = make(chan stream.TXMessage, 100)
-	return m
-}
-func (m *mockSender) Send(ms stream.TXMessage) {
-	m.SendCalled <- true
-	m.SendInput.Ms <- ms
-}
-
 type mockFeature struct {
 	HandleMessageCalled chan bool
 	HandleMessageInput  struct {

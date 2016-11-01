@@ -111,20 +111,20 @@ func (d *Dummy) FinishOauthNonce(
 		return store.ErrUnknownNonce
 	}
 
-	userRecord := d.users[nr.userID]
+	ur := d.users[nr.userID]
 	switch nr.tu {
 	case store.Streamer:
-		userRecord.streamerOD = od
-		userRecord.streamerUsername = username
+		ur.streamerOD = od
+		ur.streamerUsername = username
 	case store.Bot:
-		userRecord.botOD = od
-		userRecord.botUsername = username
+		ur.botOD = od
+		ur.botUsername = username
 	default:
 		return errors.New("bad twitch user type, this should never happen")
 	}
 
 	delete(d.nonces, nonce)
-	d.users[nr.userID] = userRecord
+	d.users[nr.userID] = ur
 	return nil
 }
 
@@ -133,8 +133,8 @@ func (d *Dummy) FinishOauthNonce(
 func (d *Dummy) TwitchStreamerAuthenticated(userID string) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	userRecord := d.users[userID]
-	return userRecord.streamerOD.AccessToken != ""
+	ur := d.users[userID]
+	return ur.streamerOD.AccessToken != ""
 }
 
 // TwitchStreamerCredentials gives you the credentials for the streamer user.
@@ -150,8 +150,8 @@ func (d *Dummy) TwitchStreamerCredentials(userID string) (string, string, int) {
 func (d *Dummy) TwitchBotAuthenticated(userID string) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	userRecord := d.users[userID]
-	return userRecord.botOD.AccessToken != ""
+	ur := d.users[userID]
+	return ur.botOD.AccessToken != ""
 }
 
 // TwitchBotCredentials gives you the credentials for the streamer user.
@@ -167,20 +167,20 @@ func (d *Dummy) TwitchBotCredentials(userID string) (string, string, int) {
 func (d *Dummy) TwitchAuthenticated(userID string) bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	userRecord := d.users[userID]
-	return userRecord.streamerOD.AccessToken != "" &&
-		userRecord.botOD.AccessToken != ""
+	ur := d.users[userID]
+	return ur.streamerOD.AccessToken != "" &&
+		ur.botOD.AccessToken != ""
 }
 
 // TwitchClearAuth removes all the auth data for twitch for the user.
 func (d *Dummy) TwitchClearAuth(userID string) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	userRecord := d.users[userID]
-	userRecord.streamerOD = store.OauthData{}
-	userRecord.streamerUsername = ""
-	userRecord.botOD = store.OauthData{}
-	userRecord.botUsername = ""
+	ur := d.users[userID]
+	ur.streamerOD = store.OauthData{}
+	ur.streamerUsername = ""
+	ur.botOD = store.OauthData{}
+	ur.botUsername = ""
 }
 
 // StoreMessage stores a message for a given user for later searching and

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -21,7 +22,12 @@ func TestBotDispatchesMessagesToFeatures(t *testing.T) {
 
 	f := newMockFeature()
 	pub, endpoints := setupPubSocket(expect)
-	defer pub.Close()
+	defer func() {
+		err := pub.Close()
+		if err != nil {
+			log.Printf("got err while closing pub socket: %s", err)
+		}
+	}()
 	expected, toSend := testMessage(expect, "test-message")
 
 	b, err := bot.New([]string{subTopic}, endpoints)
@@ -50,7 +56,12 @@ func TestBotDoesNotDispatchMessagesIfTopicDoesNotMatch(t *testing.T) {
 
 	f := newMockFeature()
 	pub, endpoints := setupPubSocket(expect)
-	defer pub.Close()
+	defer func() {
+		err := pub.Close()
+		if err != nil {
+			log.Printf("got err while closing pub socket: %s", err)
+		}
+	}()
 	_, badBytes := testMessage(expect, "test-message")
 	expected, finalBytes := testMessage(expect, "final-message")
 
@@ -85,7 +96,10 @@ func setupPubSocket(expect func(v interface{}) *expect.Expect) (*zmq4.Socket, []
 
 func randString() string {
 	b := make([]byte, 20)
-	rand.Read(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Panicf("unable to read randomness %s:", err)
+	}
 	return fmt.Sprintf("%x", b)
 }
 

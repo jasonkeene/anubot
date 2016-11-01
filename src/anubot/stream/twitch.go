@@ -101,7 +101,7 @@ func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*t
 		log.Printf("connectTwitch: did not receive CONNECTED event")
 		return nil, errors.New("did not receive CONNECTED event")
 	}
-	log.Printf("connectTwitch: recieved connection event from twitch for user: %s", u)
+	log.Printf("connectTwitch: received connection event from twitch for user: %s", u)
 	tc.c.Join(c)
 	log.Printf("connectTwitch: joined channel: %s on twitch for user: %s", c, u)
 

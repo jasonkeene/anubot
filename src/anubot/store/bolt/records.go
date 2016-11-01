@@ -108,11 +108,6 @@ func getUserRecordByUsername(username string, tx *bolt.Tx) (userRecord, error) {
 	return userRecord{}, store.ErrUnknownUsername
 }
 
-func deleteUserRecord(userID string, tx *bolt.Tx) error {
-	b := tx.Bucket([]byte("users"))
-	return b.Delete([]byte(userID))
-}
-
 func upsertMessage(msg stream.RXMessage, tx *bolt.Tx) error {
 	b := tx.Bucket([]byte("messages"))
 
@@ -156,12 +151,6 @@ func getMessageRecord(key string, tx *bolt.Tx) (messageRecord, error) {
 		return nil, err
 	}
 	return mr, nil
-}
-
-func deleteMessageRecord(key string, tx *bolt.Tx) error {
-	b := tx.Bucket([]byte("messages"))
-
-	return b.Delete([]byte(key))
 }
 
 func getMessageKey(msg stream.RXMessage) (string, error) {

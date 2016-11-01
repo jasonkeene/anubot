@@ -20,6 +20,7 @@ type conn interface {
 	close() error
 }
 
+// TwitchUserIDFetcher fetches the user ID for a given username.
 type TwitchUserIDFetcher interface {
 	UserID(username string) (userID int, err error)
 }
@@ -89,7 +90,7 @@ func (m *Manager) DisconnectTwitch(user string) func() {
 	err := c.close()
 	delete(m.twitchConns, user)
 	if err != nil {
-		log.Printf("Manager.DisconnectTwitch: error occured while disconnecting user: %s error: %s", user, err)
+		log.Printf("Manager.DisconnectTwitch: error occurred while disconnecting user: %s error: %s", user, err)
 		return func() {}
 	}
 	return func() {
@@ -107,7 +108,7 @@ func (m *Manager) DisconnectDiscord() func() {
 	m.mu.Unlock()
 	err := c.close()
 	if err != nil {
-		log.Printf("Manager.DisconnectDiscord: error occured while disconnecting: %s", err)
+		log.Printf("Manager.DisconnectDiscord: error occurred while disconnecting: %s", err)
 		return func() {}
 	}
 	return func() {

@@ -30,34 +30,6 @@ func (m *mockTwitchUserIDFetcher) UserID(username string) (userID int, err error
 	return <-m.UserIDOutput.UserID, <-m.UserIDOutput.Err
 }
 
-type mockConn struct {
-	sendCalled chan bool
-	sendInput  struct {
-		Arg0 chan TXMessage
-	}
-	closeCalled chan bool
-	closeOutput struct {
-		Ret0 chan error
-	}
-}
-
-func newMockConn() *mockConn {
-	m := &mockConn{}
-	m.sendCalled = make(chan bool, 100)
-	m.sendInput.Arg0 = make(chan TXMessage, 100)
-	m.closeCalled = make(chan bool, 100)
-	m.closeOutput.Ret0 = make(chan error, 100)
-	return m
-}
-func (m *mockConn) send(arg0 TXMessage) {
-	m.sendCalled <- true
-	m.sendInput.Arg0 <- arg0
-}
-func (m *mockConn) close() error {
-	m.closeCalled <- true
-	return <-m.closeOutput.Ret0
-}
-
 type mockDispatcher struct {
 	DispatchCalled chan bool
 	DispatchInput  struct {

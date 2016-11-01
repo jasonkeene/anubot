@@ -7,11 +7,6 @@ import (
 	"log"
 )
 
-const (
-	twitchHost = "irc.chat.twitch.tv"
-	twitchPort = 443
-)
-
 // twitchOauthStartHandler responds with a URL to start the Twitch oauth flow.
 // The streamer user is required to be the first to begin the oauth flow,
 // followed by the bot user.

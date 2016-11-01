@@ -61,9 +61,6 @@
 [submodule "src/golang.org/x/crypto"]
 	path = src/golang.org/x/crypto
 	url = https://go.googlesource.com/crypto
-[submodule "src/golang.org/x/tools"]
-	path = src/golang.org/x/tools
-	url = https://go.googlesource.com/tools
 [submodule "src/github.com/gorilla/websocket"]
 	path = src/github.com/gorilla/websocket
 	url = https://github.com/gorilla/websocket

@@ -413,6 +413,9 @@ const ChatFooter = React.createClass({
         return {
             user_type: "streamer",
             message: "",
+
+            selected: -1,
+            previous_messages: [],
         };
     },
 
@@ -426,13 +429,41 @@ const ChatFooter = React.createClass({
                 message: this.state.message,
             },
         });
-        this.setState({message: ""});
+        this.setState({
+            message: "",
+            previous_messages: this.state.previous_messages.concat([this.state.message]),
+            selected: -1,
+        });
     },
     handleMessageChange: function (e) {
         this.setState({message: e.target.value});
     },
     handleUserChange: function (e) {
         this.setState({user_type: e.target.value});
+    },
+    handleKeyDown: function (e) {
+        if (this.state.previous_messages.length === 0) {
+            return;
+        }
+        var selected;
+        switch (e.keyCode) {
+        case 38: // up
+            if (this.state.selected < 1) {
+                selected = this.state.previous_messages.length - 1;
+                break;
+            }
+            selected = (this.state.selected - 1) % this.state.previous_messages.length;
+            break;
+        case 40: // down
+            selected = (this.state.selected + 1) % this.state.previous_messages.length;
+            break;
+        default:
+            return
+        }
+        this.setState({
+            selected,
+            message: this.state.previous_messages[selected],
+        });
     },
 
     render: function () {
@@ -450,6 +481,7 @@ const ChatFooter = React.createClass({
                         <form onSubmit={this.handleSubmit}>
                             <input className="text-input"
                                    onChange={this.handleMessageChange}
+                                   onKeyDown={this.handleKeyDown}
                                    type="text"
                                    placeholder="Send a message"
                                    value={this.state.message} />

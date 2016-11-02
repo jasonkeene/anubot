@@ -7,9 +7,6 @@ const React = require('react'),
 
 const ChatTab = React.createClass({
     getInitialState: function () {
-        this.props.net.request("bttv-emoji").then((payload) => {
-            emoji.initBTTV(payload);
-        })
         return {
             scroll: true,
         };

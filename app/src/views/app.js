@@ -26,33 +26,19 @@ const App = React.createClass({
                 this.handleAuthenticateSuccess,
                 this.handleAuthenticateFailure,
             );
-            return;
         }
-        this.setState({
-            loaded: true,
-        });
     },
 
     // network events
     handleAuthenticateSuccess: function (payload) {
         this.setState({
-            loaded: true,
             authenticated: true,
         });
-        this.props.net.request("twitch-user-details", null).then(
-            this.handleUserDetailsSuccess,
-            this.handleUserDetailsFailure,
-        );
-
-        this.props.net.listeners.cmd("chat-message", this.handleChatMessage);
-        this.props.net.send({
-            cmd: "twitch-stream-messages",
-        });
+        this.finishLoading();
     },
-    handleAuthenticateFailure: function () {
-        this.setState({
-            loaded: true,
-        })
+    handleAuthenticateFailure: function (error) {
+        // TODO: handle failure
+        console.log("got error while authenticating:", error);
     },
     handleUserDetailsSuccess: function (payload) {
         this.setState({
@@ -60,15 +46,18 @@ const App = React.createClass({
             bot_username: payload.bot_username,
             status: payload.streamer_status,
             game: payload.streamer_game,
+            loaded: true,
         });
     },
     handleUserDetailsFailure: function (error) {
+        // TODO: handle failure
         console.log("got error while getting user details:", error);
     },
     handleChatMessage: function (payload, error) {
         var messages = this.state.messages;
-        messages.push(payload);
-        this.setState({messages: messages});
+        this.setState({
+            messages: messages.concat([payload]),
+        });
     },
 
     getLocalCredentials: function () {
@@ -81,6 +70,22 @@ const App = React.createClass({
             username: username,
             password: password,
         };
+    },
+    finishLoading: function () {
+        this.props.net.request("twitch-user-details", null).then(
+            this.handleUserDetailsSuccess,
+            this.handleUserDetailsFailure,
+        );
+        this.props.net.request("bttv-emoji").then((payload) => {
+            emoji.initBTTV(payload);
+        }, (error) => {
+            console.log("got error while requesting BTTV emoji:", error);
+        })
+
+        this.props.net.listeners.cmd("chat-message", this.handleChatMessage);
+        this.props.net.send({
+            cmd: "twitch-stream-messages",
+        });
     },
 
     renderTab: function () {

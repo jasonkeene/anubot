@@ -95,8 +95,9 @@ func (api *Server) Serve(ws *websocket.Conn) {
 		if !ok {
 			log.Printf("Received an event with the command '%s' that does not match any of our handlers.", e.Cmd)
 			s.Send(event{
-				Cmd:   e.Cmd,
-				Error: invalidCommand,
+				Cmd:       e.Cmd,
+				RequestID: e.RequestID,
+				Error:     invalidCommand,
 			})
 			continue
 		}

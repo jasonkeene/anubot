@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os/user"
 
 	"golang.org/x/net/websocket"
 
@@ -38,13 +37,19 @@ func main() {
 	)
 
 	// create store
-	usr, err := user.Current()
-	if err != nil {
-		log.Panicf("unable to get current user: %s", err)
-	}
-	s, err := bolt.New(usr.HomeDir + "/anubot.bolt")
-	if err != nil {
-		log.Panicf("unable to craete bolt database: %s", err)
+	backend := v.GetString("store_backend")
+	var s store.Store
+	switch backend {
+	case "bolt":
+		var err error
+		s, err = bolt.New(v.GetString("store_bolt_path"))
+		if err != nil {
+			log.Panicf("unable to craete bolt database: %s", err)
+		}
+	case "dummy":
+		log.Panicf("dummy store backend is not wired up")
+	default:
+		log.Panicf("unknown store backend: %s", backend)
 	}
 
 	// create message dispatcher

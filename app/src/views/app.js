@@ -2,7 +2,8 @@
 const React = require('react'),
       Setup = require('./setup.js'),
       Menu = require('./menu.js'),
-      ChatTab = require('./chat_tab.js');
+      ChatTab = require('./chat_tab.js'),
+      emoji = require('./emoji.js');
 
 const App = React.createClass({
     getInitialState: function () {

@@ -2,9 +2,23 @@
 
 const electron = require('electron'),
       child_process = require('child_process'),
-      electron_debug = require('electron-debug');
+      electron_debug = require('electron-debug'),
+      electron_settings = require('electron-settings');
 
-electron_debug({showDevTools: true});
+// setup settings
+electron_settings.configure({
+    prettify: true,
+});
+electron_settings.defaults({
+    api: 'wss://anubot.io/api',
+    origin: 'https://anubot.io',
+});
+electron_settings.applyDefaultsSync();
+
+// enable dev tools
+electron_debug({
+    showDevTools: true,
+});
 
 var mainWindow = null; // keep main object from being GC'd
 

@@ -4,12 +4,13 @@ const websocket = require('websocket'),
       Listeners = require('./lib/listeners.js'),
       Net = require('./lib/net.js'),
       unpack = require('./lib/unpack.js'),
-      views = require('./lib/views/main.js');
-
-const client = new websocket.client();
+      views = require('./lib/views/main.js'),
+      settings = require('electron-settings');
 
 // save off net for development/debugging
 var net;
+
+const client = new websocket.client();
 
 client.on('connect', function(connection) {
     console.log('[app] WebSocket Client Connected');
@@ -29,11 +30,10 @@ client.on('connect', function(connection) {
     });
 
     views.render(net, window.localStorage);
-
 });
 
 client.on('connectFailed', function(error) {
     console.log('[app] Connect Error: ' + error.toString());
 });
 
-client.connect('wss://anubot.io:4443/api', '', 'https://anubot.io:4443');
+client.connect(settings.getSync('api'), '', settings.getSync('origin'));

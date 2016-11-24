@@ -96,20 +96,28 @@ func main() {
 	))
 
 	// bind websocket API
-	v.SetDefault("port", 443)
+	v.SetDefault("port", 8080)
 	port := v.GetInt("port")
-	fmt.Println("listening on port", port)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: mux,
 		// TODO: consider timeouts
 	}
-	err = server.ListenAndServeTLS(
-		v.GetString("tls_cert_file"),
-		v.GetString("tls_key_file"),
-	)
+
+	certFile := v.GetString("tls_cert_file")
+	keyFile := v.GetString("tls_key_file")
+	if certFile != "" && keyFile != "" {
+		fmt.Println("listening for tls on port", port)
+		err = server.ListenAndServeTLS(certFile, keyFile)
+		if err != nil {
+			log.Panic("ListenAndServeTLS: " + err.Error())
+		}
+		return
+	}
+	fmt.Println("listening on port", port)
+	err = server.ListenAndServe()
 	if err != nil {
-		panic("ListenAndServe: " + err.Error())
+		log.Panic("ListenAndServe: " + err.Error())
 	}
 }

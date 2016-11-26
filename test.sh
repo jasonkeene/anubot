@@ -4,9 +4,9 @@ set -e
 
 if [ "$1" = "ci" ]; then
     echo installing node dependencies
-    pushd app
-        npm install --quiet
-    popd
+    pushd app > /dev/null
+        npm install --quiet --progress=false --depth=0
+    popd > /dev/null
 
     echo installing go tools
     go get -u golang.org/x/tools/cmd/goimports
@@ -35,7 +35,7 @@ fi
 
 echo running go tests
 
-pushd src/anubot
+pushd src/anubot > /dev/null
     go test -race ./...
 
     goimports -w .
@@ -55,11 +55,11 @@ pushd src/anubot
     gosimple ./...
     staticcheck ./...
     unused ./...
-popd
+popd > /dev/null
 
 echo running jasmine tests
 
-pushd app
+pushd app > /dev/null
     babel --presets es2015,react --out-dir lib src
 
     jasmine
@@ -68,6 +68,6 @@ pushd app
     jshint spec
 
     misspell -w src
-popd
+popd > /dev/null
 
 echo 'All Tests Passed!'

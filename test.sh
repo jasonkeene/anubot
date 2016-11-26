@@ -23,15 +23,15 @@ if [ "$1" = "ci" ]; then
     go get -u honnef.co/go/staticcheck/cmd/staticcheck
     go get -u honnef.co/go/unused/cmd/unused
     go get -u github.com/client9/misspell/cmd/misspell
+else
+    echo building binaries
+
+    mkdir -p bin
+    ls src/anubot/cmd | while read line; do
+        echo building $line
+        go build -o bin/$line anubot/cmd/$line
+    done
 fi
-
-echo building binaries
-
-mkdir -p bin
-ls src/anubot/cmd | while read line; do
-    echo building $line
-    go build -o bin/$line anubot/cmd/$line
-done
 
 echo running go tests
 

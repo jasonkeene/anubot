@@ -4,7 +4,6 @@ import (
 	"anubot/stream"
 	"encoding/json"
 	"log"
-	"syscall"
 
 	"github.com/pebbe/zmq4"
 )
@@ -54,11 +53,9 @@ func (p *Puller) Start() {
 		default:
 		}
 
-		rb, err := p.pull.RecvBytes(zmq4.DONTWAIT)
+		rb, err := p.pull.RecvBytes(0)
 		if err != nil {
-			if zmq4.AsErrno(err) != zmq4.Errno(syscall.EAGAIN) {
-				log.Printf("messages not read, got err: %s", err)
-			}
+			log.Printf("messages not read, got err: %s", err)
 			continue
 		}
 		var ms stream.RXMessage
@@ -76,8 +73,11 @@ func (p *Puller) Start() {
 	}
 }
 
-// Stop tears down the goroutines needed to handle messages.
-func (p *Puller) Stop() {
+// Stop signals to the goroutine reading messages to stop. It returns a
+// function that can be used to block until reading has finished.
+func (p *Puller) Stop() (wait func()) {
 	close(p.stop)
-	<-p.done
+	return func() {
+		<-p.done
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
-	"syscall"
 
 	"github.com/pebbe/zmq4"
 )
@@ -74,11 +73,9 @@ func (b *Bot) Start() {
 		default:
 		}
 
-		rb, err := b.sub.RecvMessageBytes(zmq4.DONTWAIT)
+		rb, err := b.sub.RecvMessageBytes(0)
 		if err != nil {
-			if zmq4.AsErrno(err) != zmq4.Errno(syscall.EAGAIN) {
-				log.Printf("messages not read, got err: %s", err)
-			}
+			log.Printf("messages not read, got err: %s", err)
 			continue
 		}
 		if len(rb) < 2 {
@@ -104,10 +101,13 @@ func (b *Bot) Start() {
 	}
 }
 
-// Stop tears down the goroutines needed to handle messages.
-func (b *Bot) Stop() {
+// Stop signals to the goroutine reading messages to stop. It returns a
+// function that can be used to block until reading has finished.
+func (b *Bot) Stop() (wait func()) {
 	close(b.stop)
-	<-b.done
+	return func() {
+		<-b.done
+	}
 }
 
 // SetFeature sets a feature to accept messages and ticks. This will overwrite

@@ -5,7 +5,7 @@ set -e
 if [ "$1" = "ci" ]; then
     echo installing node dependencies
     pushd app > /dev/null
-        npm install --quiet --progress=false --depth=0
+        npm install --depth=0
     popd > /dev/null
 
     echo installing go tools

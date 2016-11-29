@@ -128,12 +128,19 @@ func twitchGamesHandler(e event, s *session) {
 
 // twitchStreamMessagesHandler writes chat messages to websocket connection.
 func twitchStreamMessagesHandler(e event, s *session) {
+	streamerUsername, streamerPassword, _ := s.Store().TwitchStreamerCredentials(s.userID)
+	botUsername, botPassword, botID := s.Store().TwitchBotCredentials(s.userID)
+
 	recent, err := s.Store().FetchRecentMessages(s.userID)
 	if err == nil {
 		for _, msg := range recent {
 			if msg.Type != stream.Twitch {
 				continue
 			}
+			if msg.Twitch.OwnerID == botID && !userMessage(&msg, streamerUsername) {
+				continue
+			}
+
 			s.Send(event{
 				Cmd: "chat-message",
 				Payload: message{
@@ -149,10 +156,7 @@ func twitchStreamMessagesHandler(e event, s *session) {
 		}
 	}
 
-	streamerUsername, streamerPassword, _ := s.Store().TwitchStreamerCredentials(s.userID)
 	s.api.sm.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
-
-	botUsername, botPassword, _ := s.Store().TwitchBotCredentials(s.userID)
 	s.api.sm.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
 
 	mw, err := newMessageWriter(

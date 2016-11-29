@@ -61,8 +61,11 @@ type RXMessage struct {
 
 // RXTwitch contains information received from Twitch.
 type RXTwitch struct {
-	OwnerID int          `json:"owner_id"`
-	Line    *client.Line `json:"line"`
+	// OwnerID is the Twitch user ID that was authenticated when the IRC
+	// message was received.
+	OwnerID int `json:"owner_id"`
+	// Line is the content of the IRC message.
+	Line *client.Line `json:"line"`
 }
 
 // RXDiscord contains information received from Discord.

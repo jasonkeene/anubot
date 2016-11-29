@@ -103,7 +103,7 @@ func (mw *messageWriter) startBot() {
 			log.Printf("got err reading from streamer socket: %s", err)
 			continue
 		}
-		if !mw.streamerFilter(ms) {
+		if !userMessage(ms, mw.streamerUsername) {
 			continue
 		}
 		err = mw.writeMessage(ms)
@@ -131,12 +131,13 @@ func readMessage(sub *zmq4.Socket) (*stream.RXMessage, error) {
 	return &ms, nil
 }
 
-// streamerFilter will filter out all messages not sent from the streamer.
-func (mw *messageWriter) streamerFilter(ms *stream.RXMessage) bool {
+// userMessage returns true if the message was sent to the user, otherwise it
+// returns false.
+func userMessage(ms *stream.RXMessage, username string) bool {
 	if ms.Type != stream.Twitch {
 		return false
 	}
-	return ms.Twitch.Line.Nick == mw.streamerUsername
+	return ms.Twitch.Line.Nick == username
 }
 
 func (mw *messageWriter) writeMessage(ms *stream.RXMessage) error {

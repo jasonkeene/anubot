@@ -5,6 +5,24 @@ const React = require('react'),
       badges = require('./badges.js'),
       emoji = require('./emoji.js');
 
+const _defaultNickColors = [
+    "#FF0000",
+    "#0000FF",
+    "#008000",
+    "#B22222",
+    "#FF7F50",
+    "#9ACD32",
+    "#FF4500",
+    "#2E8B57",
+    "#DAA520",
+    "#D2691E",
+    "#5F9EA0",
+    "#1E90FF",
+    "#FF69B4",
+    "#8A2BE2",
+    "#00FF7F",
+];
+
 const ChatTab = React.createClass({
     getInitialState: function () {
         return {
@@ -42,12 +60,15 @@ const ChatTab = React.createClass({
         this.setState({scroll: false});
     },
 
-    nickStyle: (message) => {
-        const defaultColor = "#9ACD32";
+    defaultNickColor: function (username) {
+        return _defaultNickColors[_hash(username) % _defaultNickColors.length];
+    },
+    nickStyle: function (message) {
         if (message.tags === undefined ||
             message.tags.color === undefined ||
             message.tags.color === "") {
-            return {color: defaultColor};
+            var color = this.defaultNickColor(message.tags['display-name']);
+            return {color};
         }
         return {color: message.tags.color};
     },
@@ -508,5 +529,18 @@ const ChatFooter = React.createClass({
         );
     },
 });
+
+function _hash(str) {
+    var hash = 0, i, chr, len;
+    if (str.length === 0) {
+        return hash;
+    }
+    for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+    }
+    return hash;
+}
 
 module.exports = ChatTab;

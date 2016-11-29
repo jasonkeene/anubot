@@ -18,6 +18,7 @@ type message struct {
 }
 
 type twitchMessage struct {
+	Cmd  string            `json:"cmd"`
 	Nick string            `json:"nick"`
 	Body string            `json:"body"`
 	Time time.Time         `json:"time"`
@@ -147,6 +148,7 @@ func (mw *messageWriter) writeMessage(ms *stream.RXMessage) error {
 	switch ms.Type {
 	case stream.Twitch:
 		p.Twitch = &twitchMessage{
+			Cmd:  ms.Twitch.Line.Cmd,
 			Nick: ms.Twitch.Line.Nick,
 			Body: ms.Twitch.Line.Args[1],
 			Time: ms.Twitch.Line.Time,

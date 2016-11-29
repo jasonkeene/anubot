@@ -146,6 +146,7 @@ func twitchStreamMessagesHandler(e event, s *session) {
 				Payload: message{
 					Type: msg.Type,
 					Twitch: &twitchMessage{
+						Cmd:  msg.Twitch.Line.Cmd,
 						Nick: msg.Twitch.Line.Nick,
 						Body: msg.Twitch.Line.Args[1],
 						Time: msg.Twitch.Line.Time,

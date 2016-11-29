@@ -70,15 +70,15 @@ func TestDispatchingMessages(t *testing.T) {
 		defer close(clientDone)
 		// racey
 		clientConn, err := connectTwitch("test-user", "test-pass", "#test-chan", d, twitch)
+		if err != nil {
+			log.Panic("unable to connect to twitch")
+		}
 		defer func() {
 			err := clientConn.close()
 			if err != nil {
 				log.Panic("error in tearing down client conn")
 			}
 		}()
-		if err != nil {
-			log.Panic("unable to connect to twitch")
-		}
 	}()
 
 	serverConn, cleanup := acceptConn(server)

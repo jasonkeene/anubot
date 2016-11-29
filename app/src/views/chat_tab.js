@@ -51,7 +51,7 @@ const ChatTab = React.createClass({
         }
         return {color: message.tags.color};
     },
-    renderMessage: function (message) {
+    renderPrivmsg: function (message) {
         return (
             <div className="message" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
@@ -59,6 +59,24 @@ const ChatTab = React.createClass({
                 {emoji.render(message.twitch)}
             </div>
         );
+    },
+    renderAction: function (message) {
+        return (
+            <div className="message" key={message.twitch.tags.id}>
+                <span className="badges">{badges.render(message.twitch)}</span>
+                <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
+                <span style={this.nickStyle(message.twitch)}>{emoji.render(message.twitch)}</span>
+            </div>
+        );
+    },
+    renderMessage: function (message) {
+        switch (message.twitch.cmd) {
+        case "PRIVMSG":
+            return this.renderPrivmsg(message);
+        case "ACTION":
+            return this.renderAction(message);
+        }
+        return null;
     },
     render: function () {
         return (

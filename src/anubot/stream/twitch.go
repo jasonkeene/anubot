@@ -87,7 +87,8 @@ func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*t
 	tc.c.HandleFunc("CONNECTED", func(conn *client.Conn, line *client.Line) {
 		close(connected)
 	})
-	tc.c.HandleFunc("PRIVMSG", tc.dispatchPrivmsg)
+	tc.c.HandleFunc("PRIVMSG", tc.dispatchMessage)
+	tc.c.HandleFunc("ACTION", tc.dispatchMessage)
 
 	log.Printf("connectTwitch: connecting to twitch for user: %s", u)
 	if err := tc.c.Connect(); err != nil {
@@ -111,7 +112,7 @@ func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*t
 	return tc, nil
 }
 
-func (c *twitchConn) dispatchPrivmsg(conn *client.Conn, line *client.Line) {
+func (c *twitchConn) dispatchMessage(conn *client.Conn, line *client.Line) {
 	topic := "twitch:" + c.u
 	c.d.Dispatch(topic, RXMessage{
 		Type: Twitch,

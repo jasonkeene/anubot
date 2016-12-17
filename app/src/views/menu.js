@@ -7,11 +7,11 @@ const Menu = React.createClass({
             items: [
                 ["Chat", "chat"],
                 ["Playlist", "playlist"],
-                ["Currency", "currency"],
-                ["Commands", "commands"],
-                ["Mini-games", "mini-games"],
-                ["Stats", "stats"],
-                ["Settings", "settings"],
+                //["Currency", "currency"],
+                //["Commands", "commands"],
+                //["Mini-games", "mini-games"],
+                //["Stats", "stats"],
+                //["Settings", "settings"],
             ],
         };
     },

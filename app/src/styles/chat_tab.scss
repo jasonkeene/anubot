@@ -88,8 +88,13 @@
             flex-shrink: 2;
         }
         .message {
-            margin: 1px 0;
+            margin: 0;
+            padding: 1px 0;
             line-height: 28px;
+
+            &.whisper {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
 
             .badges {
                 img {
@@ -102,6 +107,9 @@
                 margin-left: 3px;
                 font-weight: 900;
                 color: black;
+            }
+            .target {
+                font-weight: 900;
             }
             img.emoji {
                 vertical-align: middle;

@@ -76,17 +76,28 @@ const ChatTab = React.createClass({
         return (
             <div className="message" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
-                <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}:</span>&nbsp;
+                <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>:&nbsp;
                 {emoji.render(message.twitch)}
             </div>
         );
     },
     renderAction: function (message) {
         return (
-            <div className="message" key={message.twitch.tags.id}>
+            <div className="message action" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
                 <span style={this.nickStyle(message.twitch)}>{emoji.render(message.twitch)}</span>
+            </div>
+        );
+    },
+    renderWhisper: function (message) {
+        return (
+            <div className="message whisper" key={message.twitch.tags.id}>
+                <span className="badges">{badges.render(message.twitch)}</span>
+                <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
+                <span className="arrow">&#x25B8;</span>&nbsp;
+                <span className="target" style={{color: this.defaultNickColor(message.twitch.target)}}>{message.twitch.target}</span>:&nbsp;
+                {emoji.render(message.twitch)}
             </div>
         );
     },
@@ -96,6 +107,8 @@ const ChatTab = React.createClass({
             return this.renderPrivmsg(message);
         case "ACTION":
             return this.renderAction(message);
+        case "WHISPER":
+            return this.renderWhisper(message);
         }
         return null;
     },

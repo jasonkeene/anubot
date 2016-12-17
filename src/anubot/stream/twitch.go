@@ -89,6 +89,7 @@ func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*t
 	})
 	tc.c.HandleFunc("PRIVMSG", tc.dispatchMessage)
 	tc.c.HandleFunc("ACTION", tc.dispatchMessage)
+	tc.c.HandleFunc("WHISPER", tc.dispatchMessage)
 
 	log.Printf("connectTwitch: connecting to twitch for user: %s", u)
 	if err := tc.c.Connect(); err != nil {

@@ -18,11 +18,12 @@ type message struct {
 }
 
 type twitchMessage struct {
-	Cmd  string            `json:"cmd"`
-	Nick string            `json:"nick"`
-	Body string            `json:"body"`
-	Time time.Time         `json:"time"`
-	Tags map[string]string `json:"tags"`
+	Cmd    string            `json:"cmd"`
+	Nick   string            `json:"nick"`
+	Target string            `json:"target"`
+	Body   string            `json:"body"`
+	Time   time.Time         `json:"time"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type discordMessage struct{}
@@ -148,11 +149,12 @@ func (mw *messageWriter) writeMessage(ms *stream.RXMessage) error {
 	switch ms.Type {
 	case stream.Twitch:
 		p.Twitch = &twitchMessage{
-			Cmd:  ms.Twitch.Line.Cmd,
-			Nick: ms.Twitch.Line.Nick,
-			Body: ms.Twitch.Line.Args[1],
-			Time: ms.Twitch.Line.Time,
-			Tags: ms.Twitch.Line.Tags,
+			Cmd:    ms.Twitch.Line.Cmd,
+			Nick:   ms.Twitch.Line.Nick,
+			Target: ms.Twitch.Line.Args[0],
+			Body:   ms.Twitch.Line.Args[1],
+			Time:   ms.Twitch.Line.Time,
+			Tags:   ms.Twitch.Line.Tags,
 		}
 	case stream.Discord:
 		// TODO: add support for discord messages

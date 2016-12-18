@@ -1,79 +1,122 @@
 package dispatch
 
 import (
-	"anubot/stream"
-	"encoding/json"
 	"log"
-	"sync"
 
 	"github.com/pebbe/zmq4"
 )
 
-// Dispatcher dispatches messages to consumers.
+// Dispatcher receives messages and sends them to the appropriate locations.
+// It is meant to be easily horizontally scalable.
+//
+// Messages are read from a pull socket as a two frame zmq message. The first
+// frame is the topic used to publish the message. The second frame is the
+// actual message data.
 type Dispatcher struct {
-	mu   sync.Mutex
-	pub  *zmq4.Socket
-	push *zmq4.Socket
+	pullEndpoints []string
+	pubEndpoints  []string
+	pushEndpoints []string
+	pull          *zmq4.Socket
+	pub           *zmq4.Socket
+	push          *zmq4.Socket
 }
 
-// New creates a new dispatcher.
-func New(pubEndpoints, pushEndpoints []string) *Dispatcher {
-	pub, err := zmq4.NewSocket(zmq4.PUB)
-	if err != nil {
-		log.Panicf("dispatch.New: can not create dispatcher publish socket: %s", err)
-	}
-	for _, endpoint := range pubEndpoints {
-		err = pub.Bind(endpoint)
-		if err != nil {
-			log.Panicf("dispatch.New: can not bind publish socket: %s", err)
-		}
-	}
+// DispatcherOption is used to configure a Dispatcher.
+type DispatcherOption func(*Dispatcher)
 
-	push, err := zmq4.NewSocket(zmq4.PUSH)
-	if err != nil {
-		log.Panicf("dispatch.New: can not create dispatcher push socket: %s", err)
-	}
-	for _, endpoint := range pushEndpoints {
-		err = push.Bind(endpoint)
-		if err != nil {
-			log.Panicf("dispatch.New: can not bind push socket: %s", err)
-		}
-	}
-
-	return &Dispatcher{
-		pub:  pub,
-		push: push,
+// WithPullEndpoints allows you to override the default pull endpoints.
+func WithPullEndpoints(endpoints []string) DispatcherOption {
+	return func(d *Dispatcher) {
+		d.pullEndpoints = endpoints
 	}
 }
 
-// Dispatch accepts messages for sending to consumers.
-func (d *Dispatcher) Dispatch(topic string, message stream.RXMessage) {
-	mb, err := json.Marshal(message)
-	if err != nil {
-		log.Printf("Dispatcher.Dispatch: got error marshalling RXMessage: %s", err)
-		return
+// WithPubEndpoints allows you to override the default pub endpoints.
+func WithPubEndpoints(endpoints []string) DispatcherOption {
+	return func(d *Dispatcher) {
+		d.pubEndpoints = endpoints
 	}
+}
 
-	switch message.Type {
-	case stream.Twitch:
-		if len(message.Twitch.Line.Args) < 2 {
-			log.Print("Dispatcher.Dispatch: twtich message did not have channel name")
-			return
+// WithPushEndpoints allows you to override the default push endpoints.
+func WithPushEndpoints(endpoints []string) DispatcherOption {
+	return func(d *Dispatcher) {
+		d.pushEndpoints = endpoints
+	}
+}
+
+// Start creates a new dispatcher and starts it.
+func Start(opts ...DispatcherOption) *Dispatcher {
+	d := &Dispatcher{
+		pullEndpoints: []string{"inproc://dispatch-pull"},
+		pubEndpoints:  []string{"inproc://dispatch-pub"},
+		pushEndpoints: []string{"inproc://dispatch-push"},
+	}
+	for _, opt := range opts {
+		opt(d)
+	}
+	d.setupSockets()
+	go d.run()
+	return d
+}
+
+func (d *Dispatcher) setupSockets() {
+	var err error
+	d.pull, err = zmq4.NewSocket(zmq4.PULL)
+	if err != nil {
+		log.Panicf("Dispatcher.setupSockets: can not create dispatcher pull socket: %s", err)
+	}
+	for _, endpoint := range d.pullEndpoints {
+		err = d.pull.Bind(endpoint)
+		if err != nil {
+			log.Panicf("Dispatcher.setupSockets: can not bind pull socket: %s", err)
 		}
-	case stream.Discord:
-	default:
-		log.Printf("Dispatcher.Dispatch: unknown message type: %d", message.Type)
-		return
 	}
 
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	_, err = d.pub.SendMessage(topic, mb)
+	d.pub, err = zmq4.NewSocket(zmq4.PUB)
 	if err != nil {
-		log.Printf("Dispatcher.Dispatch: got error publishing message: %s", err)
+		log.Panicf("Dispatcher.setupSockets: can not create dispatcher publish socket: %s", err)
 	}
-	_, err = d.push.SendBytes(mb, zmq4.DONTWAIT)
+	for _, endpoint := range d.pubEndpoints {
+		err = d.pub.Bind(endpoint)
+		if err != nil {
+			log.Panicf("Dispatcher.setupSockets: can not bind publish socket: %s", err)
+		}
+	}
+
+	d.push, err = zmq4.NewSocket(zmq4.PUSH)
 	if err != nil {
-		log.Printf("Dispatcher.Dispatch: got error pushing message: %s", err)
+		log.Panicf("Dispatcher.setupSockets: can not create dispatcher push socket: %s", err)
+	}
+	for _, endpoint := range d.pushEndpoints {
+		err = d.push.Bind(endpoint)
+		if err != nil {
+			log.Panicf("Dispatcher.setupSockets: can not bind push socket: %s", err)
+		}
+	}
+}
+
+func (d *Dispatcher) run() {
+	for {
+		parts, err := d.pull.RecvMessageBytes(0)
+		if err != nil {
+			log.Printf("Dispatcher.run: error occured when reading from pull socket: %s", err)
+			continue
+		}
+		if len(parts) != 2 {
+			log.Printf("Dispatcher.run: not the right count of parts, expected 2, was: %v", parts)
+			continue
+		}
+		topic := parts[0]
+		message := parts[1]
+
+		_, err = d.pub.SendMessage(topic, message)
+		if err != nil {
+			log.Printf("Dispatcher.run: got error publishing message: %s", err)
+		}
+		_, err = d.push.SendBytes(message, zmq4.DONTWAIT)
+		if err != nil {
+			log.Printf("Dispatcher.run: got error pushing message: %s", err)
+		}
 	}
 }

@@ -5,6 +5,34 @@
 
 package stream
 
+type mockConn struct {
+	sendCalled chan bool
+	sendInput  struct {
+		Arg0 chan TXMessage
+	}
+	closeCalled chan bool
+	closeOutput struct {
+		Ret0 chan error
+	}
+}
+
+func newMockConn() *mockConn {
+	m := &mockConn{}
+	m.sendCalled = make(chan bool, 100)
+	m.sendInput.Arg0 = make(chan TXMessage, 100)
+	m.closeCalled = make(chan bool, 100)
+	m.closeOutput.Ret0 = make(chan error, 100)
+	return m
+}
+func (m *mockConn) send(arg0 TXMessage) {
+	m.sendCalled <- true
+	m.sendInput.Arg0 <- arg0
+}
+func (m *mockConn) close() error {
+	m.closeCalled <- true
+	return <-m.closeOutput.Ret0
+}
+
 type mockTwitchUserIDFetcher struct {
 	UserIDCalled chan bool
 	UserIDInput  struct {
@@ -28,25 +56,4 @@ func (m *mockTwitchUserIDFetcher) UserID(username string) (userID int, err error
 	m.UserIDCalled <- true
 	m.UserIDInput.Username <- username
 	return <-m.UserIDOutput.UserID, <-m.UserIDOutput.Err
-}
-
-type mockDispatcher struct {
-	DispatchCalled chan bool
-	DispatchInput  struct {
-		Topic   chan string
-		Message chan RXMessage
-	}
-}
-
-func newMockDispatcher() *mockDispatcher {
-	m := &mockDispatcher{}
-	m.DispatchCalled = make(chan bool, 100)
-	m.DispatchInput.Topic = make(chan string, 100)
-	m.DispatchInput.Message = make(chan RXMessage, 100)
-	return m
-}
-func (m *mockDispatcher) Dispatch(topic string, message RXMessage) {
-	m.DispatchCalled <- true
-	m.DispatchInput.Topic <- topic
-	m.DispatchInput.Message <- message
 }

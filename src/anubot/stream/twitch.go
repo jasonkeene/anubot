@@ -36,7 +36,7 @@ func init() {
 }
 
 type twitchConn struct {
-	d  Dispatcher
+	d  chan dispatchMessage
 	c  *client.Conn
 	u  string
 	id int
@@ -59,7 +59,7 @@ func (c *twitchConn) close() error {
 	return nil
 }
 
-func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*twitchConn, error) {
+func connectTwitch(u, p, c string, d chan dispatchMessage, twitch TwitchUserIDFetcher) (*twitchConn, error) {
 	userID, err := twitch.UserID(u)
 	if err != nil {
 		return nil, err
@@ -115,11 +115,19 @@ func connectTwitch(u, p, c string, d Dispatcher, twitch TwitchUserIDFetcher) (*t
 
 func (c *twitchConn) dispatchMessage(conn *client.Conn, line *client.Line) {
 	topic := "twitch:" + c.u
-	c.d.Dispatch(topic, RXMessage{
+	msg := RXMessage{
 		Type: Twitch,
 		Twitch: &RXTwitch{
 			OwnerID: c.id,
 			Line:    line,
 		},
-	})
+	}
+	select {
+	case c.d <- dispatchMessage{
+		topic: topic,
+		msg:   msg,
+	}:
+	default:
+		log.Println("twitchConn.dispatchMessage: unable to dispatch message")
+	}
 }

@@ -74,8 +74,3 @@ type RXDiscord struct {
 	// TODO: add other types
 	MessageCreate *discordgo.MessageCreate `json:"message_create"`
 }
-
-// Dispatcher dispoatches messages from a stream source.
-type Dispatcher interface {
-	Dispatch(topic string, message RXMessage)
-}

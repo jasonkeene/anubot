@@ -8,7 +8,7 @@ import (
 )
 
 type discordConn struct {
-	d  Dispatcher
+	d  chan dispatchMessage
 	dg *discordgo.Session
 }
 
@@ -43,7 +43,7 @@ func (c *discordConn) close() error {
 	return c.dg.Close()
 }
 
-func connectDiscord(token string, d Dispatcher) (*discordConn, error) {
+func connectDiscord(token string, d chan dispatchMessage) (*discordConn, error) {
 	dg, err := discordgo.New(token)
 	dg.LogLevel = discordgo.LogDebug
 	if err != nil {
@@ -65,15 +65,24 @@ func (c *discordConn) messageCreate(s *discordgo.Session, m *discordgo.MessageCr
 	ownerID, err := c.resolveOwnerID(m)
 	if err != nil {
 		log.Printf("got err attempting to resolve discord topic: %s", err)
+		return
 	}
 	topic := "discord:" + ownerID
-	c.d.Dispatch(topic, RXMessage{
+	msg := RXMessage{
 		Type: Discord,
 		Discord: &RXDiscord{
 			OwnerID:       ownerID,
 			MessageCreate: m,
 		},
-	})
+	}
+	select {
+	case c.d <- dispatchMessage{
+		topic: topic,
+		msg:   msg,
+	}:
+	default:
+		log.Println("discordConn.messageCreate: unable to dispatch message")
+	}
 }
 
 func (c *discordConn) resolveOwnerID(m *discordgo.MessageCreate) (string, error) {

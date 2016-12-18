@@ -1,18 +1,30 @@
 package stream
 
 import (
+	"encoding/json"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/pebbe/zmq4"
 )
 
 // Manager manages numerous connections to stream soruces.
 type Manager struct {
-	d           Dispatcher
+	pushEndpoints []string
+	push          *zmq4.Socket
+	dispatch      chan dispatchMessage
+
 	mu          sync.Mutex
 	twitchConns map[string]conn
 	discordConn conn
-	twitch      TwitchUserIDFetcher
+
+	twitch TwitchUserIDFetcher
+}
+
+type dispatchMessage struct {
+	topic string
+	msg   RXMessage
 }
 
 type conn interface {
@@ -25,12 +37,64 @@ type TwitchUserIDFetcher interface {
 	UserID(username string) (userID int, err error)
 }
 
+// ManagerOption is used to configure a Mananger.
+type ManagerOption func(*Manager)
+
+// WithPushEndpoints allows you to override the default push endpoints.
+func WithPushEndpoints(endpoints []string) ManagerOption {
+	return func(m *Manager) {
+		m.pushEndpoints = endpoints
+	}
+}
+
 // NewManager creates a new manager.
-func NewManager(d Dispatcher, twitch TwitchUserIDFetcher) *Manager {
-	return &Manager{
-		d:           d,
-		twitchConns: make(map[string]conn),
-		twitch:      twitch,
+func NewManager(twitch TwitchUserIDFetcher, opts ...ManagerOption) *Manager {
+	m := &Manager{
+		pushEndpoints: []string{"inproc://dispatch-pull"},
+		dispatch:      make(chan dispatchMessage, 1000),
+		twitchConns:   make(map[string]conn),
+		twitch:        twitch,
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	m.setupSockets()
+	go m.run()
+	return m
+}
+
+func (m *Manager) setupSockets() {
+	var err error
+	m.push, err = zmq4.NewSocket(zmq4.PUSH)
+	if err != nil {
+		log.Panicf("Manager.setupSockets: can not create manager push socket: %s", err)
+	}
+	for _, endpoint := range m.pushEndpoints {
+		err = m.push.Connect(endpoint)
+		if err != nil {
+			log.Panicf("Manager.setupSockets: can not connect push socket: %s", err)
+		}
+	}
+}
+
+func (m *Manager) run() {
+	for dispatchMsg := range m.dispatch {
+		mb, err := json.Marshal(dispatchMsg.msg)
+		if err != nil {
+			log.Printf("Manager.run: error with marshalling message: %s", err)
+			continue
+		}
+
+		_, err = m.push.SendBytes([]byte(dispatchMsg.topic), zmq4.SNDMORE)
+		if err != nil {
+			log.Printf("Manager.run: unable to send message frame 0: %s", err)
+			continue
+		}
+		_, err = m.push.SendBytes(mb, 0)
+		if err != nil {
+			log.Printf("Manager.run: unable to send message frame 1: %s", err)
+			continue
+		}
 	}
 }
 
@@ -44,7 +108,7 @@ func (m *Manager) ConnectTwitch(user, pass, channel string) {
 	}
 
 	for i := 0; i < 10; i++ {
-		c, err := connectTwitch(user, pass, channel, m.d, m.twitch)
+		c, err := connectTwitch(user, pass, channel, m.dispatch, m.twitch)
 		if err == nil {
 			m.mu.Lock()
 			defer m.mu.Unlock()
@@ -65,7 +129,7 @@ func (m *Manager) ConnectDiscord(token string) {
 	}
 
 	for i := 0; i < 10; i++ {
-		c, err := connectDiscord(token, m.d)
+		c, err := connectDiscord(token, m.dispatch)
 		if err == nil {
 			m.mu.Lock()
 			defer m.mu.Unlock()

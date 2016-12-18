@@ -12,7 +12,7 @@ func TestConnectingOverTLS(t *testing.T) {
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
-	d := newMockDispatcher()
+	d := make(chan dispatchMessage)
 	twitch := newMockTwitchUserIDFetcher()
 	close(twitch.UserIDOutput.UserID)
 	close(twitch.UserIDOutput.Err)
@@ -60,7 +60,7 @@ func TestDispatchingMessages(t *testing.T) {
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
-	d := newMockDispatcher()
+	d := make(chan dispatchMessage)
 	twitch := newMockTwitchUserIDFetcher()
 	twitch.UserIDOutput.UserID <- 12345
 	close(twitch.UserIDOutput.Err)
@@ -84,9 +84,10 @@ func TestDispatchingMessages(t *testing.T) {
 	serverConn, cleanup := acceptConn(server)
 
 	serverConn.send("PRIVMSG #test-chan :test-message")
-	topic := <-d.DispatchInput.Topic
+	dispatchMsg := <-d
+	topic := dispatchMsg.topic
+	msg := dispatchMsg.msg
 	expect(topic).To.Equal("twitch:test-user")
-	msg := <-d.DispatchInput.Message
 	expect(msg.Type).To.Equal(Twitch)
 	expect(msg.Twitch.OwnerID).To.Equal(12345)
 	expect(msg.Twitch.Line.Raw).To.Equal("PRIVMSG #test-chan :test-message")
@@ -101,7 +102,7 @@ func TestSendingMessages(t *testing.T) {
 	server := newFakeIRCServer(t)
 	defer server.close()
 	defer patchTwitch(server.port())()
-	d := newMockDispatcher()
+	d := make(chan dispatchMessage)
 	twitch := newMockTwitchUserIDFetcher()
 	close(twitch.UserIDOutput.UserID)
 	close(twitch.UserIDOutput.Err)
@@ -142,7 +143,7 @@ func TestConnectingToUnresponsiveServer(t *testing.T) {
 	expect := expect.New(t)
 	server := newFakeIRCServer(t)
 	defer patchTwitch(server.port())()
-	d := newMockDispatcher()
+	d := make(chan dispatchMessage)
 	twitch := newMockTwitchUserIDFetcher()
 	close(twitch.UserIDOutput.UserID)
 	close(twitch.UserIDOutput.Err)

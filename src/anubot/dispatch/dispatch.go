@@ -21,32 +21,32 @@ type Dispatcher struct {
 	push          *zmq4.Socket
 }
 
-// DispatcherOption is used to configure a Dispatcher.
-type DispatcherOption func(*Dispatcher)
+// Option is used to configure a Dispatcher.
+type Option func(*Dispatcher)
 
 // WithPullEndpoints allows you to override the default pull endpoints.
-func WithPullEndpoints(endpoints []string) DispatcherOption {
+func WithPullEndpoints(endpoints []string) Option {
 	return func(d *Dispatcher) {
 		d.pullEndpoints = endpoints
 	}
 }
 
 // WithPubEndpoints allows you to override the default pub endpoints.
-func WithPubEndpoints(endpoints []string) DispatcherOption {
+func WithPubEndpoints(endpoints []string) Option {
 	return func(d *Dispatcher) {
 		d.pubEndpoints = endpoints
 	}
 }
 
 // WithPushEndpoints allows you to override the default push endpoints.
-func WithPushEndpoints(endpoints []string) DispatcherOption {
+func WithPushEndpoints(endpoints []string) Option {
 	return func(d *Dispatcher) {
 		d.pushEndpoints = endpoints
 	}
 }
 
 // Start creates a new dispatcher and starts it.
-func Start(opts ...DispatcherOption) *Dispatcher {
+func Start(opts ...Option) *Dispatcher {
 	d := &Dispatcher{
 		pullEndpoints: []string{"inproc://dispatch-pull"},
 		pubEndpoints:  []string{"inproc://dispatch-pub"},
@@ -100,7 +100,7 @@ func (d *Dispatcher) run() {
 	for {
 		parts, err := d.pull.RecvMessageBytes(0)
 		if err != nil {
-			log.Printf("Dispatcher.run: error occured when reading from pull socket: %s", err)
+			log.Printf("Dispatcher.run: error occurred when reading from pull socket: %s", err)
 			continue
 		}
 		if len(parts) != 2 {

@@ -31,18 +31,18 @@ func main() {
 	v.AutomaticEnv()
 
 	// setup twitch api client
-	twitch := twitch.New(
+	twitchClient := twitch.New(
 		v.GetString("twitch_api_url"),
 		v.GetString("twitch_oauth_client_id"),
 	)
 
 	// create store
 	backend := v.GetString("store_backend")
-	var s store.Store
+	var st store.Store
 	switch backend {
 	case "bolt":
 		var err error
-		s, err = bolt.New(v.GetString("store_bolt_path"))
+		st, err = bolt.New(v.GetString("store_bolt_path"))
 		if err != nil {
 			log.Panicf("unable to craete bolt database: %s", err)
 		}
@@ -53,35 +53,28 @@ func main() {
 	}
 
 	// create message dispatcher
-	pubEndpoints := []string{
-		"inproc://pub",
-	}
-	pushEndpoints := []string{
-		"inproc://push",
-	}
-	d := dispatch.New(pubEndpoints, pushEndpoints)
+	dispatch.Start()
 
 	// setup puller to store messages
-	puller, err := store.NewPuller(s, []string{"inproc://push"})
+	puller, err := store.NewPuller(st)
 	if err != nil {
 		log.Panicf("pull not able to connect, got err: %s", err)
 	}
 	go puller.Start()
 
 	// create bot manager
-	bm := bot.NewManager()
+	botManager := bot.NewManager()
 
 	// create stream manager
-	sm := stream.NewManager(d, twitch)
+	streamManager := stream.NewManager(twitchClient)
 
 	// setup websocket API server
 	mux := http.NewServeMux()
 	api := api.New(
-		bm,
-		sm,
-		pubEndpoints,
-		s,
-		twitch,
+		botManager,
+		streamManager,
+		st,
+		twitchClient,
 		v.GetString("twitch_oauth_client_id"),
 	)
 	mux.Handle("/api", websocket.Handler(api.Serve))
@@ -91,8 +84,8 @@ func main() {
 		v.GetString("twitch_oauth_client_id"),
 		v.GetString("twitch_oauth_client_secret"),
 		v.GetString("twitch_oauth_redirect_uri"),
-		s,
-		twitch,
+		st,
+		twitchClient,
 	))
 
 	// bind websocket API
@@ -115,6 +108,7 @@ func main() {
 		}
 		return
 	}
+
 	fmt.Println("listening on port", port)
 	err = server.ListenAndServe()
 	if err != nil {

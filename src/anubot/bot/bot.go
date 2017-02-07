@@ -24,7 +24,8 @@ type Feature interface {
 
 // Bot receives messages and takes actions based on those messages.
 type Bot struct {
-	pubEndpoints []string
+	subEndpoints []string
+	topics       []string
 	sub          *zmq4.Socket
 	featuresMu   sync.Mutex
 	features     map[string]Feature
@@ -32,33 +33,56 @@ type Bot struct {
 	done         chan struct{}
 }
 
-// New returns a new Bot that is connected to publishers.
-func New(topics []string, pubEndpoints []string) (*Bot, error) {
-	sub, err := zmq4.NewSocket(zmq4.SUB)
-	if err != nil {
-		return nil, err
-	}
-	for _, endpoint := range pubEndpoints {
-		err = sub.Connect(endpoint)
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, topic := range topics {
-		err = sub.SetSubscribe(topic)
-		if err != nil {
-			return nil, err
-		}
-	}
+// Option is used to configure a Bot.
+type Option func(*Bot)
 
+// WithSubEndpoints allows you to override the default endpoints that the
+// server will attempt to subscribe to.
+func WithSubEndpoints(endpoints []string) Option {
+	return func(b *Bot) {
+		b.subEndpoints = endpoints
+	}
+}
+
+// New returns a new Bot that is connected to publishers and accepting messages
+// for specific topics.
+func New(topics []string, opts ...Option) (*Bot, error) {
 	b := &Bot{
-		pubEndpoints: pubEndpoints,
-		sub:          sub,
+		subEndpoints: []string{"inproc://dispatch-pub"},
+		topics:       topics,
 		features:     make(map[string]Feature),
 		stop:         make(chan struct{}),
 		done:         make(chan struct{}),
 	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	err := b.setupSockets()
+	if err != nil {
+		return nil, err
+	}
 	return b, nil
+}
+
+func (b *Bot) setupSockets() error {
+	sub, err := zmq4.NewSocket(zmq4.SUB)
+	if err != nil {
+		return err
+	}
+	for _, endpoint := range b.subEndpoints {
+		err = sub.Connect(endpoint)
+		if err != nil {
+			return err
+		}
+	}
+	for _, topic := range b.topics {
+		err = sub.SetSubscribe(topic)
+		if err != nil {
+			return err
+		}
+	}
+	b.sub = sub
+	return nil
 }
 
 // Start reads from sub socket and sends messages to features. It needs to run

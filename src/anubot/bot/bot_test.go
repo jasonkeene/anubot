@@ -30,7 +30,7 @@ func TestBotDispatchesMessagesToFeatures(t *testing.T) {
 	}()
 	expected, toSend := testMessage(expect, "test-message")
 
-	b, err := bot.New([]string{subTopic}, endpoints)
+	b, err := bot.New([]string{subTopic}, bot.WithSubEndpoints(endpoints))
 	expect(err).To.Be.Nil()
 	b.SetFeature("test-feature", f)
 	go b.Start()
@@ -65,7 +65,7 @@ func TestBotDoesNotDispatchMessagesIfTopicDoesNotMatch(t *testing.T) {
 	_, badBytes := testMessage(expect, "test-message")
 	expected, finalBytes := testMessage(expect, "final-message")
 
-	b, err := bot.New([]string{subTopic}, endpoints)
+	b, err := bot.New([]string{subTopic}, bot.WithSubEndpoints(endpoints))
 	expect(err).To.Be.Nil()
 	b.SetFeature("test-feature", f)
 	go b.Start()

@@ -97,7 +97,7 @@ func twitchUserDetailsHandler(e event, s *session) {
 		return
 	}
 	streamerUsername, _, _ := s.Store().TwitchStreamerCredentials(s.userID)
-	status, game, err := s.api.twitch.StreamInfo(streamerUsername)
+	status, game, err := s.api.twitchClient.StreamInfo(streamerUsername)
 	if err != nil {
 		log.Printf("unable to fetch stream info for user %s: %s",
 			streamerUsername, err)
@@ -122,7 +122,7 @@ func twitchGamesHandler(e event, s *session) {
 	s.Send(event{
 		Cmd:       e.Cmd,
 		RequestID: e.RequestID,
-		Payload:   s.api.twitch.Games(),
+		Payload:   s.api.twitchClient.Games(),
 	})
 }
 
@@ -158,14 +158,14 @@ func twitchStreamMessagesHandler(e event, s *session) {
 		}
 	}
 
-	s.api.sm.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
-	s.api.sm.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
+	s.api.streamManager.ConnectTwitch(streamerUsername, "oauth:"+streamerPassword, "#"+streamerUsername)
+	s.api.streamManager.ConnectTwitch(botUsername, "oauth:"+botPassword, "#"+streamerUsername)
 
 	mw, err := newMessageWriter(
 		streamerUsername,
 		"twitch:"+streamerUsername,
 		"twitch:"+botUsername,
-		s.api.pubEndpoints,
+		s.api.subEndpoints,
 		s.ws,
 	)
 	if err != nil {
@@ -217,8 +217,8 @@ func twitchSendMessageHandler(e event, s *session) {
 		})
 		return
 	}
-	s.api.sm.ConnectTwitch(username, "oauth:"+password, "#"+username)
-	s.api.sm.Send(stream.TXMessage{
+	s.api.streamManager.ConnectTwitch(username, "oauth:"+password, "#"+username)
+	s.api.streamManager.Send(stream.TXMessage{
 		Type: stream.Twitch,
 		Twitch: &stream.TXTwitch{
 			Username: username,
@@ -256,7 +256,7 @@ func twitchUpdateChatDescriptionHandler(e event, s *session) {
 	}
 
 	user, pass, _ := s.Store().TwitchStreamerCredentials(s.userID)
-	err := s.api.twitch.UpdateDescription(status, game, user, pass)
+	err := s.api.twitchClient.UpdateDescription(status, game, user, pass)
 	if err != nil {
 		log.Println("unable to update chat description, got error:", err)
 		s.Send(event{

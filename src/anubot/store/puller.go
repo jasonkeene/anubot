@@ -15,30 +15,54 @@ type MessageStorer interface {
 
 // Puller pulls messages from dispatch and stores them.
 type Puller struct {
-	store MessageStorer
-	pull  *zmq4.Socket
-	stop  chan struct{}
-	done  chan struct{}
+	store         MessageStorer
+	pull          *zmq4.Socket
+	pullEndpoints []string
+	stop          chan struct{}
+	done          chan struct{}
+}
+
+// Option is used to configure a Puller.
+type Option func(*Puller)
+
+// WithPullEndpoints allows you to override the default pull endpoints.
+func WithPullEndpoints(endpoints []string) Option {
+	return func(p *Puller) {
+		p.pullEndpoints = endpoints
+	}
 }
 
 // NewPuller returns a new puller.
-func NewPuller(store MessageStorer, pushEndpoints []string) (*Puller, error) {
-	pull, err := zmq4.NewSocket(zmq4.PULL)
+func NewPuller(store MessageStorer, opts ...Option) (*Puller, error) {
+	p := &Puller{
+		store:         store,
+		pullEndpoints: []string{"inproc://dispatch-push"},
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	err := p.setupSockets()
 	if err != nil {
 		return nil, err
 	}
-	for _, endpoint := range pushEndpoints {
+	return p, nil
+}
+
+func (p *Puller) setupSockets() error {
+	pull, err := zmq4.NewSocket(zmq4.PULL)
+	if err != nil {
+		return err
+	}
+	for _, endpoint := range p.pullEndpoints {
 		err = pull.Connect(endpoint)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return &Puller{
-		store: store,
-		pull:  pull,
-		stop:  make(chan struct{}),
-		done:  make(chan struct{}),
-	}, nil
+	p.pull = pull
+	return nil
 }
 
 // Start reads messages from pull socket and stores them. It needs to run in

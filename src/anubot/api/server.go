@@ -15,8 +15,6 @@ import (
 	"anubot/twitch/oauth"
 )
 
-//go:generate hel
-
 // Store is the object the Server uses to persist data.
 type Store interface {
 	RegisterUser(username, password string) (userID string, err error)
@@ -34,31 +32,46 @@ type Store interface {
 
 // Server responds to websocket events sent from the client.
 type Server struct {
-	bm                  *bot.Manager
-	sm                  *stream.Manager
-	pubEndpoints        []string
+	botManager          *bot.Manager
+	streamManager       *stream.Manager
+	subEndpoints        []string
 	store               Store
-	twitch              *twitch.API
+	twitchClient        *twitch.API
 	twitchOauthClientID string
+}
+
+// Option is used to configure a Server.
+type Option func(*Server)
+
+// WithSubEndpoints allows you to override the default endpoints that the
+// server will attempt to subscribe to.
+func WithSubEndpoints(endpoints []string) Option {
+	return func(s *Server) {
+		s.subEndpoints = endpoints
+	}
 }
 
 // New creates a new Server.
 func New(
-	bm *bot.Manager,
-	sm *stream.Manager,
-	pubEndpoints []string,
+	botManager *bot.Manager,
+	streamManager *stream.Manager,
 	store Store,
-	twitch *twitch.API,
+	twitchClient *twitch.API,
 	twitchOauthClientID string,
+	opts ...Option,
 ) *Server {
-	return &Server{
-		bm:                  bm,
-		sm:                  sm,
-		pubEndpoints:        pubEndpoints,
+	s := &Server{
+		botManager:          botManager,
+		streamManager:       streamManager,
+		subEndpoints:        []string{"inproc://dispatch-pub"},
 		store:               store,
-		twitch:              twitch,
+		twitchClient:        twitchClient,
 		twitchOauthClientID: twitchOauthClientID,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Serve reads off of a websocket connection and responds to events.

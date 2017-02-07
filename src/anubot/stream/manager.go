@@ -37,18 +37,18 @@ type TwitchUserIDFetcher interface {
 	UserID(username string) (userID int, err error)
 }
 
-// ManagerOption is used to configure a Mananger.
-type ManagerOption func(*Manager)
+// Option is used to configure a Mananger.
+type Option func(*Manager)
 
 // WithPushEndpoints allows you to override the default push endpoints.
-func WithPushEndpoints(endpoints []string) ManagerOption {
+func WithPushEndpoints(endpoints []string) Option {
 	return func(m *Manager) {
 		m.pushEndpoints = endpoints
 	}
 }
 
 // NewManager creates a new manager.
-func NewManager(twitch TwitchUserIDFetcher, opts ...ManagerOption) *Manager {
+func NewManager(twitch TwitchUserIDFetcher, opts ...Option) *Manager {
 	m := &Manager{
 		pushEndpoints: []string{"inproc://dispatch-pull"},
 		dispatch:      make(chan dispatchMessage, 1000),

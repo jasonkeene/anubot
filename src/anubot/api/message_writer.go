@@ -39,7 +39,7 @@ func newMessageWriter(
 	streamerUsername string,
 	streamerTopic string,
 	botTopic string,
-	pubEndpoints []string,
+	subEndpoints []string,
 	ws *websocket.Conn,
 ) (*messageWriter, error) {
 	streamerSub, err := zmq4.NewSocket(zmq4.SUB)
@@ -60,7 +60,7 @@ func newMessageWriter(
 		return nil, err
 	}
 
-	for _, endpoint := range pubEndpoints {
+	for _, endpoint := range subEndpoints {
 		err = streamerSub.Connect(endpoint)
 		if err != nil {
 			return nil, err

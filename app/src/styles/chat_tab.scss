@@ -95,7 +95,16 @@
             &.whisper {
                 background-color: rgba(0, 0, 0, 0.05);
             }
+            &.action {
+                font-style: italic;
+            }
 
+            .mention {
+                background-color: black;
+                color: white;
+                display: inline-block;
+                padding: 4px 7px;
+            }
             .badges {
                 img {
                     margin: 0 2px;

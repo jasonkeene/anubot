@@ -3,6 +3,7 @@
 const React = require('react'),
       ReactDOM = require('react-dom'),
       badges = require('./badges.js'),
+      mentions = require('./mentions.js'),
       emoji = require('./emoji.js');
 
 const _defaultNickColors = [
@@ -77,7 +78,7 @@ const ChatTab = React.createClass({
             <div className="message" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>:&nbsp;
-                {emoji.render(message.twitch)}
+                {mentions.render(this.props.streamer_username, emoji.render(message.twitch))}
             </div>
         );
     },
@@ -86,7 +87,7 @@ const ChatTab = React.createClass({
             <div className="message action" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
-                <span style={this.nickStyle(message.twitch)}>{emoji.render(message.twitch)}</span>
+                <span className="message" style={this.nickStyle(message.twitch)}>{mentions.render(this.props.streamer_username, emoji.render(message.twitch))}</span>
             </div>
         );
     },
@@ -97,7 +98,7 @@ const ChatTab = React.createClass({
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
                 <span className="arrow">&#x25B8;</span>&nbsp;
                 <span className="target" style={{color: this.defaultNickColor(message.twitch.target)}}>{message.twitch.target}</span>:&nbsp;
-                {emoji.render(message.twitch)}
+                {mentions.render(this.props.streamer_username, emoji.render(message.twitch))}
             </div>
         );
     },

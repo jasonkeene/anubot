@@ -5,7 +5,8 @@ const websocket = require('websocket'),
       Net = require('./lib/net.js'),
       unpack = require('./lib/unpack.js'),
       views = require('./lib/views/main.js'),
-      settings = require('electron-settings');
+      settings = require('electron-settings'),
+      context_menu = require('./lib/context_menu.js');
 
 // save off net for development/debugging
 var net;
@@ -29,6 +30,7 @@ client.on('connect', function(connection) {
         console.log('[app] echo-protocol Connection Closed');
     });
 
+    context_menu.register();
     views.render(net, window.localStorage);
 });
 

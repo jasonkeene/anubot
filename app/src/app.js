@@ -30,7 +30,7 @@ client.on('connect', function(connection) {
         console.log('[app] echo-protocol Connection Closed');
     });
 
-    context_menu.register();
+    context_menu.register(window);
     views.render(net, window.localStorage);
 });
 

@@ -2,7 +2,7 @@
 const {remote} = require('electron');
 const {Menu, MenuItem} = remote;
 
-function register() {
+function register(window) {
     const userMenu = new Menu();
     userMenu.append(new MenuItem({
         label: 'MenuItem1',

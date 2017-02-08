@@ -13,12 +13,11 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	s, err := discordgo.New("Bot " + t)
+	_, err := discordgo.New("Bot " + t)
 	if err != nil {
 		panic(err)
 	}
 	// Add session calls here.
-	_ = s
 
 	<-interrupt
 }

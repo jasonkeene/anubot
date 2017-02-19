@@ -4,7 +4,7 @@ set -e
 
 if [ "$1" = "ci" ]; then
     echo installing node dependencies
-    npm install --depth=0
+    npm install --silent --no-progress --depth=0
 fi
 
 echo building lib

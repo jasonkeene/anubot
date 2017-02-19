@@ -1,12 +1,12 @@
 /* global window: false */
 
 const websocket = require('websocket'),
-      Listeners = require('./lib/listeners.js'),
-      Net = require('./lib/net.js'),
-      unpack = require('./lib/unpack.js'),
-      views = require('./lib/views/main.js'),
+      Listeners = require('../lib/listeners.js'),
+      Net = require('../lib/net.js'),
+      unpack = require('../lib/unpack.js'),
+      views = require('../lib/views/main.js'),
       settings = require('electron-settings'),
-      context_menu = require('./lib/context_menu.js');
+      context_menu = require('../lib/context_menu.js');
 
 // save off net for development/debugging
 var net;

@@ -29,7 +29,7 @@ electron.app.on('ready', () => {
         frame: false,
     };
     mainWindow = new electron.BrowserWindow(windowOpts);
-    mainWindow.loadURL('file://' + __dirname + '/index.html');
+    mainWindow.loadURL('file://' + __dirname + '/app.html');
     mainWindow.on('closed', () => {
         mainWindow = null;
     });

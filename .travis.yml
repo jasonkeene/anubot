@@ -1,7 +1,0 @@
-sudo: required
-services:
-- docker
-before_install:
-- docker pull anubot/build
-script:
-- docker run -v $PWD:/go anubot/build /go/test.sh ci

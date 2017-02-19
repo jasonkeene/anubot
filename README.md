@@ -1,11 +1,13 @@
 ![][logo]
 
-[![build status][travis-image]][travis-url]
+[![build status][ci-image]][ci-url]
 [![issues in progress][waffle-image]][waffle-url]
 
-A·nu·bot is a new bot for Twitch. It is an electron app with a golang core.
+A·nu·bot is a new bot for Twitch. It is an electron app with a
+[server component][server-url] written in go.
 
-#### Notice: This project is currently working towards [pre-alpha][milestone] and is being rapidly developed.
+#### Notice: This project is currently working towards [pre-alpha][milestone]
+and is being rapidly developed.
 
 ## Project Goals
 
@@ -23,10 +25,11 @@ I am streaming the creation of this bot [live on Twitch][stream-url].
 [![][stream-image]][stream-url]
 
 [logo]:         https://s3.amazonaws.com/anubot/logo-github-readme.png
-[travis-image]: https://img.shields.io/travis/jasonkeene/anubot.svg?style=flat-square
-[travis-url]:   https://travis-ci.org/jasonkeene/anubot
+[ci-image]:     https://ci.anubot.io/api/v1/teams/main/pipelines/main/jobs/test-client/badge
+[ci-url]:       https://ci.anubot.io/
 [waffle-image]: https://img.shields.io/waffle/label/jasonkeene/anubot/in%20progress.svg?style=flat-square
 [waffle-url]:   https://waffle.io/jasonkeene/anubot
+[server-url]:   https://github.com/jasonkeene/anubot-server
 [stream-image]: http://streambadge.com/twitch/custom/ffffff/8adaf2/648588/postcrypt.png
 [stream-url]:   https://twitch.tv/postcrypt
 [milestone]:    https://github.com/jasonkeene/anubot/milestone/1

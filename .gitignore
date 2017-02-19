@@ -9,20 +9,14 @@ __MACOSX
 Thumbs.db
 desktop.ini
 
-# go build artifacts
-/bin/
-/pkg/
-/app/anubot-server
-*.coverprofile
-
 # vim
 *.swp
 
 # node packages
 node_modules
 
-# app build artifacts
-/app/lib/
+# build artifacts
+/lib/
 
-# vagrant
-.vagrant/
+# electron app build artifacts
+/dist/

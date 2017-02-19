@@ -7,7 +7,7 @@
     "email": "jasonkeene@gmail.com",
     "url": "https://github.com/jasonkeene/anubot"
   },
-  "main": "main.js",
+  "main": "app/app.js",
   "private": true,
   "dependencies": {
     "electron-settings": "^2.2.2",

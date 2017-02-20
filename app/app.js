@@ -24,8 +24,8 @@ var mainWindow = null; // keep main object from being GC'd
 
 electron.app.on('ready', () => {
     var windowOpts = {
-        width: 1024,
-        height: 768,
+        width: 560,
+        height: 620,
         frame: false,
     };
     mainWindow = new electron.BrowserWindow(windowOpts);

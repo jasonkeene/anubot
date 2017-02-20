@@ -1,5 +1,6 @@
 
 const React = require('react'),
+      electron = require('electron'),
       Setup = require('./setup.js'),
       Menu = require('./menu.js'),
       ChatTab = require('./chat_tab.js'),
@@ -9,6 +10,7 @@ const App = React.createClass({
     getInitialState: function () {
         return {
             loaded: false,
+            connected: false,
             authenticated: false,
 
             tab: "chat",
@@ -18,30 +20,58 @@ const App = React.createClass({
             bot_username: "",
             status: "",
             game: "",
+
+            net: null,
         };
     },
-    componentWillMount: function () {
-        var credentials = this.getLocalCredentials();
-        if (credentials !== null) {
-            this.props.net.request("authenticate", credentials).then(
-                this.handleAuthenticateSuccess,
+
+    connectionReady: function (net) {
+        this.setState({
+            net,
+            connected: true,
+        });
+        var creds = this.localCredentials();
+        if (creds !== null) {
+            net.request("authenticate", creds).then(
+                this.handleAuthenticateSuccess(creds),
                 this.handleAuthenticateFailure,
             );
+            return;
         }
     },
 
-    // network events
-    handleAuthenticateSuccess: function (payload) {
+    authenticated: function (creds) {
+        this.setLocalCredentials(creds);
         this.setState({
             authenticated: true,
         });
         this.finishLoading();
+    },
+
+    // network events
+    handleAuthenticateSuccess: function (creds) {
+        var that = this;
+        return function (payload) {
+            that.authenticated(creds);
+        };
     },
     handleAuthenticateFailure: function (error) {
         // TODO: handle failure
         console.log("got error while authenticating:", error);
     },
     handleUserDetailsSuccess: function (payload) {
+        var win = electron.remote.getCurrentWindow(),
+            bounds = win.getBounds(),
+            goalWidth = 1024,
+            goalHeight = 768,
+            widthDelta = goalWidth-bounds.width,
+            heightDelta = goalHeight-bounds.height;
+        win.setBounds({
+            width: goalWidth,
+            height: goalHeight,
+            x: bounds.x - widthDelta/2,
+            y: bounds.y - heightDelta/2,
+        }, true);
         this.setState({
             streamer_username: payload.streamer_username,
             bot_username: payload.bot_username,
@@ -61,7 +91,11 @@ const App = React.createClass({
         });
     },
 
-    getLocalCredentials: function () {
+    setLocalCredentials: function (creds) {
+        this.props.localStorage.setItem("username", creds.username),
+        this.props.localStorage.setItem("password", creds.password);
+    },
+    localCredentials: function () {
         var username = this.props.localStorage.getItem("username"),
             password = this.props.localStorage.getItem("password");
         if (!username || !password) {
@@ -73,18 +107,18 @@ const App = React.createClass({
         };
     },
     finishLoading: function () {
-        this.props.net.request("twitch-user-details", null).then(
+        this.state.net.request("twitch-user-details", null).then(
             this.handleUserDetailsSuccess,
             this.handleUserDetailsFailure,
         );
-        this.props.net.request("bttv-emoji").then((payload) => {
+        this.state.net.request("bttv-emoji").then((payload) => {
             emoji.initBTTV(payload);
         }, (error) => {
             console.log("got error while requesting BTTV emoji:", error);
         })
 
-        this.props.net.listeners.cmd("chat-message", this.handleChatMessage);
-        this.props.net.send({
+        this.state.net.listeners.cmd("chat-message", this.handleChatMessage);
+        this.state.net.send({
             cmd: "twitch-stream-messages",
         });
     },
@@ -97,7 +131,7 @@ const App = React.createClass({
                             status={this.state.status}
                             game={this.state.game}
                             messages={this.state.messages}
-                            net={this.props.net}
+                            net={this.state.net}
                             key="chat-tab" />;
         default:
             return <div className="tab">Content for {this.state.tab} tab!</div>;
@@ -107,7 +141,7 @@ const App = React.createClass({
         return <div id="loading">Loading</div>;
     },
     renderSetup: function () {
-        return <Setup parent={this} net={this.props.net} />;
+        return <Setup parent={this} net={this.state.net} />;
     },
     renderNormal: function () {
         return [
@@ -116,16 +150,20 @@ const App = React.createClass({
         ];
     },
     renderApp: function () {
-        if (!this.state.loaded) {
+        if (!this.state.connected) {
             return this.renderLoading();
         }
         if (!this.state.authenticated) {
             return this.renderSetup();
         }
+        if (!this.state.loaded) {
+            return this.renderLoading();
+        }
         return this.renderNormal();
     },
     render: function () {
         return <div id="app">
+            <div id="drag-area" />
             {this.renderApp()}
         </div>;
     },

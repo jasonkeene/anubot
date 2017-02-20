@@ -30,6 +30,14 @@ body, div, span, p, li {
     color: rgb(74, 76, 78);
 }
 
+#drag-area {
+    position: absolute;
+    z-index: 999999;
+    width: 100vw;
+    height: 15px;
+    -webkit-app-region: drag;
+}
+
 #menu {
     width: 200px;
     flex-shrink: 0;
@@ -78,4 +86,12 @@ body, div, span, p, li {
 .select-input {
     padding: 3px;
     border: 1px solid #acb1b8;
+}
+
+#modal-spinner {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
 }

@@ -18,6 +18,7 @@ client.on('connect', function(connection) {
 
     const listeners = new Listeners();
     net = new Net(listeners, connection);
+    app.connectionReady(net);
 
     connection.on('message', function(message) {
         console.log("[app] Received:", JSON.parse(message.utf8Data));
@@ -29,13 +30,12 @@ client.on('connect', function(connection) {
     connection.on('close', function() {
         console.log('[app] echo-protocol Connection Closed');
     });
-
-    context_menu.register(window);
-    views.render(net, window.localStorage);
 });
 
 client.on('connectFailed', function(error) {
     console.log('[app] Connect Error: ' + error.toString());
 });
 
+var app = views.render(window.localStorage);
+context_menu.register(window);
 client.connect(settings.getSync('api'), '', settings.getSync('origin'));

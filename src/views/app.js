@@ -33,13 +33,17 @@ const App = React.createClass({
         var creds = this.localCredentials();
         if (creds !== null) {
             net.request("authenticate", creds).then(
-                this.handleAuthenticateSuccess(creds),
-                this.handleAuthenticateFailure,
+                (payload) => {
+                    this.authenticated(creds);
+                },
+                (error) => {
+                    // TODO: handle failure
+                    console.log("got error while authenticating:", error);
+                },
             );
             return;
         }
     },
-
     authenticated: function (creds) {
         this.setLocalCredentials(creds);
         this.setState({
@@ -47,50 +51,6 @@ const App = React.createClass({
         });
         this.finishLoading();
     },
-
-    // network events
-    handleAuthenticateSuccess: function (creds) {
-        var that = this;
-        return function (payload) {
-            that.authenticated(creds);
-        };
-    },
-    handleAuthenticateFailure: function (error) {
-        // TODO: handle failure
-        console.log("got error while authenticating:", error);
-    },
-    handleUserDetailsSuccess: function (payload) {
-        var win = electron.remote.getCurrentWindow(),
-            bounds = win.getBounds(),
-            goalWidth = 1024,
-            goalHeight = 768,
-            widthDelta = goalWidth-bounds.width,
-            heightDelta = goalHeight-bounds.height;
-        win.setBounds({
-            width: goalWidth,
-            height: goalHeight,
-            x: bounds.x - widthDelta/2,
-            y: bounds.y - heightDelta/2,
-        }, true);
-        this.setState({
-            streamer_username: payload.streamer_username,
-            bot_username: payload.bot_username,
-            status: payload.streamer_status,
-            game: payload.streamer_game,
-            loaded: true,
-        });
-    },
-    handleUserDetailsFailure: function (error) {
-        // TODO: handle failure
-        console.log("got error while getting user details:", error);
-    },
-    handleChatMessage: function (payload, error) {
-        var messages = this.state.messages;
-        this.setState({
-            messages: messages.concat([payload]),
-        });
-    },
-
     setLocalCredentials: function (creds) {
         this.props.localStorage.setItem("username", creds.username),
         this.props.localStorage.setItem("password", creds.password);
@@ -108,16 +68,47 @@ const App = React.createClass({
     },
     finishLoading: function () {
         this.state.net.request("twitch-user-details", null).then(
-            this.handleUserDetailsSuccess,
-            this.handleUserDetailsFailure,
+            (payload) => {
+                var win = electron.remote.getCurrentWindow(),
+                    bounds = win.getBounds(),
+                    goalWidth = 1024,
+                    goalHeight = 768,
+                    widthDelta = goalWidth-bounds.width,
+                    heightDelta = goalHeight-bounds.height;
+                win.setBounds({
+                    width: goalWidth,
+                    height: goalHeight,
+                    x: bounds.x - Math.floor(widthDelta/2),
+                    y: bounds.y - Math.floor(heightDelta/2),
+                }, true);
+                this.setState({
+                    streamer_username: payload.streamer_username,
+                    bot_username: payload.bot_username,
+                    status: payload.streamer_status,
+                    game: payload.streamer_game,
+                    loaded: true,
+                });
+            },
+            (error) => {
+                // TODO: handle failure
+                console.log("got error while getting user details:", error);
+            },
         );
-        this.state.net.request("bttv-emoji").then((payload) => {
-            emoji.initBTTV(payload);
-        }, (error) => {
-            console.log("got error while requesting BTTV emoji:", error);
-        })
+        this.state.net.request("bttv-emoji").then(
+            (payload) => {
+                emoji.initBTTV(payload);
+            },
+            (error) => {
+                console.log("got error while requesting BTTV emoji:", error);
+            },
+        )
 
-        this.state.net.listeners.cmd("chat-message", this.handleChatMessage);
+        this.state.net.listeners.cmd("chat-message", (payload, error) => {
+            var messages = this.state.messages;
+            this.setState({
+                messages: messages.concat([payload]),
+            });
+        });
         this.state.net.send({
             cmd: "twitch-stream-messages",
         });

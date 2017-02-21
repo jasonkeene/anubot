@@ -119,6 +119,27 @@ const App = React.createClass({
             disconnected: true,
         });
     },
+    logout: function () {
+        this.state.net.request("logout").then(
+            () => {
+                this.setLocalCredentials("", "");
+                this.setState({
+                    loading: true,
+                    authenticated: false,
+                    twitchAuthenticated: false,
+
+                    tab: "chat",
+                    messages: [],
+
+                    streamer_username: "",
+                    bot_username: "",
+                    status: "",
+                    game: "",
+                });
+                this.connectionReady(this.state.net);
+            },
+        );
+    },
 
     renderTab: function () {
         switch (this.state.tab) {

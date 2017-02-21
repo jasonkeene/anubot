@@ -6,7 +6,7 @@ const Menu = React.createClass({
         return {
             items: [
                 ["Chat", "chat"],
-                ["Playlist", "playlist"],
+                //["Playlist", "playlist"],
                 //["Currency", "currency"],
                 //["Commands", "commands"],
                 //["Mini-games", "mini-games"],
@@ -21,9 +21,10 @@ const Menu = React.createClass({
         this.props.parent.setState({tab: id});
     },
 
-    render: function () {
-        return <ul id="menu">{this.renderMenuItems()}</ul>;
+    logout: function () {
+        this.props.parent.logout();
     },
+
     renderMenuItems: function () {
         var nodes = [];
         for (let i = 0; i < this.state.items.length; i++) {
@@ -34,6 +35,12 @@ const Menu = React.createClass({
                                  key={i+"-"+this.state.items[i][1]} />);
         }
         return nodes;
+    },
+    render: function () {
+        return <div id="menu">
+            <ul>{this.renderMenuItems()}</ul>
+            <div id="logout" onClick={this.logout}>Logout</div>
+        </div>;
     },
 });
 

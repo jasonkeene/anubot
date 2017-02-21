@@ -45,21 +45,30 @@ textarea, input, button {
     background-color: rgb(33, 37, 43);
     color: rgb(130, 134, 139);
     font-weight: bold;
-    margin: 0;
-    padding: 0;
-    list-style: none;
     -webkit-app-region: drag;
 
     :first-child {
         padding-top: 10px;
     }
 
-    li {
+    #logout {
         padding: 4px 10px;
+        position: absolute;
+        bottom: 10px;
+    }
 
-        &.selected {
-            color: rgb(255, 255, 255);
-            font-weight: bolder;
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        li {
+            padding: 4px 10px;
+
+            &.selected {
+                color: rgb(255, 255, 255);
+                font-weight: bolder;
+            }
         }
     }
 }

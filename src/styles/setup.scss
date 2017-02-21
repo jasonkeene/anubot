@@ -1,5 +1,44 @@
 
 #setup {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    font-size: 14px;
+    flex-direction: column;
+    justify-content: center;
+
+    a {
+        color: white;
+    }
+
+    input {
+        margin: 5px 0;
+        padding: 0 7px;
+        width: 200px;
+        height: 23px;
+        font-size: 13px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px rgba(0, 0, 0, 0.3);
+        color: white;
+    }
+
+    form {
+        padding: 10px;
+    }
+
+    ::-webkit-input-placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
     #login-form {
+        text-align: center;
+        width: 250px;
+        margin: auto;
+    }
+
+    #registration-form {
+        text-align: center;
+        width: 250px;
+        margin: auto;
     }
 }

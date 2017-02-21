@@ -27,9 +27,14 @@ electron.app.on('ready', () => {
         width: 560,
         height: 620,
         frame: false,
+        backgroundColor: '#21252b',
+        show: false,
     };
     mainWindow = new electron.BrowserWindow(windowOpts);
     mainWindow.loadURL('file://' + __dirname + '/app.html');
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.show();
+    })
     mainWindow.on('closed', () => {
         mainWindow = null;
     });

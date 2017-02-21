@@ -12,6 +12,7 @@ const App = React.createClass({
             loaded: false,
             connected: false,
             authenticated: false,
+            disconnected: false,
 
             tab: "chat",
             messages: [],
@@ -113,6 +114,11 @@ const App = React.createClass({
             cmd: "twitch-stream-messages",
         });
     },
+    disconnect: function () {
+        this.setState({
+            disconnected: true,
+        });
+    },
 
     renderTab: function () {
         switch (this.state.tab) {
@@ -128,6 +134,9 @@ const App = React.createClass({
             return <div className="tab">Content for {this.state.tab} tab!</div>;
         }
     },
+    renderDisconnected: function () {
+        return <div id="disconnected">Disconnected</div>;
+    },
     renderLoading: function () {
         return <div id="loading">Loading</div>;
     },
@@ -141,6 +150,9 @@ const App = React.createClass({
         ];
     },
     renderApp: function () {
+        if (this.state.disconnected) {
+            return this.renderDisconnected();
+        }
         if (!this.state.connected) {
             return this.renderLoading();
         }

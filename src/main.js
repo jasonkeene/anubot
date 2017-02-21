@@ -25,17 +25,20 @@ client.on('connect', function(connection) {
         listeners.dispatch(...unpack(message.utf8Data));
     });
     connection.on('error', function(error) {
-        console.log("[app] Connection Error: " + error.toString());
+        console.log("[app] Connection Errored: " + error.toString());
+        app.disconnect();
     });
     connection.on('close', function() {
-        console.log('[app] echo-protocol Connection Closed');
+        console.log('[app] Connection Closed');
+        app.disconnect();
     });
 });
 
 client.on('connectFailed', function(error) {
-    console.log('[app] Connect Error: ' + error.toString());
+    console.log('[app] Connect Failed: ' + error.toString());
+    app.disconnect();
 });
 
-var app = views.render(window.localStorage);
+const app = views.render(window.localStorage);
 context_menu.register(window);
 client.connect(settings.getSync('api'), '', settings.getSync('origin'));

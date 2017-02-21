@@ -1,6 +1,5 @@
 
-const React = require('react'),
-      ReactDOM = require('react-dom');
+const React = require('react');
 
 const Setup = React.createClass({
     getInitialState: function () {

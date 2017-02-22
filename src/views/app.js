@@ -2,6 +2,8 @@
 const React = require('react'),
       electron = require('electron'),
       Setup = require('./setup.js'),
+      TwitchStreamerSetup = require('./twitch_streamer_setup.js'),
+      TwitchBotSetup = require('./twitch_bot_setup.js'),
       Menu = require('./menu.js'),
       ChatTab = require('./chat_tab.js'),
       emoji = require('./emoji.js');
@@ -9,9 +11,11 @@ const React = require('react'),
 const App = React.createClass({
     getInitialState: function () {
         return {
-            loaded: false,
+            loading: true,
             connected: false,
             authenticated: false,
+            twitchStreamerAuthenticated: false,
+            twitchBotAuthenticated: false,
             disconnected: false,
 
             tab: "chat",
@@ -38,19 +42,67 @@ const App = React.createClass({
                     this.authenticated(creds);
                 },
                 (error) => {
-                    // TODO: handle failure
                     console.log("got error while authenticating:", error);
+                    this.setState({
+                        loading: false,
+                    });
                 },
             );
             return;
         }
+        this.setState({
+            loading: false,
+        });
     },
     authenticated: function (creds) {
         this.setLocalCredentials(creds);
         this.setState({
             authenticated: true,
+            loading: true,
         });
-        this.finishLoading();
+        this.queryUserDetails();
+    },
+    queryUserDetails: function () {
+        this.state.net.request("twitch-user-details", null).then(
+            (payload) => {
+                this.setState({
+                    loading: false,
+                });
+                if (payload.streamer_authenticated) {
+                    this.twitchStreamerAuthenticated(
+                        payload.streamer_username,
+                        payload.streamer_status,
+                        payload.streamer_game,
+                    );
+                }
+                if (payload.bot_authenticated) {
+                    this.twitchBotAuthenticated(
+                        payload.bot_username,
+                    );
+                }
+            },
+            (error) => {
+                console.log("got error while getting user details:", error);
+                this.setState({
+                    loading: false,
+                });
+            },
+        );
+    },
+    twitchStreamerAuthenticated: function (streamer_username, status, game) {
+        this.setState({
+            streamer_username,
+            status,
+            game,
+            twitchStreamerAuthenticated: true,
+        })
+    },
+    twitchBotAuthenticated: function (bot_username) {
+        this.setState({
+            bot_username,
+            twitchBotAuthenticated: true,
+        })
+        this.finish();
     },
     setLocalCredentials: function (creds) {
         this.props.localStorage.setItem("username", creds.username),
@@ -67,34 +119,7 @@ const App = React.createClass({
             password: password,
         };
     },
-    finishLoading: function () {
-        this.state.net.request("twitch-user-details", null).then(
-            (payload) => {
-                var win = electron.remote.getCurrentWindow(),
-                    bounds = win.getBounds(),
-                    goalWidth = 1024,
-                    goalHeight = 768,
-                    widthDelta = goalWidth-bounds.width,
-                    heightDelta = goalHeight-bounds.height;
-                win.setBounds({
-                    width: goalWidth,
-                    height: goalHeight,
-                    x: bounds.x - Math.floor(widthDelta/2),
-                    y: bounds.y - Math.floor(heightDelta/2),
-                }, true);
-                this.setState({
-                    streamer_username: payload.streamer_username,
-                    bot_username: payload.bot_username,
-                    status: payload.streamer_status,
-                    game: payload.streamer_game,
-                    loaded: true,
-                });
-            },
-            (error) => {
-                // TODO: handle failure
-                console.log("got error while getting user details:", error);
-            },
-        );
+    finish: function () {
         this.state.net.request("bttv-emoji").then(
             (payload) => {
                 emoji.initBTTV(payload);
@@ -103,7 +128,6 @@ const App = React.createClass({
                 console.log("got error while requesting BTTV emoji:", error);
             },
         )
-
         this.state.net.listeners.cmd("chat-message", (payload, error) => {
             var messages = this.state.messages;
             this.setState({
@@ -113,6 +137,18 @@ const App = React.createClass({
         this.state.net.send({
             cmd: "twitch-stream-messages",
         });
+        var win = electron.remote.getCurrentWindow(),
+            bounds = win.getBounds(),
+            goalWidth = 1024,
+            goalHeight = 768,
+            widthDelta = goalWidth-bounds.width,
+            heightDelta = goalHeight-bounds.height;
+        win.setBounds({
+            width: goalWidth,
+            height: goalHeight,
+            x: bounds.x - Math.floor(widthDelta/2),
+            y: bounds.y - Math.floor(heightDelta/2),
+        }, true);
     },
     disconnect: function () {
         this.setState({
@@ -122,21 +158,10 @@ const App = React.createClass({
     logout: function () {
         this.state.net.request("logout").then(
             () => {
+                var net = this.state.net;
                 this.setLocalCredentials("", "");
-                this.setState({
-                    loading: true,
-                    authenticated: false,
-                    twitchAuthenticated: false,
-
-                    tab: "chat",
-                    messages: [],
-
-                    streamer_username: "",
-                    bot_username: "",
-                    status: "",
-                    game: "",
-                });
-                this.connectionReady(this.state.net);
+                this.setState(this.getInitialState());
+                this.connectionReady(net);
             },
         );
     },
@@ -164,6 +189,12 @@ const App = React.createClass({
     renderSetup: function () {
         return <Setup parent={this} net={this.state.net} />;
     },
+    renderTwitchStreamerSetup: function () {
+        return <TwitchStreamerSetup parent={this} net={this.state.net} />;
+    },
+    renderTwitchBotSetup: function () {
+        return <TwitchBotSetup parent={this} net={this.state.net} />;
+    },
     renderNormal: function () {
         return [
             <Menu parent={this} selected={this.state.tab} key="menu" />,
@@ -174,14 +205,20 @@ const App = React.createClass({
         if (this.state.disconnected) {
             return this.renderDisconnected();
         }
+        if (this.state.loading) {
+            return this.renderLoading();
+        }
         if (!this.state.connected) {
             return this.renderLoading();
         }
         if (!this.state.authenticated) {
             return this.renderSetup();
         }
-        if (!this.state.loaded) {
-            return this.renderLoading();
+        if (!this.state.twitchStreamerAuthenticated) {
+            return this.renderTwitchStreamerSetup();
+        }
+        if (!this.state.twitchBotAuthenticated) {
+            return this.renderTwitchBotSetup();
         }
         return this.renderNormal();
     },

@@ -107,3 +107,32 @@ textarea, input, button {
     width: 100vw;
     height: 100vh;
 }
+
+#streamer-setup, #bot-setup {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+
+    > div {
+        margin: auto;
+        display: flex;
+        flex-grow: 1;
+
+        webview {
+            width: 375px;
+            height: 415px;
+            box-shadow: 0 0 50px -7px rgba(0, 0, 0, 0.75);
+            background-color: white;
+        }
+    }
+
+    .help-text {
+        text-align: center;
+        height: 200px;
+        position: relative;
+        top: calc(100vh/2 - 240px);
+        flex-shrink: 0;
+        height: 20px;
+        text-align: center;
+    }
+}

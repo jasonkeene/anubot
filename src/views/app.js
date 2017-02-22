@@ -105,7 +105,7 @@ const App = React.createClass({
         this.finish();
     },
     setLocalCredentials: function (creds) {
-        this.props.localStorage.setItem("username", creds.username),
+        this.props.localStorage.setItem("username", creds.username);
         this.props.localStorage.setItem("password", creds.password);
     },
     localCredentials: function () {

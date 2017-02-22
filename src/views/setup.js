@@ -75,7 +75,7 @@ const Login = React.createClass({
         this.props.parent.setState({
             thinking: true,
         });
-        net.request("authenticate", {
+        this.props.net.request("authenticate", {
             username: this.state.username,
             password: this.state.password,
         }).then(
@@ -157,7 +157,7 @@ const Register = React.createClass({
             thinking: true,
         });
 
-        net.request("register", {
+        this.props.net.request("register", {
             username: this.state.username,
             password: this.state.password,
         }).then(

@@ -41,7 +41,7 @@ client.on('connectFailed', function(error) {
 });
 
 var win = electron.remote.getCurrentWindow();
-var collect = () => {
+function collect() {
     var b = win.getBounds();
     if (window.localStorage.getItem("window_bounds_collection") !== null) {
         window.localStorage.setItem("window_bounds_width", b.width);
@@ -49,10 +49,14 @@ var collect = () => {
         window.localStorage.setItem("window_bounds_x", b.x);
         window.localStorage.setItem("window_bounds_y", b.y);
     }
-};
+}
 win.on("resize", collect);
 win.on("move", collect);
 
-const app = views.render(window.localStorage);
+const app = views.render(window.localStorage, connect);
 context_menu.register(window);
-client.connect(settings.getSync('api'), '', settings.getSync('origin'));
+
+function connect() {
+    client.connect(settings.getSync('api'), '', settings.getSync('origin'));
+}
+connect();

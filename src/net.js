@@ -43,4 +43,8 @@ Net.prototype.send = function (obj) {
     console.log("[app] Sent:", obj);
 }
 
+Net.prototype.disconnect = function () {
+    this.connection.close(1000, "logging out");
+}
+
 module.exports = Net;

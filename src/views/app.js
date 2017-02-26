@@ -34,6 +34,7 @@ const App = React.createClass({
         this.setState({
             net,
             connected: true,
+            disconnected: false,
         });
         var creds = this.localCredentials();
         if (creds !== null) {
@@ -138,7 +139,7 @@ const App = React.createClass({
             cmd: "twitch-stream-messages",
         });
 
-        window.localStorage.setItem("window_bounds_collection", "true");
+        this.props.localStorage.setItem("window_bounds_collection", "true");
         var win = electron.remote.getCurrentWindow();
         win.setBounds(this.targetBounds(win.getBounds()), true);
         win.setResizable(true);
@@ -182,7 +183,7 @@ const App = React.createClass({
     logout: function () {
         this.state.net.request("logout").then(
             () => {
-                window.localStorage.removeItem("window_bounds_collection");
+                this.props.localStorage.removeItem("window_bounds_collection");
                 var win = electron.remote.getCurrentWindow(),
                     bounds = win.getBounds(),
                     goalWidth = 560,
@@ -196,10 +197,10 @@ const App = React.createClass({
                     y: bounds.y - Math.floor(heightDelta/2),
                 }, true);
                 win.setResizable(false);
-                var net = this.state.net;
+                this.state.net.disconnect();
                 this.setLocalCredentials("", "");
                 this.setState(this.getInitialState());
-                this.connectionReady(net);
+                this.props.connect();
             },
         );
     },

@@ -36,7 +36,7 @@ const TwitchStreamerSetup = React.createClass({
     },
     renderWebview: function () {
         if (this.state.url !== null) {
-            return <WebView src={this.state.url} partition="twitch-streamer-setup" />;
+            return <div><WebView src={this.state.url} partition="twitch-streamer-setup" /></div>;
         }
         return null;
     },

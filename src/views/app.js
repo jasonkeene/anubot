@@ -137,18 +137,42 @@ const App = React.createClass({
         this.state.net.send({
             cmd: "twitch-stream-messages",
         });
-        var win = electron.remote.getCurrentWindow(),
-            bounds = win.getBounds(),
-            goalWidth = 1024,
+
+        window.localStorage.setItem("window_bounds_collection", "true");
+        var win = electron.remote.getCurrentWindow();
+        win.setBounds(this.targetBounds(win.getBounds()), true);
+        win.setResizable(true);
+    },
+    targetBounds: function (currentBounds) {
+        var previousWidth = this.props.localStorage.getItem("window_bounds_width"),
+            previousHeight = this.props.localStorage.getItem("window_bounds_height"),
+            previousX = this.props.localStorage.getItem("window_bounds_x"),
+            previousY = this.props.localStorage.getItem("window_bounds_y");
+        if (
+            previousWidth !== null &&
+            previousHeight !== null &&
+            previousX !== null &&
+            previousY !== null
+        ) {
+            var foo = {
+                width: parseInt(previousWidth),
+                height: parseInt(previousHeight),
+                x: parseInt(previousX),
+                y: parseInt(previousY),
+            };
+            return foo;
+        }
+        var goalWidth = 1024,
             goalHeight = 768,
-            widthDelta = goalWidth-bounds.width,
-            heightDelta = goalHeight-bounds.height;
-        win.setBounds({
+            widthDelta = goalWidth-currentBounds.width,
+            heightDelta = goalHeight-currentBounds.height;
+        var bar = {
             width: goalWidth,
             height: goalHeight,
-            x: bounds.x - Math.floor(widthDelta/2),
-            y: bounds.y - Math.floor(heightDelta/2),
-        }, true);
+            x: currentBounds.x - Math.floor(widthDelta/2),
+            y: currentBounds.y - Math.floor(heightDelta/2),
+        };
+        return bar;
     },
     disconnect: function () {
         this.setState({
@@ -158,6 +182,20 @@ const App = React.createClass({
     logout: function () {
         this.state.net.request("logout").then(
             () => {
+                window.localStorage.removeItem("window_bounds_collection");
+                var win = electron.remote.getCurrentWindow(),
+                    bounds = win.getBounds(),
+                    goalWidth = 560,
+                    goalHeight = 620,
+                    widthDelta = goalWidth-bounds.width,
+                    heightDelta = goalHeight-bounds.height;
+                win.setBounds({
+                    width: goalWidth,
+                    height: goalHeight,
+                    x: bounds.x - Math.floor(widthDelta/2),
+                    y: bounds.y - Math.floor(heightDelta/2),
+                }, true);
+                win.setResizable(false);
                 var net = this.state.net;
                 this.setLocalCredentials("", "");
                 this.setState(this.getInitialState());

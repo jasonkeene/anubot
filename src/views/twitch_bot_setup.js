@@ -36,7 +36,7 @@ const TwitchBotSetup = React.createClass({
     },
     renderWebview: function () {
         if (this.state.url !== null) {
-            return <WebView src={this.state.url} partition="twitch-bot-setup" />;
+            return <div><WebView src={this.state.url} partition="twitch-bot-setup" /></div>;
         }
         return null;
     },

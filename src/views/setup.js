@@ -8,7 +8,6 @@ const Setup = React.createClass({
             thinking: false,
         };
     },
-
     renderStep: function () {
         switch (this.state.step) {
         case "login":
@@ -102,7 +101,7 @@ const Login = React.createClass({
 
     renderBadCreds: function () {
         if (this.state.badCreds) {
-            return <div id="bad-creds">The username and password you entered are not correct.</div>;
+            return <div id="bad-creds">Wrong username or password.</div>;
         }
         return null;
     },
@@ -110,11 +109,13 @@ const Login = React.createClass({
         return <div id="login-form">
             {this.renderBadCreds()}
             <form onSubmit={this.submitLogin}>
+                <i className="material-icons">person_outline</i>
                 <input type="text" placeholder="username" onChange={this.handleUsernameChange} /><br />
-                <input type="password" placeholder="password" onChange={this.handlePasswordChange} />
-                <input type="submit" style={{display: "none"}} />
+                <i className="material-icons">lock_open</i>
+                <input type="password" placeholder="password" onChange={this.handlePasswordChange} /><br />
+                <input type="submit" className="submit" value="Sign in" />
             </form>
-            Don't have an account? <a href="#" onClick={this.handleSignup}>Sign up</a>
+            Don't have an account? <a href="#" onClick={this.handleSignup}>Sign up</a><br />
         </div>;
     },
 });
@@ -123,6 +124,7 @@ const Register = React.createClass({
     getInitialState: function () {
         return {
             username: "",
+            email: "",
             password: "",
             referral: "",
             error: null,
@@ -159,6 +161,8 @@ const Register = React.createClass({
 
         this.props.net.request("register", {
             username: this.state.username,
+            email: this.state.email,
+            referral: this.state.referral,
             password: this.state.password,
         }).then(
             this.handleRegisterSuccess,
@@ -170,9 +174,25 @@ const Register = React.createClass({
             username: e.target.value,
         });
     },
+    handleEmailChange: function (e) {
+        this.setState({
+            email: e.target.value,
+        });
+    },
+    handleReferralChange: function (e) {
+        this.setState({
+            referral: e.target.value,
+        });
+    },
     handlePasswordChange: function (e) {
         this.setState({
             password: e.target.value,
+        });
+    },
+    handleLogin: function (e) {
+        e.preventDefault();
+        this.props.parent.setState({
+            step: "login",
         });
     },
 
@@ -187,10 +207,17 @@ const Register = React.createClass({
         return <div id="registration-form">
             {this.renderError()}
             <form onSubmit={this.submitRegister}>
+                <i className="material-icons">person_outline</i>
                 <input type="text" placeholder="username" onChange={this.handleUsernameChange} /><br />
-                <input type="password" placeholder="password" onChange={this.handlePasswordChange} />
-                <input type="submit" style={{display: "none"}} />
+                <i className="material-icons">email</i>
+                <input type="text" placeholder="email" onChange={this.handleEmailChange} /><br />
+                <i className="material-icons">code</i>
+                <input type="text" placeholder="invitation code" onChange={this.handleReferralChange} /><br />
+                <i className="material-icons">lock_open</i>
+                <input type="password" placeholder="password" onChange={this.handlePasswordChange} /><br />
+                <input type="submit" className="submit" />
             </form>
+            Already have an account? <a href="#" onClick={this.handleLogin}>Login</a><br />
         </div>
     },
 });

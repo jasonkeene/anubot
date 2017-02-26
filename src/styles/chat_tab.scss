@@ -103,7 +103,15 @@
                 background-color: black;
                 color: white;
                 display: inline-block;
-                padding: 4px 7px;
+                padding: 0 5px;
+            }
+            .timestamp {
+                display: inline-block;
+                width: 30px;
+                text-align: right;
+                font-family: "Helvetica Neue", Helvetica, sans-serif;
+                font-size: 12px;
+                margin-right: 5px;
             }
             .badges {
                 img {

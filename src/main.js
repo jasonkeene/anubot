@@ -5,6 +5,7 @@ const websocket = require('websocket'),
       Net = require('../lib/net.js'),
       unpack = require('../lib/unpack.js'),
       views = require('../lib/views/main.js'),
+      electron = require('electron'),
       settings = require('electron-settings'),
       context_menu = require('../lib/context_menu.js');
 
@@ -38,6 +39,19 @@ client.on('connectFailed', function(error) {
     console.log('[app] Connect Failed: ' + error.toString());
     app.disconnect();
 });
+
+var win = electron.remote.getCurrentWindow();
+var collect = () => {
+    var b = win.getBounds();
+    if (window.localStorage.getItem("window_bounds_collection") !== null) {
+        window.localStorage.setItem("window_bounds_width", b.width);
+        window.localStorage.setItem("window_bounds_height", b.height);
+        window.localStorage.setItem("window_bounds_x", b.x);
+        window.localStorage.setItem("window_bounds_y", b.y);
+    }
+};
+win.on("resize", collect);
+win.on("move", collect);
 
 const app = views.render(window.localStorage);
 context_menu.register(window);

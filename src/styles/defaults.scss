@@ -3,14 +3,19 @@
 html, body {
     width: 100%;
     height: 100%;
-    background-color: '#21252b';
+    background-color: #24272f;
+    background-image: url(../../assets/images/gradient-background.png);
+    background-repeat: repeat-x;
+    background-position: bottom;
 }
+
 * {
     box-sizing: border-box;
 }
 
 body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Dosis', sans-serif;
+    font-size: 17px;
     padding: 0;
     margin: 0;
     color: white;
@@ -22,6 +27,7 @@ body, div, span, p, li {
 }
 
 textarea, input, button {
+    font-family: 'Dosis', sans-serif;
     outline: none;
 }
 
@@ -106,33 +112,4 @@ textarea, input, button {
     position: absolute;
     width: 100vw;
     height: 100vh;
-}
-
-#streamer-setup, #bot-setup {
-    display: flex;
-    flex-direction: column;
-    width: 100vw;
-
-    > div {
-        margin: auto;
-        display: flex;
-        flex-grow: 1;
-
-        webview {
-            width: 375px;
-            height: 415px;
-            box-shadow: 0 0 50px -7px rgba(0, 0, 0, 0.75);
-            background-color: white;
-        }
-    }
-
-    .help-text {
-        text-align: center;
-        height: 200px;
-        position: relative;
-        top: calc(100vh/2 - 240px);
-        flex-shrink: 0;
-        height: 20px;
-        text-align: center;
-    }
 }

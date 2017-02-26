@@ -26,9 +26,12 @@ electron.app.on('ready', () => {
     var windowOpts = {
         width: 560,
         height: 620,
+        minWidth: 500,
+        minHeight: 400,
         frame: false,
-        backgroundColor: '#21252b',
+        backgroundColor: '#24272f',
         show: false,
+        resizable: false,
     };
     mainWindow = new electron.BrowserWindow(windowOpts);
     mainWindow.loadURL('file://' + __dirname + '/app.html');

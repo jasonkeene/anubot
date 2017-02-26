@@ -4,7 +4,8 @@ const React = require('react'),
       ReactDOM = require('react-dom'),
       badges = require('./badges.js'),
       mentions = require('./mentions.js'),
-      emoji = require('./emoji.js');
+      emoji = require('./emoji.js'),
+      moment = require('moment');
 
 const _defaultNickColors = [
     "#FF0000",
@@ -74,8 +75,13 @@ const ChatTab = React.createClass({
         return {color: message.tags.color};
     },
     renderPrivmsg: function (message) {
+        var d = new Date(message.twitch.time),
+            m = moment(d),
+            time = m.format("h:mm");
+
         return (
             <div className="message" key={message.twitch.tags.id}>
+                <span className="timestamp">{time}</span>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>:&nbsp;
                 {mentions.render(this.props.streamer_username, emoji.render(message.twitch))}

@@ -21,8 +21,10 @@ const App = React.createClass({
             tab: "chat",
             messages: [],
 
-            streamer_username: "",
-            bot_username: "",
+            streamerUsername: "",
+            streamerLogo: "",
+            streamerDisplayName: "",
+            botUsername: "",
             status: "",
             game: "",
 
@@ -72,13 +74,15 @@ const App = React.createClass({
                 if (payload.streamer_authenticated) {
                     this.twitchStreamerAuthenticated(
                         payload.streamer_username,
+                        payload.streamer_display_name,
+                        payload.streamer_logo,
                         payload.streamer_status,
                         payload.streamer_game,
                     );
                 }
                 if (payload.bot_authenticated) {
                     this.twitchBotAuthenticated(
-                        payload.bot_username,
+                        payload.botUsername,
                     );
                 }
             },
@@ -90,17 +94,19 @@ const App = React.createClass({
             },
         );
     },
-    twitchStreamerAuthenticated: function (streamer_username, status, game) {
+    twitchStreamerAuthenticated: function (streamerUsername, streamerDisplayName, streamerLogo, status, game) {
         this.setState({
-            streamer_username,
+            streamerUsername,
+            streamerDisplayName,
+            streamerLogo,
             status,
             game,
             twitchStreamerAuthenticated: true,
         })
     },
-    twitchBotAuthenticated: function (bot_username) {
+    twitchBotAuthenticated: function (botUsername) {
         this.setState({
-            bot_username,
+            botUsername,
             twitchBotAuthenticated: true,
         })
         this.finish();
@@ -208,8 +214,8 @@ const App = React.createClass({
     renderTab: function () {
         switch (this.state.tab) {
         case "chat":
-            return <ChatTab streamer_username={this.state.streamer_username}
-                            bot_username={this.state.bot_username}
+            return <ChatTab streamerUsername={this.state.streamerUsername}
+                            botUsername={this.state.botUsername}
                             status={this.state.status}
                             game={this.state.game}
                             messages={this.state.messages}
@@ -236,7 +242,11 @@ const App = React.createClass({
     },
     renderNormal: function () {
         return [
-            <Menu parent={this} selected={this.state.tab} key="menu" />,
+            <Menu parent={this}
+                selected={this.state.tab}
+                streamerLogo={this.state.streamerLogo}
+                streamerDisplayName={this.state.streamerDisplayName}
+                key="menu" />,
             this.renderTab()
         ];
     },

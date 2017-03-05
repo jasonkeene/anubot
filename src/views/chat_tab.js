@@ -69,7 +69,7 @@ const ChatTab = React.createClass({
         if (message.tags === undefined ||
             message.tags.color === undefined ||
             message.tags.color === "") {
-            var color = this.defaultNickColor(message.tags['display-name']);
+            var color = this.defaultNickColor(message.nick);
             return {color};
         }
         return {color: message.tags.color};
@@ -84,7 +84,7 @@ const ChatTab = React.createClass({
                 <span className="timestamp">{time}</span>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>:&nbsp;
-                {mentions.render(this.props.streamer_username, emoji.render(message.twitch))}
+                {mentions.render(this.props.streamerUsername, emoji.render(message.twitch))}
             </div>
         );
     },
@@ -93,7 +93,7 @@ const ChatTab = React.createClass({
             <div className="message action" key={message.twitch.tags.id}>
                 <span className="badges">{badges.render(message.twitch)}</span>
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
-                <span className="message" style={this.nickStyle(message.twitch)}>{mentions.render(this.props.streamer_username, emoji.render(message.twitch))}</span>
+                <span className="message" style={this.nickStyle(message.twitch)}>{mentions.render(this.props.streamerUsername, emoji.render(message.twitch))}</span>
             </div>
         );
     },
@@ -104,7 +104,7 @@ const ChatTab = React.createClass({
                 <span className="nick" style={this.nickStyle(message.twitch)}>{message.twitch.tags['display-name']}</span>&nbsp;
                 <span className="arrow">&#x25B8;</span>&nbsp;
                 <span className="target" style={{color: this.defaultNickColor(message.twitch.target)}}>{message.twitch.target}</span>:&nbsp;
-                {mentions.render(this.props.streamer_username, emoji.render(message.twitch))}
+                {mentions.render(this.props.streamerUsername, emoji.render(message.twitch))}
             </div>
         );
     },
@@ -122,7 +122,7 @@ const ChatTab = React.createClass({
     render: function () {
         return (
             <div id="chat-tab" className="tab">
-                <ChatHeader channel={"#" + this.props.streamer_username}
+                <ChatHeader channel={"#" + this.props.streamerUsername}
                             status={this.props.status}
                             game={this.props.game}
                             net={this.props.net} />
@@ -130,9 +130,7 @@ const ChatTab = React.createClass({
                     <div className="spacer" />
                     {this.props.messages.map(this.renderMessage)}
                 </div>
-                <ChatFooter streamer_username={this.props.streamer_username}
-                            bot_username={this.props.bot_username}
-                            net={this.props.net} />
+                <ChatFooter net={this.props.net} />
             </div>
         );
     },
@@ -467,11 +465,11 @@ const ChatHeaderInput = React.createClass({
 const ChatFooter = React.createClass({
     getInitialState: function () {
         return {
-            user_type: "streamer",
+            userType: "streamer",
             message: "",
 
             selected: -1,
-            previous_messages: [],
+            previousMessages: [],
         };
     },
 
@@ -481,69 +479,78 @@ const ChatFooter = React.createClass({
         this.props.net.send({
             cmd: "twitch-send-message",
             payload: {
-                user_type: this.state.user_type,
+                userType: this.state.userType,
                 message: this.state.message,
             },
         });
         this.setState({
             message: "",
-            previous_messages: this.state.previous_messages.concat([this.state.message]),
+            previousMessages: this.state.previousMessages.concat([this.state.message]),
             selected: -1,
         });
     },
     handleMessageChange: function (e) {
         this.setState({message: e.target.value});
     },
-    handleUserChange: function (e) {
-        this.setState({user_type: e.target.value});
+    handleStreamerSelect: function (e) {
+        e.preventDefault();
+        this.setState({userType: "streamer"});
+        ReactDOM.findDOMNode(this).querySelector('#send-message-input').focus();
+    },
+    handleBotSelect: function (e) {
+        e.preventDefault();
+        this.setState({userType: "bot"});
+        ReactDOM.findDOMNode(this).querySelector('#send-message-input').focus();
     },
     handleKeyDown: function (e) {
-        if (this.state.previous_messages.length === 0) {
+        if (this.state.previousMessages.length === 0) {
             return;
         }
         var selected;
         switch (e.keyCode) {
         case 38: // up
             if (this.state.selected < 1) {
-                selected = this.state.previous_messages.length - 1;
+                selected = this.state.previousMessages.length - 1;
                 break;
             }
-            selected = (this.state.selected - 1) % this.state.previous_messages.length;
+            selected = (this.state.selected - 1) % this.state.previousMessages.length;
             break;
         case 40: // down
-            selected = (this.state.selected + 1) % this.state.previous_messages.length;
+            selected = (this.state.selected + 1) % this.state.previousMessages.length;
             break;
         default:
             return
         }
         this.setState({
             selected,
-            message: this.state.previous_messages[selected],
+            message: this.state.previousMessages[selected],
         });
     },
 
     render: function () {
         return (
             <div className="footer">
-                <div className="selection">
-                    <select onChange={this.handleUserChange}
-                            className="select-input">
-                        <option value="streamer">{this.props.streamer_username}</option>
-                        <option value="bot">{this.props.bot_username}</option>
-                    </select>
-                </div>
-                <div className="input">
+                <div className="footer-container">
+                    <a href="#" id="streamer-select"
+                        onClick={this.handleStreamerSelect}
+                        className={this.state.userType == "streamer" ? "active" : ""}>
+                        <i className="mdi mdi-account"></i>
+                    </a>
+                    <a href="#" id="bot-select"
+                        onClick={this.handleBotSelect}
+                        className={this.state.userType == "bot" ? "active" : ""}>
+                        <i className="mdi mdi-robot"></i>
+                    </a>
                     <div className="form">
                         <form onSubmit={this.handleSubmit}>
-                            <input className="text-input"
+                            <input id="send-message-input"
+                                   className="text-input"
                                    onChange={this.handleMessageChange}
                                    onKeyDown={this.handleKeyDown}
                                    type="text"
-                                   placeholder="Send a message"
                                    value={this.state.message} />
                         </form>
                     </div>
-                    <div className="spacer"></div>
                 </div>
             </div>
         );

@@ -45,48 +45,19 @@ textarea, input, button {
     -webkit-app-region: drag;
 }
 
-#menu {
-    width: 200px;
-    flex-shrink: 0;
-    background-color: rgb(33, 37, 43);
-    color: rgb(130, 134, 139);
-    font-weight: bold;
-    -webkit-app-region: drag;
-
-    :first-child {
-        padding-top: 10px;
-    }
-
-    #logout {
-        padding: 4px 10px;
-        position: absolute;
-        bottom: 10px;
-    }
-
-    ul {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-
-        li {
-            padding: 4px 10px;
-
-            &.selected {
-                color: rgb(255, 255, 255);
-                font-weight: bolder;
-            }
-        }
-    }
-}
-
 .tab {
     flex-grow: 1;
-    color: rgb(74, 76, 78);
-    background-color: rgb(237, 235, 237);
+
+    // light mode
+    //color: rgb(74, 76, 78);
+    //background-color: rgb(237, 235, 237);
+
+    background-color: #1b1c23;
+    color: #797b83;
 
     .body {
         height: 100vh;
-        overflow: scroll;
+        overflow: auto;
         padding: 20px;
     }
 }
@@ -112,4 +83,23 @@ textarea, input, button {
     position: absolute;
     width: 100vw;
     height: 100vh;
+}
+
+::-webkit-scrollbar              {
+    width: 10px;
+    border-radius: 5px;
+    background-color: #31333d;
+}
+::-webkit-scrollbar-button       {
+    display: none;
+}
+::-webkit-scrollbar-thumb        {
+    background-color: #4a4d5c;
+    border-radius: 5px;
+}
+::-webkit-scrollbar-corner       {
+    display: none;
+}
+::-webkit-resizer                {
+    display: none;
 }

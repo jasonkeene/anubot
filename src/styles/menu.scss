@@ -1,0 +1,98 @@
+
+#menu {
+    width: 210px;
+    flex-shrink: 0;
+    background-color: #31333d;
+    color: rgb(130, 134, 139);
+    font-family: Roboto;
+    font-weight: 400;
+    -webkit-app-region: drag;
+
+    &.light {
+        background-color: rgb(33, 37, 43);
+    }
+
+    ul {
+        margin: 0;
+        padding: 0 13px;
+        list-style: none;
+
+        li {
+            height: 38px;
+            line-height: 30px;
+            padding: 4px 10px;
+            margin: 8px 0;
+            font-size: 16px;
+
+            &.selected {
+                border-radius: 17.5px;
+                background: #24262e;
+                color: rgb(255, 255, 255);
+            }
+
+            &:hover {
+                color: white;
+            }
+
+            .icon {
+                font-size: 22px;
+                width: 20px;
+                height: 22px;
+                display: block;
+                float: left;
+                margin: 0 20px 0 10px;
+                padding: 0;
+            }
+        }
+    }
+
+    #logo {
+        width: 180px;
+        padding: 10px 0 0 10px;
+    }
+
+    #user-info {
+        display: flex;
+        width: 210px;
+        padding-right: 20px;
+        position: absolute;
+        bottom: 0;
+        background-color: #24262e;
+        z-index: 3;
+
+        #streamer-logo {
+            border-radius: 4px;
+            margin: 20px 10px 20px 20px;
+            width: 42px;
+            height: 42px;
+        }
+        #display-name {
+            line-height: 80px;
+            overflow: hidden;
+            font-size: 13px;
+            color: #fafbfc;
+        }
+    }
+
+    #user-menu {
+        width: 210px;
+        height: 0;
+        position: absolute;
+        bottom: 80px;
+        background-color: #24262e;
+        z-index: 2;
+        transition: all 0.5s ease;
+        overflow: hidden;
+        padding: 0;
+
+        &.show {
+            height: 156px;
+            padding: 10px 13px 0 13px;
+        }
+
+        li.selected {
+            background-color: #1d1e23;
+        }
+    }
+}
+

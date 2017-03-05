@@ -479,7 +479,7 @@ const ChatFooter = React.createClass({
         this.props.net.send({
             cmd: "twitch-send-message",
             payload: {
-                userType: this.state.userType,
+                user_type: this.state.userType,
                 message: this.state.message,
             },
         });

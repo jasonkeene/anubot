@@ -10,7 +10,7 @@ electron_settings.configure({
     prettify: true,
 });
 electron_settings.defaults({
-    api: 'wss://api.anubot.io/api',
+    api: 'wss://api.anubot.io/v1/ws',
     origin: 'https://api.anubot.io',
 });
 electron_settings.applyDefaultsSync();

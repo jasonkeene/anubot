@@ -18,7 +18,7 @@ build_mac_app() {
         rm -r dist
     fi
     sudo spctl --master-disable
-    build --macos
+    build --macos --em.build.appId=anubot-alpha --em.name=anubot-alpha
     sudo spctl --master-enable
 }
 
